@@ -1,0 +1,1 @@
+window.__proofmapWalkthroughs("data/walkthrough/Fixture.Status-59dd5d9c.js", "8fa7e922b793b85e", {"lines":["n : Nat","⊢ 0 \u003c hiddenHelper n","⊢ 0 \u003c n + 1","⊢ double n = n * 2"],"steps":{"Fixture.hiddenHelper_pos":[["unfold hiddenHelper",[38,2,38,21],0,[[0,1]],[[0,2]]],["omega",[39,2,39,7],0,[[0,2]],[]]],"Fixture.unfinished":[["sorry",[24,2,24,7],0,[[0,3]],[]]]}});

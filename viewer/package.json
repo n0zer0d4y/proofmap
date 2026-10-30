@@ -1,0 +1,53 @@
+{
+  "name": "proofmap-viewer",
+  "private": true,
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/copy-template.mjs",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "preview": "vite preview",
+    "gen:types": "node scripts/gen-types.mjs",
+    "check:types": "node scripts/gen-types.mjs --check",
+    "validate": "node scripts/validate.mjs",
+    "e2e:prepare": "node scripts/inject.mjs dist/index.html tests/fixtures/fixture.page.json tests/out/fixture.html && node scripts/make-site.mjs dist/index.html tests/fixtures/site tests/out/site && node scripts/inject.mjs dist/index.html tests/fixtures/compare-new.json tests/out/compare.html tests/fixtures/compare-old.json",
+    "e2e": "npm run e2e:prepare && playwright test"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.12.0",
+    "elkjs": "^0.12.0",
+    "html-to-image": "^1.11.13",
+    "katex": "^0.19.1",
+    "markdown-it": "^15.0.3",
+    "minisearch": "^7.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-resizable-panels": "^4.15.0",
+    "shiki": "^4.5.0",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "ajv": "^8.20.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "json-schema-to-typescript": "^16.0.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vite-plugin-singlefile": "^2.3.4",
+    "vitest": "^5.0.5"
+  }
+}

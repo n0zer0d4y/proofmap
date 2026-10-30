@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/n0zer0d4y/proofmap/schema/proofmap.schema.json",
+  "title": "ProofmapData",
+  "description": "proofmap.json, schema version 1. Written by the proofmap Lean extractor and read by the viewer. This file is the source of truth: the TypeScript types are generated from it and the Lean output is validated against it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "generator", "project", "modules", "decls", "walkthroughs", "glossary"],
+  "properties": {
+    "schema": { "const": 1 },
+    "generator": { "$ref": "#/$defs/Generator" },
+    "project": { "$ref": "#/$defs/Project" },
+    "modules": { "type": "array", "items": { "$ref": "#/$defs/Module" } },
+    "decls": {
+      "description": "All declarations. A declaration's id equals its index in this array.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/Decl" }
+    },
+    "walkthroughs": { "type": "array", "items": { "$ref": "#/$defs/Walkthrough" } },
+    "glossary": {
+      "description": "Name fragment to plain-words expansions used for humanized titles (built-in defaults merged with config).",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "Generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "lean"],
+      "properties": {
+        "name": { "const": "proofmap" },
+        "version": { "type": "string" },
+        "lean": { "description": "Lean version the extractor ran on, e.g. 4.29.0.", "type": "string" }
+      }
+    },
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "rootModules", "rootDir", "builtAt", "roots"],
+      "properties": {
+        "title": { "type": "string" },
+        "rootModules": { "type": "array", "items": { "type": "string" } },
+        "repoUrl": { "type": ["string", "null"] },
+        "repoRef": { "type": ["string", "null"] },
+        "rootDir": { "description": "Absolute project root, with forward slashes.", "type": "string" },
+        "builtAt": { "description": "ISO 8601 timestamp of the build.", "type": "string" },
+        "roots": {
+          "description": "Ids of the root declarations (from config, or detected automatically).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/DeclId" }
+        },
+        "standardAxioms": {
+          "description": "Axioms counted as standard; anything else is reported as non-standard.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "preset": { "enum": ["reader", "mathematician", "developer", "auditor"] },
+        "footer": { "description": "Show the 'Made with proofmap' footer (default true).", "type": "boolean" }
+      }
+    },
+    "DeclId": { "type": "integer", "minimum": 0 },
+    "Position": {
+      "description": "[line, column]: 1-based line, 0-based column in Unicode code points.",
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "Range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "$ref": "#/$defs/Position" },
+        "end": { "$ref": "#/$defs/Position" }
+      }
+    },
+    "Module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "imports", "doc", "sections"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "description": "Source path relative to the project root, forward slashes.", "type": ["string", "null"] },
+        "imports": { "type": "array", "items": { "type": "string" } },
+        "doc": { "description": "Module docs (/-! ... -/ blocks) joined as Markdown.", "type": ["string", "null"] },
+        "sections": { "type": "array", "items": { "$ref": "#/$defs/Section" } }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "source", "range", "children"],
+      "properties": {
+        "title": { "type": "string" },
+        "source": {
+          "description": "What produced the section: a heading in a module doc, a divider comment, or a section/namespace block.",
+          "enum": ["doc", "divider", "section", "namespace"]
+        },
+        "description": { "type": ["string", "null"] },
+        "range": { "$ref": "#/$defs/Range" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/Section" } }
+      }
+    },
+    "DeclKind": {
+      "enum": ["theorem", "def", "abbrev", "structure", "inductive", "ctor", "recursor", "instance", "axiom", "opaque", "quot"]
+    },
+    "Flag": {
+      "description": "Noise flags start with 'noise:' and hide the declaration by default; the rest are informational. noise:generated marks a project declaration Lean generated without a source range (match splitters, congruence lemmas, deriving helpers).",
+      "enum": [
+        "noise:instance", "noise:aux", "noise:internal", "noise:matcher", "noise:projection", "noise:ctor", "noise:equation", "noise:generated",
+        "private", "deprecated", "unsafe", "partial"
+      ]
+    },
+    "SummarySource": { "enum": ["attr", "config", "docstring", "comment", "section", "ai"] },
+    "Summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "source"],
+      "properties": {
+        "text": { "type": "string" },
+        "source": { "$ref": "#/$defs/SummarySource" }
+      }
+    },
+    "HoverSpan": {
+      "description": "A name inside the signature that links to a declaration. Offsets are Unicode code points into the signature string, end exclusive.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "decl"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 },
+        "decl": { "$ref": "#/$defs/DeclId" }
+      }
+    },
+    "DepLists": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "proof"],
+      "properties": {
+        "statement": { "type": "array", "items": { "$ref": "#/$defs/DeclId" } },
+        "proof": { "type": "array", "items": { "$ref": "#/$defs/DeclId" } }
+      }
+    },
+    "Status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sorry", "axioms", "nonstandardAxioms"],
+      "properties": {
+        "sorry": { "type": "boolean" },
+        "axioms": { "description": "All axioms used, sorted. Includes sorryAx when sorry is true.", "type": "array", "items": { "type": "string" } },
+        "nonstandardAxioms": { "description": "Axioms outside the standard set, excluding sorryAx, sorted.", "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "Rank": { "enum": ["result", "theorem", "lemma", "def"] },
+    "Tags": {
+      "description": "Author tags from @[proofmap ...] or proofmap.toml.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "step": { "type": "string" },
+        "rank": { "$ref": "#/$defs/Rank" },
+        "summary": { "type": "string" }
+      }
+    },
+    "Decl": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "name", "title", "kind", "module", "external", "range", "sectionPath", "signature", "signatureHover",
+        "summary", "docstring", "leadingComment", "code", "flags", "status", "deps", "directDeps", "size", "rank", "step",
+        "tags", "walkthrough"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/DeclId" },
+        "name": { "description": "Full Lean name as written (private names unmangled).", "type": "string" },
+        "title": { "description": "Humanized title.", "type": "string" },
+        "kind": { "$ref": "#/$defs/DeclKind" },
+        "module": { "type": ["string", "null"] },
+        "external": { "description": "True for declarations outside the root modules (boundary nodes).", "type": "boolean" },
+        "range": { "anyOf": [{ "$ref": "#/$defs/Range" }, { "type": "null" }] },
+        "sectionPath": {
+          "description": "Index path into the module's section tree (sections[i].children[j]...). Empty when outside any section.",
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        },
+        "signature": { "type": "string" },
+        "signatureHover": { "type": "array", "items": { "$ref": "#/$defs/HoverSpan" } },
+        "summary": { "anyOf": [{ "$ref": "#/$defs/Summary" }, { "type": "null" }] },
+        "docstring": { "type": ["string", "null"] },
+        "leadingComment": { "type": ["string", "null"] },
+        "code": { "description": "Full source of the declaration; null for external declarations.", "type": ["string", "null"] },
+        "flags": { "type": "array", "items": { "$ref": "#/$defs/Flag" }, "uniqueItems": true },
+        "status": { "$ref": "#/$defs/Status" },
+        "deps": {
+          "description": "Direct dependencies after collapsing through noise: what the map draws.",
+          "$ref": "#/$defs/DepLists"
+        },
+        "directDeps": {
+          "description": "Direct dependencies as Lean records them, including noise declarations. An edge in deps but not in directDeps is routed through hidden noise.",
+          "$ref": "#/$defs/DepLists"
+        },
+        "size": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lines", "exprNodes"],
+          "properties": {
+            "lines": { "type": "integer", "minimum": 0 },
+            "exprNodes": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "rank": { "$ref": "#/$defs/Rank" },
+        "step": { "description": "Step label used to group big steps on the map.", "type": ["string", "null"] },
+        "tags": { "$ref": "#/$defs/Tags" },
+        "walkthrough": { "description": "Index into walkthroughs, or null.", "anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }] }
+      }
+    },
+    "Walkthrough": {
+      "description": "A proof's tactic steps. proofmap build --json always writes the inline form (steps). The split form (file, build) is what the viewer holds for a page whose walkthroughs were moved into files next to it; it loads them when the walkthrough is opened. stepCount is always present.",
+      "oneOf": [{ "$ref": "#/$defs/InlineWalkthrough" }, { "$ref": "#/$defs/SplitWalkthrough" }]
+    },
+    "InlineWalkthrough": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decl", "stepCount", "steps"],
+      "properties": {
+        "decl": { "$ref": "#/$defs/DeclId" },
+        "stepCount": { "type": "integer", "minimum": 0 },
+        "steps": { "type": "array", "items": { "$ref": "#/$defs/Step" } }
+      }
+    },
+    "SplitWalkthrough": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decl", "stepCount", "file", "build"],
+      "properties": {
+        "decl": { "$ref": "#/$defs/DeclId" },
+        "stepCount": { "type": "integer", "minimum": 0 },
+        "file": {
+          "description": "Script relative to the page. It calls window.__proofmapWalkthroughs(file, build, { \"<declaration name>\": steps, ... }).",
+          "type": "string"
+        },
+        "build": { "description": "Id the script must carry; a mismatch means the page and the script come from different builds.", "type": "string" }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tactic", "range", "depth", "goalsBefore", "goalsAfter"],
+      "properties": {
+        "tactic": { "type": "string" },
+        "range": { "$ref": "#/$defs/Range" },
+        "depth": { "description": "Nesting depth; children of a compound tactic follow it with depth + 1.", "type": "integer", "minimum": 0 },
+        "goalsBefore": { "type": "array", "items": { "type": "string" } },
+        "goalsAfter": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,152 @@
+Fixture.Color  [Fixture.Basic]
+  title: Color
+  sig:   Fixture.Color : Type
+Fixture.Color.blue  [Fixture.Basic]
+  title: Blue
+  sig:   Fixture.Color.blue : ⟦Fixture.Color→Fixture.Color@Fixture.Basic⟧
+Fixture.Color.green  [Fixture.Basic]
+  title: Green
+  sig:   Fixture.Color.green : ⟦Fixture.Color→Fixture.Color@Fixture.Basic⟧
+Fixture.Color.red  [Fixture.Basic]
+  title: Red
+  sig:   Fixture.Color.red : ⟦Fixture.Color→Fixture.Color@Fixture.Basic⟧
+Fixture.NatPair  [Fixture.Basic]
+  title: Nat pair
+  sig:   Fixture.NatPair : Type
+Fixture.Point  [Fixture.Basic]
+  title: Point
+  sig:   Fixture.Point : Type
+Fixture.Point.origin  [Fixture.Basic]
+  title: Origin
+  sig:   Fixture.Point.origin : ⟦Fixture.Point→Fixture.Point@Fixture.Basic⟧
+Fixture.colorOf  [Fixture.Basic]
+  title: Color of
+  sig:   Fixture.colorOf : ⟦Nat→Nat@Init.Prelude⟧ → ⟦Fixture.Color→Fixture.Color@Fixture.Basic⟧
+Fixture.colorOf_zero  [Fixture.Basic]
+  title: Color of zero
+  sig:   Fixture.colorOf_zero : ⟦Fixture.colorOf→Fixture.colorOf@Fixture.Basic⟧ 0 = ⟦Fixture.Color.red→Fixture.Color.red@Fixture.Basic⟧
+Fixture.double  [Fixture.Basic]
+  title: Double
+  sig:   Fixture.double (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.double_eq_add  [Fixture.Basic]
+  title: Double equals add
+  sig:   Fixture.double_eq_add (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n = n + n
+Fixture.double_eq_add'  [Fixture.Basic]
+  title: Double equals add (variant)
+  sig:   Fixture.double_eq_add' (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n = 2 * n
+Fixture.double_eq_zero_iff  [Fixture.Basic]
+  title: Double equals zero if and only if
+  sig:   Fixture.double_eq_zero_iff (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n = 0 ↔ n = 0
+Fixture.double_zero  [Fixture.Basic]
+  title: Double zero
+  sig:   Fixture.double_zero : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 0 = 0
+Fixture.origin_x  [Fixture.Basic]
+  title: Origin x
+  sig:   Fixture.origin_x : ⟦Fixture.Point.origin→Fixture.Point.origin@Fixture.Basic⟧.⟦x→Fixture.Point.x@Fixture.Basic⟧ = 0
+Fixture.secretNumber  [Fixture.Basic]
+  title: Secret number
+  sig:   Fixture.secretNumber : ⟦Nat→Nat@Init.Prelude⟧
+ClashDemo.value  [Fixture.Clash.A]
+  title: Value
+  sig:   ClashDemo.value : ⟦Nat→Nat@Init.Prelude⟧
+ClashDemo.value_pos  [Fixture.Clash.A]
+  title: Value positive
+  sig:   ClashDemo.value_pos : 0 < ⟦ClashDemo.value→ClashDemo.value@Fixture.Clash.A⟧
+ClashDemo.value  [Fixture.Clash.B]
+  title: Value
+  sig:   ClashDemo.value : ⟦Nat→Nat@Init.Prelude⟧
+ClashDemo.value_pos  [Fixture.Clash.B]
+  title: Value positive
+  sig:   ClashDemo.value_pos : 0 < ⟦ClashDemo.value→ClashDemo.value@Fixture.Clash.B⟧
+Fixture.Geometry.dist1  [Fixture.Result]
+  title: Dist 1
+  sig:   Fixture.Geometry.dist1 (p : ⟦Fixture.Point→Fixture.Point@Fixture.Basic⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.Geometry.dist1_origin  [Fixture.Result]
+  title: Dist 1 origin
+  sig:   Fixture.Geometry.dist1_origin : ⟦Fixture.Geometry.dist1→Fixture.Geometry.dist1@Fixture.Result⟧ ⟦Fixture.Point.origin→Fixture.Point.origin@Fixture.Basic⟧ = 0
+Fixture.add_origin  [Fixture.Result]
+  title: Add origin
+  sig:   Fixture.add_origin (p : ⟦Fixture.Point→Fixture.Point@Fixture.Basic⟧) : p + ⟦Fixture.Point.origin→Fixture.Point.origin@Fixture.Basic⟧ = p
+Fixture.double_double  [Fixture.Result]
+  title: Double double
+  sig:   Fixture.double_double (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ (⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n) = 4 * n
+Fixture.double_mono  [Fixture.Result]
+  title: Double monotone
+  sig:   Fixture.double_mono {a b : ⟦Nat→Nat@Init.Prelude⟧} (h : a ≤ b) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ a ≤ ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ b
+Fixture.main_result  [Fixture.Result]
+  title: Main result
+  sig:   Fixture.main_result (n : ⟦Nat→Nat@Init.Prelude⟧) (p : ⟦Fixture.Point→Fixture.Point@Fixture.Basic⟧) :
+  ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ (⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n) = 4 * n ∧
+    p + ⟦Fixture.Point.origin→Fixture.Point.origin@Fixture.Basic⟧ = p ∧ ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n ≤ ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ (n + 1)
+Fixture.tainted_result  [Fixture.Result]
+  title: Tainted result
+  sig:   Fixture.tainted_result : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 5 = 5 * 2 ∧ ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 3 ≥ 3
+Fixture.trickyChar  [Fixture.Result]
+  title: Tricky char
+  sig:   Fixture.trickyChar : ⟦Char→Char@Init.Prelude⟧
+Fixture.trickyString  [Fixture.Result]
+  title: Tricky string
+  sig:   Fixture.trickyString : ⟦String→String@Init.Prelude⟧
+Fixture.classical_fact  [Fixture.Status]
+  title: Classical fact
+  sig:   Fixture.classical_fact (p : Prop) : p ∨ ¬p
+Fixture.collatzSteps  [Fixture.Status]
+  title: Collatz steps
+  sig:   Fixture.collatzSteps (n : ⟦Nat→Nat@Init.Prelude⟧) (acc : ⟦Nat→Nat@Init.Prelude⟧ := 0) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.customAxiom  [Fixture.Status]
+  title: Custom axiom
+  sig:   Fixture.customAxiom (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n ≥ n
+Fixture.downstream_of_sorry  [Fixture.Status]
+  title: Downstream of sorry
+  sig:   Fixture.downstream_of_sorry : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 5 = 5 * 2
+Fixture.hiddenHelper  [Fixture.Status]
+  title: Hidden helper
+  sig:   Fixture.hiddenHelper✝ (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.hiddenHelper_pos  [Fixture.Status]
+  title: Hidden helper positive
+  sig:   Fixture.hiddenHelper_pos (n : ⟦Nat→Nat@Init.Prelude⟧) : 0 < ⟦Fixture.hiddenHelper✝→Fixture.hiddenHelper@Fixture.Status⟧ n
+Fixture.safeId  [Fixture.Status]
+  title: Safe id
+  sig:   Fixture.safeId (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.twice  [Fixture.Status]
+  title: Twice
+  sig:   Fixture.twice (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.unfinished  [Fixture.Status]
+  title: Unfinished
+  sig:   Fixture.unfinished (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n = n * 2
+Fixture.unsafeId  [Fixture.Status]
+  title: Unsafe id
+  sig:   Fixture.unsafeId (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.uses_custom_axiom  [Fixture.Status]
+  title: Uses custom axiom
+  sig:   Fixture.uses_custom_axiom (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n ≥ n
+Fixture.uses_custom_axiom_indirectly  [Fixture.Status]
+  title: Uses custom axiom indirectly
+  sig:   Fixture.uses_custom_axiom_indirectly : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 3 ≥ 3
+Fixture.and_swap  [Fixture.Tactics]
+  title: And swap
+  sig:   Fixture.and_swap (p q : Prop) (hp : p) (hq : q) : q ∧ p
+Fixture.two_goals  [Fixture.Tactics]
+  title: Two goals
+  sig:   Fixture.two_goals (a : ⟦Nat→Nat@Init.Prelude⟧) : a + 0 = a ∧ 0 + a = a
+Fixture.double_one  [Fixture.Tagged]
+  title: Double one
+  sig:   Fixture.double_one : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 1 = 2
+Fixture.double_two  [Fixture.Tagged]
+  title: Double two
+  sig:   Fixture.double_two : ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ 2 = 4
+Fixture.le_double  [Fixture.Tagged]
+  title: ≤ double
+  sig:   Fixture.le_double (n : ⟦Nat→Nat@Init.Prelude⟧) : n ≤ ⟦Fixture.double→Fixture.double@Fixture.Basic⟧ n
+Fixture.proofmap  [Fixture.Tagged]
+  title: Proofmap
+  sig:   Fixture.proofmap : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.rank  [Fixture.Tagged]
+  title: Rank
+  sig:   Fixture.rank : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.step  [Fixture.Tagged]
+  title: Step
+  sig:   Fixture.step : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.summary  [Fixture.Tagged]
+  title: Summary
+  sig:   Fixture.summary : ⟦Nat→Nat@Init.Prelude⟧

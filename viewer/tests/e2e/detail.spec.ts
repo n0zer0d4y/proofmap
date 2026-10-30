@@ -1,0 +1,67 @@
+import { readFileSync } from 'node:fs';
+import { expect, test } from '@playwright/test';
+import { fixtureUrl } from './helpers';
+
+// Detail panel, "why" trace and glossary hover cards.
+
+const basicLean = readFileSync(new URL('../../../lean/test/fixture/Fixture/Basic.lean', import.meta.url), 'utf8').split(/\r?\n/);
+
+test('code block line numbers and text match the source file; VS Code link names the line', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.double_eq_add`);
+  const detail = page.getByRole('complementary', { name: 'Details' });
+  await detail.getByText(/^Lean code/).click();
+  const lines = detail.locator('.code .code-line');
+  await expect(lines.first()).toBeVisible();
+  const n = await lines.count();
+  expect(n).toBeGreaterThan(2);
+  for (let i = 0; i < n; i++) {
+    const line = lines.nth(i);
+    const no = Number(await line.getAttribute('data-line'));
+    const text = (await line.innerText()).replace(/^\s*\d+/, '').replace(/\n$/, '');
+    expect(text.trimEnd()).toBe(basicLean[no - 1]!.trimEnd());
+  }
+  expect(Number(await lines.first().getAttribute('data-line'))).toBe(49);
+  // Highlighted (Shiki) tokens are present.
+  await expect(detail.locator('.code span[style]').first()).toBeAttached();
+  await expect(detail.getByRole('link', { name: 'Open in VS Code' })).toHaveAttribute('href', 'vscode://file/C:/fixture/Fixture/Basic.lean:49');
+});
+
+test('docstring, statement with links, uses and used-by', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.main_result`);
+  const detail = page.getByRole('complementary', { name: 'Details' });
+  await expect(detail).toContainText('The main result of the fixture');
+  await expect(detail.locator('.signature .sig-link').first()).toBeVisible();
+  await expect(detail.getByRole('heading', { name: /^Uses \(/ })).toBeVisible();
+  await detail.getByRole('button', { name: 'Fixture.double_double', exact: true }).click();
+  await expect(detail.locator('.fullname')).toContainText('Fixture.double_double');
+});
+
+test('why trace names the chain to the custom axiom and highlights it on the map', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.tainted_result`);
+  const detail = page.getByRole('complementary', { name: 'Details' });
+  const item = detail.locator('.why-item', { hasText: 'Fixture.customAxiom' });
+  await item.getByRole('button', { name: 'Why?' }).click();
+  await expect(item.locator('.chain li')).toHaveText([
+    'Fixture.tainted_result',
+    'Fixture.uses_custom_axiom_indirectly',
+    'Fixture.uses_custom_axiom',
+    'Fixture.customAxiom is the axiom',
+  ]);
+  await item.getByRole('button', { name: 'Show on map' }).click();
+  for (const n of ['Fixture.tainted_result', 'Fixture.uses_custom_axiom_indirectly', 'Fixture.uses_custom_axiom', 'Fixture.customAxiom'])
+    await expect(page.locator(`.react-flow__node.highlighted [data-decl="${n}"]`)).toBeVisible();
+  // "Show on map" selected the chain's source; go back to the tainted result for the sorry.
+  await expect(detail.locator('.fullname-text')).toHaveText('Fixture.customAxiom');
+  await page.locator('[data-decl="Fixture.tainted_result"] .card-head').click();
+  const sorry = detail.locator('.why-item', { hasText: 'sorry' });
+  await sorry.getByRole('button', { name: 'Why?' }).click();
+  await expect(sorry.locator('.chain li').last()).toHaveText('Fixture.unfinished contains sorry');
+});
+
+test('glossary hover cards explain jargon', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.customAxiom`);
+  const term = page.getByRole('complementary', { name: 'Details' }).locator('.term', { hasText: 'axiom' }).first();
+  await term.focus();
+  await expect(term.getByRole('tooltip')).toBeVisible();
+  await expect(term.getByRole('tooltip')).toContainText('assumed without proof');
+});

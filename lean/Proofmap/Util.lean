@@ -1,0 +1,54 @@
+import Std.Time
+
+namespace Proofmap.Util
+
+private def pad2 (n : Nat) : String :=
+  if n < 10 then s!"0{n}" else toString n
+
+/-- ISO 8601 UTC timestamp for seconds since the Unix epoch (civil-date algorithm by
+Howard Hinnant). Avoids `Std.Time` formatting, whose API differs between toolchains. -/
+def isoUtc (secs : Nat) : String :=
+  let days := secs / 86400
+  let rem := secs % 86400
+  let z := days + 719468
+  let era := z / 146097
+  let doe := z - era * 146097
+  let yoe := (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365
+  let doy := doe - (365 * yoe + yoe / 4 - yoe / 100)
+  let mp := (5 * doy + 2) / 153
+  let d := doy - (153 * mp + 2) / 5 + 1
+  let m := if mp < 10 then mp + 3 else mp - 9
+  let y := yoe + era * 400 + (if m ≤ 2 then 1 else 0)
+  s!"{y}-{pad2 m}-{pad2 d}T{pad2 (rem / 3600)}:{pad2 (rem % 3600 / 60)}:{pad2 (rem % 60)}Z"
+
+def nowIsoUtc : IO String := do
+  let t ← Std.Time.Timestamp.now
+  return isoUtc t.toSecondsSinceUnixEpoch.val.toNat
+
+/-- Path with forward slashes, for JSON output. -/
+def slashes (p : System.FilePath) : String :=
+  p.toString.map fun c => if c == '\\' then '/' else c
+
+/-- `file` relative to `root` with forward slashes, if it is inside it (compared without case
+where the file system ignores case). -/
+def relativeTo? (root file : System.FilePath) : Option String :=
+  let norm (s : String) := if System.Platform.isWindows || System.Platform.isOSX then s.toLower else s
+  -- List operations: the String API differs between the supported toolchains.
+  let r := String.ofList ((slashes root).toList.reverse.dropWhile (· == '/')).reverse
+  let f := slashes file
+  if norm f == norm r then some ""
+  else if (norm f).startsWith (norm r ++ "/") then some (String.ofList (f.toList.drop (r.length + 1)))
+  else none
+
+/-- Folders, relative to the project root, that hold module sources: the project itself (`""`),
+then the source folders of packages inside it (from `LEAN_SRC_PATH`, set by `lake env`), so
+modules of a dependency such as Mathlib can be mapped too. -/
+def sourceDirs (rootDir : System.FilePath) : IO (Array String) := do
+  let mut out := #[""]
+  if let some sp ← IO.getEnv "LEAN_SRC_PATH" then
+    for e in System.SearchPath.parse sp do
+      if let some rel := relativeTo? rootDir e then
+        unless rel == "" || out.contains rel do out := out.push rel
+  return out
+
+end Proofmap.Util

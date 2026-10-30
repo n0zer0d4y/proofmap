@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lean:
+    name: Lean ${{ matrix.toolchain }}
+    runs-on: ubuntu-latest
+    # The oldest supported toolchain (v4.28.0), v4.29.0 and the latest stable are required;
+    # the newest release candidate is allowed to fail.
+    continue-on-error: ${{ !matrix.required }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolchain: leanprover/lean4:v4.35.0
+            required: true
+          - toolchain: leanprover/lean4:v4.29.0
+            required: true
+          - toolchain: leanprover/lean4:v4.28.0
+            required: true
+          - toolchain: leanprover/lean4:v4.36.0-rc1
+            required: false
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install elan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Install toolchain
+        run: elan toolchain install "${{ matrix.toolchain }}"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - name: Install viewer dependencies (schema validator, live-reload test)
+        run: npm ci && npx playwright install --with-deps chromium
+        working-directory: viewer
+      - name: Build package, check APIs, build fixture, check extraction and serve
+        run: bash .github/scripts/ci-lean.sh "${{ matrix.toolchain }}"
+        env:
+          PROOFMAP_E2E: "1"
+
+  viewer:
+    name: Viewer
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: viewer
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run check:types
+      - run: npm test
+      - run: npm run build
+      - name: The committed template matches the build
+        run: git diff --exit-code -- ../lean/assets/viewer.html
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: End-to-end tests (Chromium, Firefox, WebKit)
+        run: npm run e2e
+        env:
+          ALL_BROWSERS: '1'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: viewer.html
+          path: viewer/dist/index.html
+          if-no-files-found: error

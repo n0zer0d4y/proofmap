@@ -1,0 +1,636 @@
+{
+  "description": "Hand-written expectations for the proofmap fixture. Kinds, flags and axioms were checked against the built environment on Lean v4.35.0 and v4.29.0. Golden tests in M1 and M2 compare the extractor's output with this file.",
+  "modules": [
+    {
+      "name": "Fixture",
+      "imports": [
+        "Fixture.Basic",
+        "Fixture.Status",
+        "Fixture.Result",
+        "Fixture.Tagged",
+        "Fixture.Tactics"
+      ]
+    },
+    {
+      "name": "Fixture.Basic",
+      "imports": [],
+      "docHeadings": [
+        "Basic definitions"
+      ]
+    },
+    {
+      "name": "Fixture.Status",
+      "imports": [
+        "Fixture.Basic"
+      ],
+      "docHeadings": [
+        "Status cases"
+      ]
+    },
+    {
+      "name": "Fixture.Result",
+      "imports": [
+        "Fixture.Basic",
+        "Fixture.Status"
+      ],
+      "docHeadings": [
+        "Main results",
+        "Doubling",
+        "Points"
+      ]
+    },
+    {
+      "name": "Fixture.Clash.A",
+      "imports": [],
+      "docHeadings": [
+        "Clash A"
+      ]
+    },
+    {
+      "name": "Fixture.Clash.B",
+      "imports": [],
+      "docHeadings": [
+        "Clash B"
+      ]
+    },
+    {
+      "name": "Fixture.Tagged",
+      "imports": [
+        "Fixture.Basic"
+      ],
+      "docHeadings": [
+        "Tagged declarations"
+      ]
+    },
+    {
+      "name": "Fixture.Tactics",
+      "imports": [],
+      "docHeadings": [
+        "Compound tactics"
+      ]
+    }
+  ],
+  "standardAxioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "rootsMustInclude": [
+    "Fixture.main_result",
+    "Fixture.tainted_result"
+  ],
+  "decls": [
+    {
+      "name": "Fixture.Color",
+      "kind": "inductive",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.Color.red",
+      "kind": "ctor",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.Color.green",
+      "kind": "ctor",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.Color.blue",
+      "kind": "ctor",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.Point",
+      "kind": "structure",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.instAddPoint",
+      "kind": "instance",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Data types",
+      "flags": [
+        "noise:instance"
+      ]
+    },
+    {
+      "name": "Fixture.Point.origin",
+      "kind": "def",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.NatPair",
+      "kind": "abbrev",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.colorOf",
+      "kind": "def",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Data types",
+      "leadingComment": "Picks a colour for a number. A definition by pattern matching,\nso Lean generates a matcher for it."
+    },
+    {
+      "name": "Fixture.double",
+      "kind": "def",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Data types",
+      "leadingComment": "A plain block comment above a definition. /- With a nested block comment. -/\nThe leading comment covers this whole block."
+    },
+    {
+      "name": "Fixture.secretNumber",
+      "kind": "opaque",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Data types"
+    },
+    {
+      "name": "Fixture.double_eq_add",
+      "kind": "theorem",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Facts",
+      "proof": "tactic",
+      "axioms": [
+        "Quot.sound",
+        "propext"
+      ]
+    },
+    {
+      "name": "Fixture.double_eq_add'",
+      "kind": "theorem",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Facts",
+      "proof": "term",
+      "axioms": [],
+      "title": "Double equals add (variant)"
+    },
+    {
+      "name": "Fixture.double_eq_zero_iff",
+      "kind": "theorem",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Facts",
+      "proof": "tactic",
+      "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+      ]
+    },
+    {
+      "name": "Fixture.origin_x",
+      "kind": "theorem",
+      "module": "Fixture.Basic",
+      "docstring": true,
+      "section": "Facts",
+      "proof": "term",
+      "axioms": []
+    },
+    {
+      "name": "Fixture.colorOf_zero",
+      "kind": "theorem",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Facts",
+      "proof": "term",
+      "axioms": [],
+      "leadingComment": "The colour of zero is red, by computation."
+    },
+    {
+      "name": "Fixture.double_zero",
+      "kind": "theorem",
+      "module": "Fixture.Basic",
+      "docstring": false,
+      "section": "Facts",
+      "proof": "tactic",
+      "axioms": [
+        "propext"
+      ],
+      "leadingComment": null,
+      "note": "The comment above is separated by two blank lines and must not attach."
+    },
+    {
+      "name": "Fixture.customAxiom",
+      "kind": "axiom",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Axioms and sorry",
+      "nonstandardAxioms": [
+        "Fixture.customAxiom"
+      ]
+    },
+    {
+      "name": "Fixture.uses_custom_axiom",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Axioms and sorry",
+      "proof": "term",
+      "nonstandardAxioms": [
+        "Fixture.customAxiom"
+      ]
+    },
+    {
+      "name": "Fixture.uses_custom_axiom_indirectly",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Axioms and sorry",
+      "proof": "term",
+      "nonstandardAxioms": [
+        "Fixture.customAxiom"
+      ]
+    },
+    {
+      "name": "Fixture.unfinished",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Axioms and sorry",
+      "proof": "tactic",
+      "sorry": true
+    },
+    {
+      "name": "Fixture.downstream_of_sorry",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Axioms and sorry",
+      "proof": "term",
+      "sorry": true
+    },
+    {
+      "name": "Fixture.classical_fact",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Axioms and sorry",
+      "proof": "term",
+      "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+      ]
+    },
+    {
+      "name": "Fixture.hiddenHelper",
+      "kind": "def",
+      "module": "Fixture.Status",
+      "docstring": false,
+      "section": "Flags",
+      "flags": [
+        "private"
+      ],
+      "leanName": "_private.Fixture.Status.0.Fixture.hiddenHelper",
+      "note": "Lean reports isInternalDetail = true for private names; proofmap must flag it private, not noise."
+    },
+    {
+      "name": "Fixture.hiddenHelper_pos",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "proof": "tactic"
+    },
+    {
+      "name": "Fixture.twice",
+      "kind": "def",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "flags": [
+        "deprecated"
+      ]
+    },
+    {
+      "name": "Fixture.collatzSteps",
+      "kind": "opaque",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "flags": [
+        "partial"
+      ],
+      "note": "Lean compiles partial defs to an opaque constant; only the generated collatzSteps._unsafe_rec carries the partial bit."
+    },
+    {
+      "name": "Fixture.unsafeId",
+      "kind": "def",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "flags": [
+        "unsafe"
+      ]
+    },
+    {
+      "name": "Fixture.safeId",
+      "kind": "def",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "flags": [
+        "partial"
+      ],
+      "note": "proofmap flags implemented_by declarations as partial."
+    },
+    {
+      "name": "Fixture.double_mono",
+      "kind": "theorem",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Doubling",
+      "proof": "tactic"
+    },
+    {
+      "name": "Fixture.trickyString",
+      "kind": "def",
+      "module": "Fixture.Result",
+      "docstring": false,
+      "section": "Doubling",
+      "leadingComment": "A string containing \"--\" and \"-/\" must not confuse the comment scanner."
+    },
+    {
+      "name": "Fixture.trickyChar",
+      "kind": "def",
+      "module": "Fixture.Result",
+      "docstring": false,
+      "section": "Doubling",
+      "leadingComment": null
+    },
+    {
+      "name": "Fixture.double_double",
+      "kind": "theorem",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Doubling",
+      "proof": "tactic"
+    },
+    {
+      "name": "Fixture.add_origin",
+      "kind": "theorem",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Points",
+      "proof": "tactic",
+      "axioms": []
+    },
+    {
+      "name": "Fixture.Geometry.dist1",
+      "kind": "def",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Geometry"
+    },
+    {
+      "name": "Fixture.Geometry.dist1_origin",
+      "kind": "theorem",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Geometry",
+      "proof": "term",
+      "axioms": []
+    },
+    {
+      "name": "Fixture.main_result",
+      "kind": "theorem",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Final results",
+      "proof": "term",
+      "axioms": [
+        "Quot.sound",
+        "propext"
+      ],
+      "sorry": false,
+      "nonstandardAxioms": []
+    },
+    {
+      "name": "Fixture.tainted_result",
+      "kind": "theorem",
+      "module": "Fixture.Result",
+      "docstring": true,
+      "section": "Final results",
+      "proof": "term",
+      "sorry": true,
+      "nonstandardAxioms": [
+        "Fixture.customAxiom"
+      ]
+    },
+    {
+      "name": "ClashDemo.value",
+      "kind": "def",
+      "module": "Fixture.Clash.A",
+      "docstring": true,
+      "section": "ClashDemo"
+    },
+    {
+      "name": "ClashDemo.value_pos",
+      "kind": "theorem",
+      "module": "Fixture.Clash.A",
+      "docstring": true,
+      "section": "ClashDemo",
+      "proof": "tactic",
+      "axioms": []
+    },
+    {
+      "name": "ClashDemo.value",
+      "kind": "def",
+      "module": "Fixture.Clash.B",
+      "docstring": true,
+      "section": "ClashDemo"
+    },
+    {
+      "name": "ClashDemo.value_pos",
+      "kind": "theorem",
+      "module": "Fixture.Clash.B",
+      "docstring": true,
+      "section": "ClashDemo",
+      "proof": "tactic",
+      "axioms": []
+    },
+    {
+      "name": "Fixture.le_double",
+      "kind": "theorem",
+      "module": "Fixture.Tagged",
+      "docstring": true,
+      "section": "Fixture",
+      "proof": "tactic",
+      "tags": {
+        "rank": "result",
+        "step": "Tagged step",
+        "summary": "Doubling never makes a number smaller"
+      },
+      "expectSummary": {
+        "source": "attr",
+        "text": "Doubling never makes a number smaller"
+      },
+      "expectStep": "Tagged step",
+      "expectRank": "result"
+    },
+    {
+      "name": "Fixture.summary",
+      "kind": "def",
+      "module": "Fixture.Tagged",
+      "docstring": false,
+      "section": "Fixture",
+      "note": "The attribute keywords are non-reserved, so this name compiles."
+    },
+    {
+      "name": "Fixture.step",
+      "kind": "def",
+      "module": "Fixture.Tagged",
+      "docstring": false,
+      "section": "Fixture",
+      "note": "The attribute keywords are non-reserved, so this name compiles."
+    },
+    {
+      "name": "Fixture.rank",
+      "kind": "def",
+      "module": "Fixture.Tagged",
+      "docstring": false,
+      "section": "Fixture",
+      "note": "The attribute keywords are non-reserved, so this name compiles."
+    },
+    {
+      "name": "Fixture.proofmap",
+      "kind": "def",
+      "module": "Fixture.Tagged",
+      "docstring": false,
+      "section": "Fixture",
+      "note": "The attribute keywords are non-reserved, so this name compiles."
+    },
+    {
+      "name": "Fixture.double_one",
+      "kind": "theorem",
+      "module": "Fixture.Tagged",
+      "docstring": true,
+      "section": "Banner section",
+      "proof": "term",
+      "leadingComment": null,
+      "expectSummary": {
+        "source": "docstring",
+        "text": "A docstring right under a banner belongs to the declaration, not to the section."
+      },
+      "note": "A docstring right under a banner belongs to the declaration; the banner section gets no description from it."
+    },
+    {
+      "name": "Fixture.double_two",
+      "kind": "theorem",
+      "module": "Fixture.Tagged",
+      "docstring": false,
+      "section": "Banner section",
+      "proof": "term",
+      "leadingComment": "A comment above a one-shot command prefix and an attribute.",
+      "note": "The leading comment search looks past `set_option ... in` and the attribute line."
+    },
+    {
+      "name": "Fixture.and_swap",
+      "kind": "theorem",
+      "module": "Fixture.Tactics",
+      "docstring": true,
+      "section": "Fixture",
+      "proof": "tactic",
+      "axioms": []
+    },
+    {
+      "name": "Fixture.two_goals",
+      "kind": "theorem",
+      "module": "Fixture.Tactics",
+      "docstring": true,
+      "section": "Fixture",
+      "proof": "tactic"
+    }
+  ],
+  "defaults": {
+    "flags": [],
+    "sorry": false,
+    "nonstandardAxioms": []
+  },
+  "noise": {
+    "description": "Generated declarations that must carry a noise flag (hidden by default, kept in the data).",
+    "names": [
+      "Fixture.Color.casesOn",
+      "Fixture.Color.recOn",
+      "Fixture.Color.rec",
+      "Fixture.Color.noConfusion",
+      "Fixture.Color.noConfusionType",
+      "Fixture.Color.ctorIdx",
+      "Fixture.Color.ctorElim",
+      "Fixture.Color.ctorElimType",
+      "Fixture.Color.red.elim",
+      "Fixture.Color.green.elim",
+      "Fixture.Color.blue.elim",
+      "Fixture.Color.red.sizeOf_spec",
+      "Fixture.Color.green.sizeOf_spec",
+      "Fixture.Color.blue.sizeOf_spec",
+      "Fixture.Color._sizeOf_1",
+      "Fixture.Color._sizeOf_inst",
+      "Fixture.Point.casesOn",
+      "Fixture.Point.recOn",
+      "Fixture.Point.rec",
+      "Fixture.Point.noConfusion",
+      "Fixture.Point.noConfusionType",
+      "Fixture.Point.ctorIdx",
+      "Fixture.Point.mk",
+      "Fixture.Point.mk._flat_ctor",
+      "Fixture.Point.mk.inj",
+      "Fixture.Point.mk.injEq",
+      "Fixture.Point.mk.noConfusion",
+      "Fixture.Point.mk.sizeOf_spec",
+      "Fixture.Point.x",
+      "Fixture.Point.y",
+      "Fixture.Point._sizeOf_1",
+      "Fixture.Point._sizeOf_inst",
+      "Fixture.colorOf.match_1",
+      "Fixture.double.eq_1",
+      "Fixture.double_eq_add._proof_1_1",
+      "Fixture.double_eq_zero_iff._proof_1_1",
+      "Fixture.double_double._proof_1_1",
+      "Fixture.double_mono._proof_1_1",
+      "Fixture.hiddenHelper_pos._proof_1_1",
+      "Fixture.collatzSteps._unsafe_rec",
+      "Fixture.le_double._proof_1_1",
+      "Fixture.two_goals._proof_1_1",
+      "Fixture.two_goals._proof_1_2"
+    ]
+  },
+  "toolchainDifferences": {
+    "v4.28.0": {
+      "extraNoise": [
+        "Fixture.Color.toCtorIdx"
+      ],
+      "note": "As on v4.29.0."
+    },
+    "v4.29.0": {
+      "extraNoise": [
+        "Fixture.Color.toCtorIdx"
+      ],
+      "note": "collectAxioms returns axioms in a different order than on v4.35.0; the extractor must sort axiom lists for stable output."
+    }
+  },
+  "clashGroups": {
+    "description": "Fixture.Clash.A and Fixture.Clash.B declare the same names and cannot be imported together; the extractor must split them into separate import groups.",
+    "expectedGroups": 2
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "description": "Hand-checked project-internal dependency edges of the visible fixture declarations after noise collapse. External targets are excluded. Clashing names are keyed name@module. Reviewed against the fixture source on 2026-10-28.",
+  "edges": {
+    "Fixture.Color": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.Color.blue": {
+      "statement": [
+        "Fixture.Color"
+      ],
+      "proof": []
+    },
+    "Fixture.Color.green": {
+      "statement": [
+        "Fixture.Color"
+      ],
+      "proof": []
+    },
+    "Fixture.Color.red": {
+      "statement": [
+        "Fixture.Color"
+      ],
+      "proof": []
+    },
+    "Fixture.Geometry.dist1": {
+      "statement": [
+        "Fixture.Point"
+      ],
+      "proof": []
+    },
+    "Fixture.Geometry.dist1_origin": {
+      "statement": [
+        "Fixture.Geometry.dist1",
+        "Fixture.Point.origin"
+      ],
+      "proof": []
+    },
+    "Fixture.NatPair": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.Point": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.Point.origin": {
+      "statement": [
+        "Fixture.Point"
+      ],
+      "proof": []
+    },
+    "Fixture.add_origin": {
+      "statement": [
+        "Fixture.Point",
+        "Fixture.Point.origin"
+      ],
+      "proof": []
+    },
+    "Fixture.classical_fact": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.collatzSteps": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.colorOf": {
+      "statement": [
+        "Fixture.Color"
+      ],
+      "proof": [
+        "Fixture.Color.blue",
+        "Fixture.Color.green",
+        "Fixture.Color.red"
+      ]
+    },
+    "Fixture.colorOf_zero": {
+      "statement": [
+        "Fixture.Color",
+        "Fixture.Color.red",
+        "Fixture.colorOf"
+      ],
+      "proof": []
+    },
+    "Fixture.customAxiom": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.double": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.double_double": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.double_eq_add"
+      ]
+    },
+    "Fixture.double_eq_add": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.double_eq_add'": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.double_eq_zero_iff": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.double_mono": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.double_eq_add"
+      ]
+    },
+    "Fixture.double_zero": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.downstream_of_sorry": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.unfinished"
+      ]
+    },
+    "Fixture.hiddenHelper": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.hiddenHelper_pos": {
+      "statement": [
+        "Fixture.hiddenHelper"
+      ],
+      "proof": []
+    },
+    "Fixture.main_result": {
+      "statement": [
+        "Fixture.Point",
+        "Fixture.Point.origin",
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.add_origin",
+        "Fixture.double_double",
+        "Fixture.double_mono"
+      ]
+    },
+    "Fixture.origin_x": {
+      "statement": [
+        "Fixture.Point",
+        "Fixture.Point.origin"
+      ],
+      "proof": []
+    },
+    "Fixture.safeId": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.secretNumber": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.tainted_result": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.downstream_of_sorry",
+        "Fixture.uses_custom_axiom_indirectly"
+      ]
+    },
+    "Fixture.trickyChar": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.trickyString": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.twice": {
+      "statement": [],
+      "proof": [
+        "Fixture.double"
+      ]
+    },
+    "Fixture.unfinished": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.unsafeId": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.uses_custom_axiom": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.customAxiom"
+      ]
+    },
+    "Fixture.uses_custom_axiom_indirectly": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": [
+        "Fixture.uses_custom_axiom"
+      ]
+    },
+    "ClashDemo.value@Fixture.Clash.A": {
+      "statement": [],
+      "proof": []
+    },
+    "ClashDemo.value_pos@Fixture.Clash.A": {
+      "statement": [
+        "ClashDemo.value@Fixture.Clash.A"
+      ],
+      "proof": []
+    },
+    "ClashDemo.value@Fixture.Clash.B": {
+      "statement": [],
+      "proof": []
+    },
+    "ClashDemo.value_pos@Fixture.Clash.B": {
+      "statement": [
+        "ClashDemo.value@Fixture.Clash.B"
+      ],
+      "proof": []
+    },
+    "Fixture.le_double": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.summary": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.step": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.rank": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.proofmap": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.double_one": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.double_two": {
+      "statement": [
+        "Fixture.double"
+      ],
+      "proof": []
+    },
+    "Fixture.and_swap": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.two_goals": {
+      "statement": [],
+      "proof": []
+    }
+  }
+}

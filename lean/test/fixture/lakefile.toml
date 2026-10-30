@@ -1,0 +1,13 @@
+name = "fixture"
+defaultTargets = ["Fixture"]
+
+# The fixture uses the optional @[proofmap ...] attribute (Fixture/Tagged.lean).
+[[require]]
+name = "proofmap"
+path = "../.."
+
+# `Fixture.*` builds Fixture and all its submodules, including Fixture.Clash.A and
+# Fixture.Clash.B, which the root module does not (and cannot) import together.
+[[lean_lib]]
+name = "Fixture"
+globs = ["Fixture.*"]

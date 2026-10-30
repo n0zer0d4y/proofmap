@@ -1,0 +1,22 @@
+# Lean build outputs
+.lake/
+lean/.lake/
+
+# Node / viewer build outputs
+node_modules/
+dist/
+viewer/dist/
+
+# Generated proofmap output
+proofmap.html
+proofmap.json
+
+# Test output
+test-results/
+playwright-report/
+coverage/
+viewer/tests/out/
+lean/test/.live-*/
+
+# Local files
+local_docs/

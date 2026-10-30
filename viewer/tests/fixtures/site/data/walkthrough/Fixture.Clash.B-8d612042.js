@@ -1,0 +1,1 @@
+window.__proofmapWalkthroughs("data/walkthrough/Fixture.Clash.B-8d612042.js", "3595fa440f66c05b", {"lines":["⊢ 0 \u003c value"],"steps":{"ClashDemo.value_pos":[["decide",[13,36,13,42],0,[[0]],[]]]}});

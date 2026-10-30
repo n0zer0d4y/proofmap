@@ -1,0 +1,139 @@
+{
+  "description": "Hand-checked proof walkthroughs: tactic text, nesting depth and the goals before and after each step. Term-mode proofs have no walkthrough.",
+  "termMode": [
+    "Fixture.origin_x",
+    "Fixture.colorOf_zero",
+    "Fixture.double_eq_add'",
+    "Fixture.main_result"
+  ],
+  "walkthroughs": {
+    "Fixture.double_eq_add": [
+      {
+        "tactic": "unfold double",
+        "depth": 0,
+        "goalsBefore": [
+          "n : Nat\n⊢ double n = n + n"
+        ],
+        "goalsAfter": [
+          "n : Nat\n⊢ 2 * n = n + n"
+        ]
+      },
+      {
+        "tactic": "omega",
+        "depth": 0,
+        "goalsBefore": [
+          "n : Nat\n⊢ 2 * n = n + n"
+        ],
+        "goalsAfter": []
+      }
+    ],
+    "Fixture.double_mono": [
+      {
+        "tactic": "simp only [double_eq_add]",
+        "depth": 0,
+        "goalsBefore": [
+          "a b : Nat\nh : a ≤ b\n⊢ double a ≤ double b"
+        ],
+        "goalsAfter": [
+          "a b : Nat\nh : a ≤ b\n⊢ a + a ≤ b + b"
+        ]
+      },
+      {
+        "tactic": "omega",
+        "depth": 0,
+        "goalsBefore": [
+          "a b : Nat\nh : a ≤ b\n⊢ a + a ≤ b + b"
+        ],
+        "goalsAfter": []
+      }
+    ],
+    "Fixture.add_origin": [
+      {
+        "tactic": "obtain ⟨x, y⟩ := p",
+        "depth": 0,
+        "goalsBefore": [
+          "p : Point\n⊢ p + Point.origin = p"
+        ],
+        "goalsAfter": [
+          "x y : Int\n⊢ { x := x, y := y } + Point.origin = { x := x, y := y }"
+        ]
+      },
+      {
+        "tactic": "show Point.mk (x + 0) (y + 0) = Point.mk x y",
+        "depth": 0,
+        "goalsBefore": [
+          "x y : Int\n⊢ { x := x, y := y } + Point.origin = { x := x, y := y }"
+        ],
+        "goalsAfter": [
+          "x y : Int\n⊢ { x := x + 0, y := y + 0 } = { x := x, y := y }"
+        ]
+      },
+      {
+        "tactic": "rw [Int.add_zero, Int.add_zero]",
+        "depth": 0,
+        "goalsBefore": [
+          "x y : Int\n⊢ { x := x + 0, y := y + 0 } = { x := x, y := y }"
+        ],
+        "goalsAfter": []
+      }
+    ],
+    "Fixture.and_swap": [
+      {
+        "tactic": "constructor",
+        "depth": 0,
+        "goalsBefore": [
+          "p q : Prop\nhp : p\nhq : q\n⊢ q ∧ p"
+        ],
+        "goalsAfter": [
+          "case left\np q : Prop\nhp : p\nhq : q\n⊢ q",
+          "case right\np q : Prop\nhp : p\nhq : q\n⊢ p"
+        ]
+      },
+      {
+        "tactic": "· exact hq",
+        "depth": 0,
+        "goalsBefore": [
+          "case left\np q : Prop\nhp : p\nhq : q\n⊢ q",
+          "case right\np q : Prop\nhp : p\nhq : q\n⊢ p"
+        ],
+        "goalsAfter": [
+          "case right\np q : Prop\nhp : p\nhq : q\n⊢ p"
+        ]
+      },
+      {
+        "tactic": "exact hq",
+        "depth": 1,
+        "goalsBefore": [
+          "case left\np q : Prop\nhp : p\nhq : q\n⊢ q"
+        ],
+        "goalsAfter": []
+      },
+      {
+        "tactic": "· exact hp",
+        "depth": 0,
+        "goalsBefore": [
+          "case right\np q : Prop\nhp : p\nhq : q\n⊢ p"
+        ],
+        "goalsAfter": []
+      },
+      {
+        "tactic": "exact hp",
+        "depth": 1,
+        "goalsBefore": [
+          "case right\np q : Prop\nhp : p\nhq : q\n⊢ p"
+        ],
+        "goalsAfter": []
+      }
+    ],
+    "Fixture.unfinished": [
+      {
+        "tactic": "sorry",
+        "depth": 0,
+        "goalsBefore": [
+          "n : Nat\n⊢ double n = n * 2"
+        ],
+        "goalsAfter": []
+      }
+    ]
+  }
+}

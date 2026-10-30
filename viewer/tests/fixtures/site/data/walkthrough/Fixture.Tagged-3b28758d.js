@@ -1,0 +1,1 @@
+window.__proofmapWalkthroughs("data/walkthrough/Fixture.Tagged-3b28758d.js", "1275bdf52d534433", {"lines":["n : Nat","⊢ n ≤ double n","⊢ n ≤ 2 * n"],"steps":{"Fixture.le_double":[["unfold double",[16,2,16,15],0,[[0,1]],[[0,2]]],["omega",[17,2,17,7],0,[[0,2]],[]]]}});
