@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { buildIndexes } from '../../src/data/indexes';
 import type { ProofmapData } from '../../src/data/schema';
@@ -83,9 +82,8 @@ test('export: the SVG opens and shows the same cards; the PNG is a PNG', async (
   const svg = readFileSync(svgPath, 'utf8');
   expect(svg.startsWith('<svg')).toBe(true);
   for (const t of onScreen) expect(svg).toContain(t);
-  // Open the exported file on its own and check it renders the cards.
+  // Render the exported SVG on its own page and check its size matches the map.
   const view = await browser.newPage();
-  await view.goto(pathToFileURL(svgPath).href.replace(/$/, ''), { waitUntil: 'load' }).catch(() => undefined);
   await view.setContent(`<img id="x" src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}">`);
   const size = await view.evaluate(() => new Promise<[number, number]>((r) => {
     const img = document.getElementById('x') as HTMLImageElement;

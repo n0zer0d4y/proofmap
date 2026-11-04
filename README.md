@@ -177,7 +177,7 @@ Tests:
 | `cd viewer && npm run lint && npm run typecheck && npm test` | Viewer lint, types and unit tests                                                                                                                                                                                                                       |
 | `cd viewer && npm run e2e`                                   | Browser tests on the fixture pages, including accessibility (axe-core). `ALL_BROWSERS=1` adds Firefox and WebKit.                                                                                                                                       |
 
-CI runs the Lean checks on Lean v4.28.0, v4.29.0 and v4.35.0, and the viewer checks on Chromium, Firefox and WebKit. It also checks that the committed `lean/assets/viewer.html` matches a fresh viewer build. Please add a test with each change, and a line in the [changelog](CHANGELOG.md).
+CI runs on every push, except pushes that change only documentation. It runs the Lean checks on Lean v4.28.0, v4.29.0 and v4.35.0, and on the newest release candidate, which is allowed to fail. It runs the viewer checks on Chromium, Firefox and WebKit, and checks that the committed `lean/assets/viewer.html` matches a fresh viewer build. Please add a test with each change, and a line in the [changelog](CHANGELOG.md).
 
 ## License
 

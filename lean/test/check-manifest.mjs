@@ -1,6 +1,9 @@
 // Compares extractor output for the fixture with test/fixture/expected/manifest.json.
 // Usage: node test/check-manifest.mjs FIXTURE_JSON [--lean v4.29.0]
 // Covers kinds, flags, sorry, axioms and the module import graph.
+// On a toolchain newer than the newest one proofmap was tested with, generated helpers
+// (`noise:*`) that the manifest does not list are notes rather than errors: each Lean release
+// may add or rename them, and the viewer hides them either way.
 import { readFile } from 'node:fs/promises';
 
 const [file, ...rest] = process.argv.slice(2);
@@ -10,7 +13,24 @@ const manifest = JSON.parse(
 );
 const data = JSON.parse(await readFile(file, 'utf8'));
 
+/** `v4.36.0-rc1` → [4, 36, 0]; null when the toolchain is not a numbered release. */
+const versionOf = (v) => {
+  const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(v ?? '');
+  return m ? m.slice(1).map(Number) : null;
+};
+const launcher = await readFile(new URL('../Proofmap/Launcher.lean', import.meta.url), 'utf8');
+const nt = /def newestTested : LeanVersion := \{ major := (\d+), minor := (\d+), patch := (\d+) \}/.exec(launcher);
+if (!nt) throw new Error('newestTested not found in Proofmap/Launcher.lean');
+const newestTested = nt.slice(1).map(Number);
+const newer = (a, b) => {
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i];
+  return false;
+};
+const current = versionOf(leanVersion);
+const untested = current !== null && newer(current, newestTested);
+
 const errors = [];
+const notes = [];
 const fail = (msg) => errors.push(msg);
 const same = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
 // Project declarations keyed by name and module (two modules may declare the same name).
@@ -83,9 +103,11 @@ for (const n of noiseNames) {
 // Nothing unaccounted for: every project declaration is in the manifest or the noise list.
 const known = new Set([...manifest.decls.map((m) => `${m.name}@${m.module}`), ...noiseNames]);
 for (const d of projectDecls) {
-  if (!known.has(`${d.name}@${d.module}`) && !known.has(d.name))
-    fail(`${d.name} [${d.module}]: not in the manifest (flags ${JSON.stringify(d.flags)})`);
-  else {
+  if (!known.has(`${d.name}@${d.module}`) && !known.has(d.name)) {
+    const msg = `${d.name} [${d.module}]: not in the manifest (flags ${JSON.stringify(d.flags)})`;
+    if (untested && noiseOf(d).length > 0) notes.push(msg);
+    else fail(msg);
+  } else {
     const declared = manifest.decls.find((m) => m.name === d.name && m.module === d.module);
     const noiseExpected = noiseNames.includes(d.name) || (declared?.flags ?? []).some((f) => f.startsWith('noise:'));
     if (!noiseExpected && noiseOf(d).length > 0) fail(`${d.name}: unexpectedly flagged ${noiseOf(d)}`);
@@ -170,6 +192,7 @@ for (const m of manifest.modules) {
   if (!same(imports, m.imports)) fail(`module ${m.name}: imports ${JSON.stringify(imports)}, expected ${JSON.stringify(m.imports)}`);
 }
 
+for (const n of notes) console.log(`note (Lean ${leanVersion} is newer than ${newestTested.join('.')}): ${n}`);
 if (errors.length) {
   console.error(`manifest check: ${errors.length} problem(s)`);
   for (const e of errors) console.error(`  ${e}`);

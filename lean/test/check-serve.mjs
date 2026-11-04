@@ -36,7 +36,26 @@ const get = (port, path, { method = 'GET', host } = {}) =>
     req.end();
   });
 
-const child = spawn(exe, [...prefix, 'serve', '--no-build', '--out', join(dir, 'site', 'page.html')], { stdio: ['ignore', 'pipe', 'pipe'] });
+// `lake env` runs proofmap as its own child, so stopping `lake` alone would leave the server
+// running on Linux with this script's pipes open. On POSIX the server gets its own process group
+// and the whole group is stopped; on Windows, ending `lake` ends the server too.
+const posix = process.platform !== 'win32';
+const child = spawn(exe, [...prefix, 'serve', '--no-build', '--out', join(dir, 'site', 'page.html')], {
+  stdio: ['ignore', 'pipe', 'pipe'],
+  detached: posix,
+});
+const stop = () => {
+  if (child.exitCode === null && child.signalCode === null) {
+    try {
+      if (posix) process.kill(-child.pid, 'SIGTERM');
+      else child.kill();
+    } catch {
+      // Already gone.
+    }
+  }
+  child.stdout.destroy();
+  child.stderr.destroy();
+};
 let stderr = '';
 child.stderr.on('data', (d) => (stderr += d));
 const port = await new Promise((resolve, reject) => {
@@ -83,7 +102,7 @@ try {
   check('Host without the port is 403', (await get(port, '/', { host: 'localhost' })).status === 403);
   check('localhost Host is fine', (await get(port, '/', { host: `localhost:${port}` })).status === 200);
 } finally {
-  child.kill();
+  stop();
   rmSync(dir, { recursive: true, force: true });
 }
 

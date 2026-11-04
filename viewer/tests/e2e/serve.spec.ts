@@ -7,8 +7,9 @@ import { expect, test } from '@playwright/test';
 // Serve + live reload against the real Lean side: on a copy of the
 // fixture project, `proofmap serve`, edit a docstring, `proofmap build`, and the open page
 // shows the new text within 3 s of the build finishing. PROOFMAP_EXE is the proofmap
-// executable (run through `lake env`) built for the fixture's toolchain; PROOFMAP_FIXTURE
-// optionally names the fixture folder (default: lean/test/fixture in this repository).
+// executable built for the fixture's toolchain, run through `lake env` (on Windows it needs
+// Lean's DLLs from there); PROOFMAP_FIXTURE optionally names the fixture folder (default:
+// lean/test/fixture in this repository).
 const exe = process.env.PROOFMAP_EXE;
 test.skip(!exe, 'set PROOFMAP_EXE to a built proofmap executable');
 test.setTimeout(300_000);
@@ -16,6 +17,24 @@ test.setTimeout(300_000);
 const fixture = process.env.PROOFMAP_FIXTURE ?? fileURLToPath(new URL('../../../lean/test/fixture/', import.meta.url));
 let dir = '';
 let server: ChildProcess | null = null;
+
+const posix = process.platform !== 'win32';
+
+/** `lake env` runs proofmap as its own child, so stopping `lake` alone would leave the server
+ * running on Linux, holding this worker's pipes open. On POSIX the server gets its own process
+ * group and the whole group is stopped; on Windows, ending `lake` ends the server too. */
+const stop = (child: ChildProcess) => {
+  if (child.exitCode === null && child.signalCode === null) {
+    try {
+      if (posix) process.kill(-child.pid!, 'SIGTERM');
+      else child.kill();
+    } catch {
+      // Already gone.
+    }
+  }
+  child.stdout?.destroy();
+  child.stderr?.destroy();
+};
 
 const build = () => {
   const r = spawnSync('lake', ['env', exe!, 'build', '--root', 'Fixture', '--no-walkthrough'], { cwd: dir, encoding: 'utf8' });
@@ -29,7 +48,7 @@ test.beforeAll(() => {
   build();
 });
 test.afterAll(() => {
-  server?.kill();
+  if (server) stop(server);
   try {
     rmSync(dir, { recursive: true, force: true });
   } catch {
@@ -38,7 +57,7 @@ test.afterAll(() => {
 });
 
 test('editing a docstring and rebuilding updates the open page', async ({ page }) => {
-  server = spawn('lake', ['env', exe!, 'serve', '--no-build'], { cwd: dir });
+  server = spawn('lake', ['env', exe!, 'serve', '--no-build'], { cwd: dir, detached: posix });
   const url = await new Promise<string>((resolve, reject) => {
     let out = '';
     server!.stdout!.on('data', (d) => {
