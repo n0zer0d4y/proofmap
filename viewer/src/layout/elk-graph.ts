@@ -24,6 +24,10 @@ const BASE: Record<string, string> = {
   // Not 'considerModelOrder': it made a 300-card layout take ~690 ms instead of ~80 ms.
   'elk.layered.thoroughness': '3',
   'elk.separateConnectedComponents': 'false',
+  // Straight, balanced placement: each card sits level with the cards it connects to, rather
+  // than all dependencies stacking at the top of one tall column.
+  'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
+  'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
 };
 
 const INTERACTIVE: Record<string, string> = {
@@ -38,14 +42,21 @@ const INTERACTIVE: Record<string, string> = {
 export function elkGraph(nodes: LayoutNode[], edges: LayoutEdge[], previous?: Positions) {
   const ids = new Set(nodes.map((n) => n.id));
   const interactive = previous && nodes.some((n) => previous[n.id]);
-  const hint = (id: string) => {
-    if (previous?.[id]) return previous[id];
+  // Placed cards keep their position. A new card starts one layer left of a card it is used by, or
+  // right of one it uses; this spreads step by step, so a chain of new cards lands in order.
+  const hints = new Map<string, { x: number; y: number }>();
+  for (const n of nodes) if (previous?.[n.id]) hints.set(n.id, previous[n.id]!);
+  for (let changed = interactive; changed; ) {
+    changed = false;
     for (const e of edges) {
-      if (e.source === id && previous?.[e.target]) return { x: previous[e.target]!.x - 300, y: previous[e.target]!.y };
-      if (e.target === id && previous?.[e.source]) return { x: previous[e.source]!.x + 300, y: previous[e.source]!.y };
+      const s = hints.get(e.source), t = hints.get(e.target);
+      if (!s && t) hints.set(e.source, { x: t.x - 300, y: t.y });
+      else if (s && !t) hints.set(e.target, { x: s.x + 300, y: s.y });
+      else continue;
+      changed = true;
     }
-    return undefined;
-  };
+  }
+  const hint = (id: string) => hints.get(id);
   return {
     id: 'root',
     layoutOptions: interactive ? { ...BASE, ...INTERACTIVE } : BASE,
@@ -54,6 +65,14 @@ export function elkGraph(nodes: LayoutNode[], edges: LayoutEdge[], previous?: Po
       .filter((e) => ids.has(e.source) && ids.has(e.target))
       .map((e) => ({ id: e.id, sources: [e.source], targets: [e.target] })),
   };
+}
+
+/** Whether every edge runs left to right (dependency left of its user), as the map promises. */
+export function flowsRight(positions: Positions, edges: LayoutEdge[]): boolean {
+  return edges.every((e) => {
+    const s = positions[e.source], t = positions[e.target];
+    return !s || !t || s.x < t.x;
+  });
 }
 
 export function positionsOf(result: { children?: Array<{ id: string; x?: number; y?: number }> }): Positions {

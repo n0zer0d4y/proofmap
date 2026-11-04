@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { Indexes } from '../data/indexes';
 import { outlineChildren, tourSteps } from '../graph/outline';
 import { useStore } from '../state/store';
-import { Statement } from './Statement';
+import { MarkdownInline } from './Markdown';
 import { StatusBadge } from './StatusBadge';
 
 /**
@@ -30,8 +30,19 @@ export function TourPanel({ ix }: { ix: Indexes }) {
   const tour = useStore((s) => s.tour);
   const goTo = useStore((s) => s.tourGo);
   const end = useStore((s) => s.tourEnd);
-  const select = useStore((s) => s.select);
   const { steps, pathTo } = useTour(ix);
+  // Escape ends the tour, unless the reader is typing.
+  useEffect(() => {
+    if (tour === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.key !== 'Escape' || (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA'))) return;
+      if (document.querySelector('dialog[open]')) return;
+      end();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tour, end]);
   if (tour === null || !steps.length) return null;
   const id = steps[tour]!;
   const d = ix.decls[id]!;
@@ -49,10 +60,21 @@ export function TourPanel({ ix }: { ix: Indexes }) {
       <h3>
         <StatusBadge decl={d} withText={false} /> {d.title}
       </h3>
+      <div className="mono muted tour-name">{d.name}</div>
       <p className="plain">
-        {d.summary ? (d.summary.source === 'section' ? `Part of “${d.summary.text}”.` : d.summary.text) : 'No description in the code.'}
+        {d.summary ? (
+          d.summary.source === 'section' ? (
+            <>
+              Part of “<MarkdownInline text={d.summary.text} />”.
+            </>
+          ) : (
+            <MarkdownInline text={d.summary.text} />
+          )
+        ) : (
+          'No description in the code.'
+        )}
       </p>
-      <Statement decl={d} ix={ix} onSelect={select} />
+      <p className="muted tour-hint">The statement and proof are in the details panel; the map shows the way here.</p>
       <div className="tour-nav">
         <button className="icon-button" onClick={() => go(tour - 1)} disabled={tour === 0}>
           ← Back

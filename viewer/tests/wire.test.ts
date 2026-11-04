@@ -15,7 +15,9 @@ describe('page payload', () => {
   const wire = read(fixture('fixture.page.json').pathname.replace(/^\/([A-Za-z]:)/, '$1')) as Wire;
 
   it('decodes to the public JSON, minus exactly the documented losses', () => {
-    expect(decode(wire)).toEqual(slimForWire(pub));
+    // A single-file page also records where the project is relative to it; the JSON does not.
+    const page = wire.project as { pageToRoot?: string | null };
+    expect(decode(wire)).toEqual(slimForWire({ ...pub, project: { ...pub.project, pageToRoot: page.pageToRoot } }));
   });
   it('covers both directDeps forms and the helper slimming', () => {
     expect(wire.decls.some((d) => d.e === undefined)).toBe(true);
@@ -25,6 +27,11 @@ describe('page payload', () => {
   });
   it('passes public JSON through unchanged', () => {
     expect(decode(pub)).toBe(pub);
+  });
+  it('still opens a version 1 file (proofmap 0.1), for comparisons', () => {
+    const v1 = read(fixture('compare-old.json').pathname.replace(/^\/([A-Za-z]:)/, '$1')) as { schema: number };
+    expect(v1.schema).toBe(1);
+    expect(decode(v1)).toBe(v1);
   });
   it('refuses a payload from another version', () => {
     expect(() => decode({ ...wire, wire: 99 })).toThrow(StaleDataError);

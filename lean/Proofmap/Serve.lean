@@ -1,5 +1,6 @@
 import ProofmapCompat.Serve
 import Lean.Data.Json
+import Proofmap.Util
 
 /-!
 # `serve`
@@ -139,7 +140,9 @@ def answer (site : Site) (port : UInt16) (req : Request) : IO ByteArray := do
   let some segs := resolve req.target | return textResponse "400 Bad Request" "bad path" withBody
   if segs == ["__proofmap", "version"] then
     let id ← buildId site
-    return response "200 OK" "application/json" (Lean.Json.compress (.mkObj [("build", .str id)])).toUTF8 withBody
+    -- The project folder, for "Open in VS Code" links; served on 127.0.0.1 only.
+    let root := Proofmap.Util.slashes (← IO.currentDir)
+    return response "200 OK" "application/json" (Lean.Json.compress (.mkObj [("build", .str id), ("root", .str root)])).toUTF8 withBody
   let file := if segs.isEmpty then site.root / site.index else segs.foldl (fun (p : System.FilePath) (s : String) => p / s) site.root
   if ← file.isDir then return textResponse "404 Not Found" "not found" withBody
   unless ← file.pathExists do return textResponse "404 Not Found" "not found" withBody

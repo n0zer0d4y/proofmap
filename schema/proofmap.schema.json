@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["schema", "generator", "project", "modules", "decls", "walkthroughs", "glossary"],
   "properties": {
-    "schema": { "const": 1 },
+    "schema": { "const": 2 },
     "generator": { "$ref": "#/$defs/Generator" },
     "project": { "$ref": "#/$defs/Project" },
     "modules": { "type": "array", "items": { "$ref": "#/$defs/Module" } },
@@ -37,13 +37,16 @@
     "Project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["title", "rootModules", "rootDir", "builtAt", "roots"],
+      "required": ["title", "rootModules", "builtAt", "roots"],
       "properties": {
         "title": { "type": "string" },
         "rootModules": { "type": "array", "items": { "type": "string" } },
         "repoUrl": { "type": ["string", "null"] },
         "repoRef": { "type": ["string", "null"] },
-        "rootDir": { "description": "Absolute project root, with forward slashes.", "type": "string" },
+        "pageToRoot": {
+          "description": "The project folder relative to the page, with forward slashes (\"\" when the page is in the project folder). Written for single-file pages only, so the viewer can link to source files; no absolute path is ever recorded.",
+          "type": ["string", "null"]
+        },
         "builtAt": { "description": "ISO 8601 timestamp of the build.", "type": "string" },
         "roots": {
           "description": "Ids of the root declarations (from config, or detected automatically).",

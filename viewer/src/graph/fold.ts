@@ -1,4 +1,5 @@
 import type { Indexes } from '../data/indexes';
+import { isCoreLibrary, libraryOf } from '../data/library';
 import { reduceDeps } from './reduce';
 
 /**
@@ -7,8 +8,8 @@ import { reduceDeps } from './reduce';
  * Starting from the roots, every expanded declaration shows its direct dependencies (after noise
  * collapse and transitive reduction). When more than `maxDirect` remain, they are grouped by
  * step label, then section, then module, each group becoming one "+N" card that can be opened.
- * Dependencies from other libraries are aggregated into one boundary card per library area
- * ("Mathlib · Data"). Above `cap` visible declaration cards, further expansions are grouped
+ * Dependencies from other libraries are aggregated into one boundary card per library
+ * ("Mathlib", "Lean core"); Lean core can be left out. Above `cap` visible declaration cards, further expansions are grouped
  * regardless, so the hairball cannot come back.
  *
  * Edges point from a dependency to its user, so foundations end up on the left.
@@ -42,6 +43,8 @@ export interface FoldOptions {
   expandedGroups: ReadonlySet<string>;
   showNoise: boolean;
   showExternal: boolean;
+  /** Lean's own libraries (Init, Std, Lean); shown unless false. */
+  showCore?: boolean;
   /** Declarations that are always shown as their own cards (never grouped away). */
   pinned?: ReadonlySet<number>;
   maxDirect?: number;
@@ -55,16 +58,10 @@ export interface Folded {
 
 export const declNodeId = (id: number) => `d${id}`;
 
-/** Library area of an external declaration: the first two components of its module. */
+/** The library card an external declaration goes to: its library ("Mathlib"), with Lean's own
+ * libraries together as "Lean core". */
 export function externalArea(module: string | null): string {
-  if (!module) return 'Other';
-  const parts = module.split('.');
-  return parts.slice(0, Math.min(2, parts.length)).join('.');
-}
-
-export function areaLabel(area: string): string {
-  const [lib, ...rest] = area.split('.');
-  return rest.length ? `${lib} · ${rest.join('.')}` : (lib ?? area);
+  return libraryOf(module);
 }
 
 export function fold(ix: Indexes, o: FoldOptions): Folded {
@@ -121,6 +118,7 @@ export function fold(ix: Indexes, o: FoldOptions): Folded {
       if (d.external) {
         if (!o.showExternal) continue;
         const area = externalArea(d.module);
+        if (o.showCore === false && isCoreLibrary(area)) continue;
         areas.set(area, [...(areas.get(area) ?? []), id]);
       } else project.push(id);
     }
@@ -128,7 +126,7 @@ export function fold(ix: Indexes, o: FoldOptions): Folded {
       const nid = `ext:${area}`;
       const node = nodes.get(nid);
       const members = [...new Set([...(node?.members ?? []), ...ids])];
-      nodes.set(nid, { id: nid, kind: 'external', members, label: areaLabel(area) });
+      nodes.set(nid, { id: nid, kind: 'external', members, label: area });
       const kind = ids.some((i) => kindOf.get(i) === 'statement') ? 'statement' : 'proof';
       addEdge(nid, target, kind, ids.every((i) => !direct.has(i)));
     }

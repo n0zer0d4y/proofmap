@@ -3,8 +3,10 @@ import { CodeBlock } from '../components/CodeBlock';
 import { StatusBadge } from '../components/StatusBadge';
 import { useWalkthroughSteps } from '../data/chunks';
 import type { Indexes } from '../data/indexes';
-import { closedGoals, diffAfter, diffBefore, visibleSteps, type GoalLine } from '../graph/goals';
+import { caseOf, closedGoals, diffAfter, diffBefore, duplicateBullets, subtreeOf, visibleSteps, type GoalLine } from '../graph/goals';
 import { useStore } from '../state/store';
+
+const VIEW_NAMES = { map: 'map', outline: 'outline', paths: 'path finder', health: 'health view', compare: 'comparison' } as const;
 
 /**
  * Proof walkthrough: the proof's source with the current tactic highlighted
@@ -15,12 +17,24 @@ import { useStore } from '../state/store';
 export function WalkthroughView({ ix, id }: { ix: Indexes; id: number }) {
   const d = ix.decls[id]!;
   const setWalkthrough = useStore((s) => s.setWalkthrough);
+  const view = useStore((s) => s.view);
   const w = d.walkthrough !== null ? ix.data.walkthroughs[d.walkthrough] : undefined;
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
   const [current, setCurrent] = useState(0);
   const loaded = useWalkthroughSteps(w, d.name);
   const steps = useMemo(() => (loaded.state === 'ready' ? loaded.steps : []), [loaded]);
-  const items = useMemo(() => visibleSteps(steps.map((s) => s.depth), collapsed), [steps, collapsed]);
+  const depths = useMemo(() => steps.map((s) => s.depth), [steps]);
+  // A bullet's copy of its only tactic is left out; its children move up under the bullet.
+  const items = useMemo(() => {
+    const dup = duplicateBullets(
+      steps.map((s) => s.tactic),
+      depths,
+    );
+    const kept = steps.map((_, i) => i).filter((i) => !dup.has(i));
+    const lifted = kept.map((i) => depths[i]! - [...dup].filter((j) => j < i && subtreeOf(depths, j).includes(i)).length);
+    const collapsedAt = new Set(kept.flatMap((i, p) => (collapsed.has(i) ? [p] : [])));
+    return visibleSteps(lifted, collapsedAt).map((it) => ({ ...it, index: kept[it.index]! }));
+  }, [steps, depths, collapsed]);
   const pos = Math.max(0, items.findIndex((it) => it.index === current));
   const go = (p: number) => {
     const it = items[Math.min(Math.max(p, 0), items.length - 1)];
@@ -30,10 +44,12 @@ export function WalkthroughView({ ix, id }: { ix: Indexes; id: number }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+      // Keys meant for a dialog (About, the tour) stay there.
+      if (t?.closest('dialog, [role="dialog"]') || document.querySelector('dialog[open]')) return;
       if (e.key === 'ArrowRight') go(pos + 1);
       else if (e.key === 'ArrowLeft') go(pos - 1);
-      else if (e.key === 'Escape') setWalkthrough(false);
+      else if (e.key === 'Escape' && useStore.getState().tour === null) setWalkthrough(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -41,7 +57,7 @@ export function WalkthroughView({ ix, id }: { ix: Indexes; id: number }) {
 
   const back = (
     <button className="icon-button" onClick={() => setWalkthrough(false)}>
-      ← Back to the map
+      ← Back to the {VIEW_NAMES[view]}
     </button>
   );
   if (!w || steps.length === 0) {
@@ -105,26 +121,33 @@ export function WalkthroughView({ ix, id }: { ix: Indexes; id: number }) {
           <ol className="wt-steps" aria-label="Steps">
             {items.map((it, p) => {
               const s = steps[it.index]!;
+              // The case a step works on, shown where it changes.
+              const kase = caseOf(s.goalsBefore);
+              const prevCase = p > 0 ? caseOf(steps[items[p - 1]!.index]!.goalsBefore) : null;
               return (
                 <li key={it.index} style={{ paddingLeft: 8 + it.depth * 16 }} className={it.index === current ? 'current' : undefined}>
                   {it.hasChildren ? (
                     <button
                       className="chevron"
                       aria-label={collapsed.has(it.index) ? 'Expand compound tactic' : 'Collapse compound tactic'}
-                      onClick={() =>
+                      onClick={() => {
+                        const closing = !collapsed.has(it.index);
                         setCollapsed((c) => {
                           const n = new Set(c);
                           if (n.has(it.index)) n.delete(it.index);
                           else n.add(it.index);
                           return n;
-                        })
-                      }
+                        });
+                        // Collapsing the step that holds the current one makes it current.
+                        if (closing && subtreeOf(depths, it.index).includes(current)) setCurrent(it.index);
+                      }}
                     >
                       {collapsed.has(it.index) ? '▸' : '▾'}
                     </button>
                   ) : (
                     <span className="chevron" aria-hidden="true" />
                   )}
+                  {kase && kase !== prevCase && <span className="wt-case">case {kase}</span>}
                   <button className="linklike mono" onClick={() => go(p)} aria-current={it.index === current ? 'step' : undefined}>
                     {s.tactic.split('\n')[0]}
                   </button>
@@ -148,7 +171,17 @@ export function WalkthroughView({ ix, id }: { ix: Indexes; id: number }) {
                 ✓ {closed === 1 ? 'goal closed' : `${closed} goals closed`}
               </p>
             )}
-            {step.goalsAfter.length === 0 ? <p className="muted plain">No goals left.</p> : <Goals goals={diffAfter(step.goalsBefore, step.goalsAfter)} />}
+            {step.goalsAfter.length === 0 ? (
+              // Lean lists only the goals in focus, so an empty list after a case means that case is
+              // done; the proof is complete only after its last step.
+              <p className="muted plain">
+                {steps.some((_, j) => j > current && !subtreeOf(depths, current).includes(j))
+                  ? 'This case is done; the proof continues with the next step.'
+                  : 'No goals left: the proof is complete.'}
+              </p>
+            ) : (
+              <Goals goals={diffAfter(step.goalsBefore, step.goalsAfter)} />
+            )}
           </section>
         </div>
       </div>

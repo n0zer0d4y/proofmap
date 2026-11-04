@@ -16,13 +16,15 @@ export interface PresetDefaults {
   namesSecondary: boolean;
   /** Noise toggles visible in the toolbar. */
   noiseControls: boolean;
+  /** Lean's own libraries (Init, Std, Lean) shown as a library card on the map. */
+  showCore: boolean;
 }
 
 export const PRESET_DEFAULTS: Record<Preset, PresetDefaults> = {
-  reader: { view: 'outline', showCode: false, statementsExpanded: false, namesSecondary: true, noiseControls: false },
-  mathematician: { view: 'map', showCode: false, statementsExpanded: true, namesSecondary: true, noiseControls: false },
-  developer: { view: 'map', showCode: true, statementsExpanded: true, namesSecondary: false, noiseControls: true },
-  auditor: { view: 'health', showCode: false, statementsExpanded: false, namesSecondary: false, noiseControls: true },
+  reader: { view: 'outline', showCode: false, statementsExpanded: false, namesSecondary: true, noiseControls: false, showCore: false },
+  mathematician: { view: 'map', showCode: false, statementsExpanded: true, namesSecondary: true, noiseControls: false, showCore: false },
+  developer: { view: 'map', showCode: true, statementsExpanded: true, namesSecondary: false, noiseControls: true, showCore: true },
+  auditor: { view: 'health', showCode: false, statementsExpanded: false, namesSecondary: false, noiseControls: true, showCore: true },
 };
 
 export const PRESET_LABELS: Record<Preset, string> = {

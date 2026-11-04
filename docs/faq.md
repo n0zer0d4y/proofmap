@@ -2,7 +2,7 @@
 
 ### Which Lean versions does proofmap support?
 
-Lean v4.28.0 and newer. proofmap is tested on v4.28.0, v4.29.0 and the latest stable release, and each new stable Lean release gets a proofmap release. With the global install, proofmap builds a matching engine for each Lean version it meets, so projects on different versions all work. If a project is older than v4.28.0, proofmap says so and suggests bumping `lean-toolchain`. `proofmap doctor` shows the version proofmap detected and whether it is supported.
+Lean v4.28.0 and newer. proofmap is tested on v4.28.0 and the latest stable release, and each new stable Lean release gets a proofmap release. With the global install, proofmap builds a matching engine for each Lean version it meets, so projects on different versions all work. If a project is older than v4.28.0, proofmap says so and suggests bumping `lean-toolchain`. `proofmap doctor` shows the version proofmap detected and whether it is supported.
 
 ### Does proofmap run my code? Is it safe on code I don't trust?
 
@@ -10,7 +10,7 @@ proofmap loads the project the way `lake build` and documentation tools such as 
 
 ### Does anything leave my machine? Can I use it on private code?
 
-Nothing leaves your machine, so yes. proofmap makes no network requests, and the generated page loads nothing from the network (no fonts, scripts or analytics). `proofmap serve` listens on 127.0.0.1 only and answers only requests addressed to it. The page does contain your declarations' source code, statements and comments, so share it only as you would share the code.
+Nothing leaves your machine, so yes. proofmap makes no network requests, and the generated page loads nothing from the network (no fonts, scripts or analytics). `proofmap serve` listens on 127.0.0.1 only and answers only requests addressed to it. The page does contain your declarations' source code, statements and comments, so share it only as you would share the code. It contains no absolute path of your computer: file paths are relative to the project.
 
 ### `proofmap build` says it is "using 1 worker". Can it go faster?
 

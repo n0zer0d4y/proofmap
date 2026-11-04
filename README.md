@@ -34,7 +34,7 @@ Everything runs on your machine. proofmap sends nothing anywhere, and the page l
 
 - **proofmap runs your project's code, as `lake build` does.** It imports the compiled modules, which runs their initializers. With `--walkthrough`, it also elaborates the source files again. Run it only on code you would also build.
 - **Nothing leaves your machine.** proofmap makes no network requests. The page loads no fonts, scripts or analytics. `proofmap serve` listens on 127.0.0.1 only, and answers only requests addressed to it.
-- **The page contains your code.** It includes your declarations' source, statements and comments, so share it only as you would share the code.
+- **The page contains your code.** It includes your declarations' source, statements and comments, so share it only as you would share the code. It contains no absolute path of your computer: file paths are relative to the project.
 
 To report a security problem, use "Report a vulnerability" on the repository's Security tab rather than a public issue.
 
@@ -93,14 +93,14 @@ Add proofmap to the lakefile. In `lakefile.toml`:
 [[require]]
 name = "proofmap"
 git = "https://github.com/n0zer0d4y/proofmap"
-rev = "v0.1.0"
+rev = "v0.2.0"
 subDir = "lean"
 ```
 
 Or in `lakefile.lean`:
 
 ```lean
-require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.1.0" / "lean"
+require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.2.0" / "lean"
 ```
 
 Then:
@@ -177,7 +177,7 @@ Tests:
 | `cd viewer && npm run lint && npm run typecheck && npm test` | Viewer lint, types and unit tests                                                                                                                                                                                                                       |
 | `cd viewer && npm run e2e`                                   | Browser tests on the fixture pages, including accessibility (axe-core). `ALL_BROWSERS=1` adds Firefox and WebKit.                                                                                                                                       |
 
-CI runs on every push, except pushes that change only documentation. It runs the Lean checks on Lean v4.28.0, v4.29.0 and v4.35.0, and on the newest release candidate, which is allowed to fail. It runs the viewer checks on Chromium, Firefox and WebKit, and checks that the committed `lean/assets/viewer.html` matches a fresh viewer build. Please add a test with each change, and a line in the [changelog](CHANGELOG.md).
+CI runs on every push, except pushes that change only documentation. It runs the Lean checks on Lean v4.28.0 and v4.35.0, the oldest and newest supported versions, and the viewer checks on Chromium, Firefox and WebKit. It also checks that the committed `lean/assets/viewer.html` matches a fresh viewer build. Please add a test with each change, and a line in the [changelog](CHANGELOG.md).
 
 ## License
 

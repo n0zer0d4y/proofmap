@@ -22,21 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     # A normal run takes about 5 minutes; the limit stops a hung step early.
     timeout-minutes: 30
-    # The oldest supported toolchain (v4.28.0), v4.29.0 and the latest stable are required;
-    # the newest release candidate is allowed to fail.
-    continue-on-error: ${{ !matrix.required }}
+    # The oldest supported toolchain and the newest tested one: the two ends of the supported range.
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - toolchain: leanprover/lean4:v4.35.0
-            required: true
-          - toolchain: leanprover/lean4:v4.29.0
-            required: true
-          - toolchain: leanprover/lean4:v4.28.0
-            required: true
-          - toolchain: leanprover/lean4:v4.36.0-rc1
-            required: false
+        toolchain:
+          - leanprover/lean4:v4.35.0
+          - leanprover/lean4:v4.28.0
     steps:
       - uses: actions/checkout@v7
       - name: Install elan

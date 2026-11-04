@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { startLiveReload, type LiveReloadDeps } from '../src/data/live';
 
 /** A fake server whose build id the test controls, and a manual clock. */
-function harness(protocol = 'http:', initial: string | null = 'b1') {
+function harness(protocol = 'http:', initial: string | null = 'b1', hostname = '127.0.0.1') {
   const state = { build: initial, reloads: 0, tick: null as null | (() => void), requests: 0 };
   const deps: LiveReloadDeps = {
     protocol,
+    hostname,
     fetchImpl: async () => {
       state.requests++;
       if (state.build === null) return new Response('not found', { status: 404 });
@@ -45,5 +46,10 @@ describe('live reload', () => {
     state.tick!();
     await settle();
     expect(state.reloads).toBe(0);
+  });
+  it('never asks a static host, which has no proofmap serve behind it', async () => {
+    const { state, deps } = harness('https:', 'b1', 'example.github.io');
+    expect(await startLiveReload(2000, deps)).toBe(false);
+    expect(state.requests).toBe(0);
   });
 });

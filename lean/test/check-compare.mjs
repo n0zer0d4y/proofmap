@@ -2,7 +2,7 @@
 // built, then edited (one theorem added, one removed, a sorry fixed, a proof rewritten) and
 // built again. The printed summary must list exactly the planted changes.
 // Usage: node check-compare.mjs [--save DIR] COMMAND...   (COMMAND runs proofmap, for example
-// `lake env /abs/path/proofmap`). --save keeps both snapshots, with rootDir normalized, for the
+// `lake env /abs/path/proofmap`). --save keeps both snapshots (they hold no local paths) for the
 // viewer's compare tests.
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -65,6 +65,13 @@ try {
   if (!lines[0].includes('now sorry-free: 3, newly depending on sorry: 0')) failures.push(`summary line: ${lines[0]}`);
   const html = readFileSync(join(dir, 'compare.html'), 'utf8');
   if (!html.includes('<script id="proofmap-baseline" type="application/json">{')) failures.push('compare.html has no embedded baseline');
+  // A snapshot from proofmap 0.1 (data format 1, with `project.rootDir`) still compares.
+  const v1 = JSON.parse(readFileSync(join(dir, 'old.json'), 'utf8'));
+  v1.schema = 1;
+  v1.project.rootDir = 'C:/old/project';
+  writeFileSync(join(dir, 'old-v1.json'), JSON.stringify(v1));
+  const fromV1 = run('compare', 'old-v1.json', 'new.json', '--out', 'compare-v1.html');
+  if (fromV1.split('\n')[0] !== lines[0]) failures.push(`version 1 baseline: ${fromV1.split('\n')[0]}`);
   // Bad input: a usage error, not a crash.
   const bad = spawnSync(cmd, [...prefix, 'compare', 'old.json', 'missing.json'], { cwd: dir, encoding: 'utf8' });
   if (bad.status !== 1) failures.push(`compare with a missing file exited with ${bad.status}, expected 1`);
@@ -72,7 +79,6 @@ try {
   if (save) {
     for (const f of ['old', 'new']) {
       const d = JSON.parse(readFileSync(join(dir, `${f}.json`), 'utf8'));
-      d.project.rootDir = 'C:/fixture';
       writeFileSync(join(save, `compare-${f}.json`), JSON.stringify(d));
     }
     console.log(`saved snapshots to ${save}`);

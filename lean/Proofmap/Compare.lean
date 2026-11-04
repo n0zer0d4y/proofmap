@@ -56,6 +56,27 @@ private def statusKey (d : Json) : String :=
 
 private def code (d : Json) : String := ((d.getObjValAs? String "code").toOption.getD "").trimAscii.toString
 
+/-- A statement in a form that does not depend on how proofmap printed it: every linked name is
+written in full, the declaration's own name is left out, and runs of white space are one space.
+Versions of proofmap print names differently (0.2 prints them relative to the namespace), and that
+must not count as a change. -/
+private def statementKey (s : Snapshot) (d : Json) : String := Id.run do
+  let cps := (str d "signature").toList.toArray
+  let spans := (arr d "signatureHover").filterMap (fun h => do
+      pure ((← nat? (← (h.getObjVal? "start").toOption)), (← nat? (← (h.getObjVal? "end").toOption)),
+        (← nat? (← (h.getObjVal? "decl").toOption))))
+    |>.qsort (fun a b => a.1 < b.1)
+  let mut out := ""
+  let mut pos := 0
+  for (a, b, i) in spans do
+    if a < pos then continue
+    out := out ++ String.ofList (cps.extract pos a).toList ++ s.names.getD i (String.ofList (cps.extract a b).toList)
+    pos := b
+  out := out ++ String.ofList (cps.extract pos cps.size).toList
+  -- Drop the head (the declaration's own name), then normalise white space.
+  let words := ((out.map fun c => if c.isWhitespace then ' ' else c).splitOn " ").filter (· != "")
+  return " ".intercalate (words.drop 1)
+
 structure Diff where
   added : Array String := #[]
   removed : Array String := #[]
@@ -73,7 +94,7 @@ def diff (old new : Snapshot) : Diff := Id.run do
     | none => r := { r with added := r.added.push n }
     | some o =>
       let mut what := #[]
-      if str o "signature" != str d "signature" then what := what.push "statement"
+      if statementKey old o != statementKey new d then what := what.push "statement"
       if code o != code d then what := what.push "code"
       if statusKey o != statusKey d then what := what.push "status"
       if depKey old o != depKey new d then what := what.push "dependencies"

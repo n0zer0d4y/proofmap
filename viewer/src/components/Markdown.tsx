@@ -56,3 +56,9 @@ export function Markdown({ text, className }: { text: string; className?: string
   const html = useMemo(() => renderMarkdown(text), [text]);
   return <div className={`markdown ${className ?? ''}`} dangerouslySetInnerHTML={{ __html: html }} />;
 }
+
+/** One line of Markdown (a summary) rendered inline: code, emphasis, links and maths, no paragraphs. */
+export function MarkdownInline({ text, className }: { text: string; className?: string }) {
+  const html = useMemo(() => md.renderInline(text), [text]);
+  return <span className={`markdown-inline ${className ?? ''}`} dangerouslySetInnerHTML={{ __html: html }} />;
+}

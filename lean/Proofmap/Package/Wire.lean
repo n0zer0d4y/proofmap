@@ -10,7 +10,7 @@ compact form, decoded by the viewer (`viewer/src/data/wire.ts`) back into exactl
 shape. Both ship together in one page, so this format is internal and versioned by `wire`.
 
 ```
-{ "wire": 1, "schema": 1, "generator", "project", "modules", "glossary": as in proofmap.json,
+{ "wire": 1, "schema": 2, "generator", "project", "modules", "glossary": as in proofmap.json,
   "kinds": [kind], "moduleNames": [module], "statuses": [status],   -- tables, first-seen order
   "decls": [{ ... short keys, see `encodeDecl` ... }],              -- index = id
   "walkthroughs": [{ "d": decl, "n": stepCount, "s": [step] } | { "d", "n", "f": file, "b": build }],

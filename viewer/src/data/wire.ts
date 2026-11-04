@@ -85,7 +85,10 @@ export function decodeSteps(steps: WireStep[], lines: string[]): Step[] {
 export function decode(raw: unknown): ProofmapData {
   const obj = raw as Partial<Wire> & Partial<ProofmapData>;
   if (obj.wire === undefined) {
-    if (obj.schema !== 1 || !Array.isArray(obj.decls)) throw new Error('not proofmap data (schema 1)');
+    // Version 1 (proofmap 0.1) differs only in `project.rootDir`, which the viewer does not use, so
+    // older snapshots still open for comparison.
+    const version = obj.schema as number | undefined;
+    if ((version !== 1 && version !== 2) || !Array.isArray(obj.decls)) throw new Error('not proofmap data (schema 1 or 2)');
     return obj as ProofmapData;
   }
   if (obj.wire !== WIRE_VERSION)

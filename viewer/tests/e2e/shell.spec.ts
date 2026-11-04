@@ -24,8 +24,9 @@ test('search, select, views, preset and theme', async ({ page }) => {
   await expect(page.getByRole('complementary', { name: 'Details' })).toContainText('Fixture.double_eq_add');
   await page.getByRole('tab', { name: 'Outline' }).click();
   await expect(page.locator('[data-view="outline"]')).toBeVisible();
+  // A preset changes what is shown, not the view.
   await page.getByLabel('Persona preset').selectOption('auditor');
-  await expect(page.locator('[data-view="health"]')).toBeVisible();
+  await expect(page.locator('[data-view="outline"]')).toBeVisible();
   await page.getByRole('button', { name: /^Theme/ }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.getByRole('button', { name: 'About' }).click();

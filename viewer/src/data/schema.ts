@@ -47,7 +47,7 @@ export type Walkthrough = InlineWalkthrough | SplitWalkthrough;
  * proofmap.json, schema version 1. Written by the proofmap Lean extractor and read by the viewer. This file is the source of truth: the TypeScript types are generated from it and the Lean output is validated against it.
  */
 export interface ProofmapData {
-  schema: 1;
+  schema: 2;
   generator: Generator;
   project: Project;
   modules: Module[];
@@ -77,9 +77,9 @@ export interface Project {
   repoUrl?: string | null;
   repoRef?: string | null;
   /**
-   * Absolute project root, with forward slashes.
+   * The project folder relative to the page, with forward slashes ("" when the page is in the project folder). Written for single-file pages only, so the viewer can link to source files; no absolute path is ever recorded.
    */
-  rootDir: string;
+  pageToRoot?: string | null;
   /**
    * ISO 8601 timestamp of the build.
    */

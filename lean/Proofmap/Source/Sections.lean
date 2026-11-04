@@ -75,9 +75,12 @@ private def docEvents (t : Token) : Array Event := Id.run do
     if line.startsWith "```" then inFence := !inFence
     let hashes := (line.toList.takeWhile (· == '#')).length
     if !inFence && hashes ≥ 1 && hashes ≤ 6 && (line.drop hashes).toString.startsWith " " then
-      out := flush current body out
-      current := some (t.startLine + k, hashes, (line.drop hashes).toString.trimAscii.toString)
-      body := #[]
+      let title := (line.drop hashes).toString.trimAscii.toString
+      -- A heading of box-drawing characters or punctuation only (`# ═════`) is decoration.
+      if title.any Char.isAlphanum then
+        out := flush current body out
+        current := some (t.startLine + k, hashes, title)
+        body := #[]
     else
       body := body.push line
   return flush current body out

@@ -2,7 +2,6 @@ import type { Indexes } from '../data/indexes';
 import { PRESETS, PRESET_LABELS, VIEWS, type Preset, type View } from '../state/presets';
 import { useStore } from '../state/store';
 import type { Theme } from '../state/url';
-import { ExportButton } from './Export';
 import { SearchBox } from './SearchBox';
 import { useTour } from './Tour';
 
@@ -41,7 +40,6 @@ export function Header({ ix }: { ix: Indexes }) {
       <button className="icon-button" disabled={!steps.length} onClick={() => tourGo(0, pathTo(steps[0]!))}>
         Walk me through it
       </button>
-      <ExportButton title={ix.data.project.title} />
       <label>
         <span className="sr-only" style={{ position: 'absolute', left: -9999 }}>
           Persona preset

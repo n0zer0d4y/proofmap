@@ -1,5 +1,5 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
-import { elkGraph, positionsOf, type LayoutEdge, type LayoutNode, type Positions } from './elk-graph';
+import { elkGraph, flowsRight, positionsOf, type LayoutEdge, type LayoutNode, type Positions } from './elk-graph';
 
 export type { LayoutEdge, LayoutNode, Positions } from './elk-graph';
 
@@ -9,5 +9,7 @@ let elk: InstanceType<typeof ELK> | null = null;
 
 export async function layout(nodes: LayoutNode[], edges: LayoutEdge[], previous?: Positions): Promise<Positions> {
   elk ??= new ELK();
-  return positionsOf(await elk.layout(elkGraph(nodes, edges, previous)));
+  const positions = positionsOf(await elk.layout(elkGraph(nodes, edges, previous)));
+  if (previous && !flowsRight(positions, edges)) return positionsOf(await elk.layout(elkGraph(nodes, edges)));
+  return positions;
 }

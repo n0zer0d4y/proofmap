@@ -29,6 +29,19 @@ def nowIsoUtc : IO String := do
 def slashes (p : System.FilePath) : String :=
   p.toString.map fun c => if c == '\\' then '/' else c
 
+/-- The path from folder `fromDir` to folder `toDir` (both absolute), with forward slashes:
+`""` for the same folder, `"../.."` for two levels up. `none` when there is no relative path
+(different drives). Pages record where the project is relative to themselves this way, never
+the absolute path. -/
+def relativeDir (fromDir toDir : System.FilePath) : Option String :=
+  let parts (p : System.FilePath) := ((slashes p).splitOn "/").filter fun s => s != "" && s != "."
+  let a := parts fromDir
+  let b := parts toDir
+  let same (x y : String) := if System.Platform.isWindows then x.toLower == y.toLower else x == y
+  let common := ((a.zip b).takeWhile fun (x, y) => same x y).length
+  if common == 0 && !(a.isEmpty && b.isEmpty) && (slashes fromDir).take 1 != "/" then none
+  else some ("/".intercalate (List.replicate (a.length - common) ".." ++ b.drop common))
+
 /-- `file` relative to `root` with forward slashes, if it is inside it (compared without case
 where the file system ignores case). -/
 def relativeTo? (root file : System.FilePath) : Option String :=

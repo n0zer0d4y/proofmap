@@ -96,11 +96,26 @@ describe('health', () => {
     expect(custom.standard).toBe(false);
     expect(h.axioms.find((a) => a.name === 'propext')!.standard).toBe(true);
   });
-  it('lists unused declarations (not roots or main results)', () => {
+  it('lists unused declarations (not roots or main results), documented theorems apart', () => {
     const unused = h.unused.map(name);
-    expect(unused).toContain('Fixture.classical_fact');
-    expect(unused).not.toContain('Fixture.main_result');
-    expect(unused).not.toContain('Fixture.double');
+    const standalone = h.standalone.map(name);
+    // A documented theorem nothing uses is a standalone result, not a possibly unused helper.
+    expect(standalone).toContain('Fixture.classical_fact');
+    expect(unused).not.toContain('Fixture.classical_fact');
+    for (const n of ['Fixture.main_result', 'Fixture.double']) {
+      expect(unused).not.toContain(n);
+      expect(standalone).not.toContain(n);
+    }
+    expect(h.standalone.every((i) => ix.decls[i]!.kind === 'theorem' && ix.decls[i]!.docstring)).toBe(true);
+  });
+  it('keeps the declarations behind every count', () => {
+    expect(h.lists.sorry.length).toBe(h.sorry);
+    expect(h.lists.deprecated.map(name)).toEqual(visible.filter((d) => d.flags.includes('deprecated')).map((d) => d.name));
+    expect(h.axiomUsers.get('Fixture.customAxiom')!.length).toBe(h.axioms.find((a) => a.name === 'Fixture.customAxiom')!.count);
+  });
+  it('groups steps by module, in source order', () => {
+    const modules = h.byStep.map((r) => r.module);
+    expect([...modules].sort((a, b) => a.localeCompare(b))).toEqual(modules);
   });
   it('counts generated declarations and leaves them out of the unused list', () => {
     expect(h.generated).toBe(0);

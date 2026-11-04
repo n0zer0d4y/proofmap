@@ -13,9 +13,10 @@ export function outlineChildren(ix: Indexes, id: number): number[] {
   const statement = reduceDeps(ix.decls, d.deps.statement, 'statement');
   // Proof dependencies first ("rests on"), then what the statement is about.
   const ids = [...new Set([...proof, ...statement])].filter((i) => !ix.decls[i]!.external && !ix.isNoise(i));
+  // Within a step, the mathematics (theorems) before the definitions and encodings it uses.
   const key = (i: number) => {
     const x = ix.decls[i]!;
-    return [x.step ?? '', x.module ?? '', String(x.range?.start[0] ?? 0).padStart(7, '0')];
+    return [x.step ?? '', x.kind === 'theorem' ? '0' : '1', x.module ?? '', String(x.range?.start[0] ?? 0).padStart(7, '0')];
   };
   return ids.sort((a, b) => {
     const ka = key(a), kb = key(b);
@@ -45,6 +46,36 @@ export function outlineRows(ix: Indexes, roots: number[], expanded: ReadonlySet<
   };
   for (const r of roots) visit(r, 0);
   return rows;
+}
+
+/**
+ * The rows to open so that `target` shows in the outline: the shortest way down from a root
+ * (breadth-first over outline children), without the target itself. Opening these ids is enough:
+ * the first occurrence of each is expanded, so the target appears under one of them. Null when the
+ * target is not below any root within `maxDepth` levels.
+ */
+export function outlinePathTo(ix: Indexes, roots: number[], target: number, maxDepth = 16): number[] | null {
+  if (roots.includes(target)) return [];
+  const parent = new Map<number, number>();
+  let frontier = roots.filter((r) => ix.decls[r]);
+  const seen = new Set(frontier);
+  for (let depth = 0; depth < maxDepth && frontier.length; depth++) {
+    const next: number[] = [];
+    for (const id of frontier)
+      for (const k of outlineChildren(ix, id)) {
+        if (seen.has(k)) continue;
+        seen.add(k);
+        parent.set(k, id);
+        if (k === target) {
+          const path: number[] = [];
+          for (let p = parent.get(k); p !== undefined; p = parent.get(p)) path.unshift(p);
+          return path;
+        }
+        next.push(k);
+      }
+    frontier = next;
+  }
+  return null;
 }
 
 /** The guided tour: each root, then its big steps (children and their

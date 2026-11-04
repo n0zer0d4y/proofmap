@@ -17,9 +17,9 @@ function decl(id: number, statement: number[] = [], proof: number[] = [], extra:
 }
 
 const synthetic = (decls: Decl[]): ProofmapData => ({
-  schema: 1,
+  schema: 2,
   generator: { name: 'proofmap', version: '0', lean: '0' },
-  project: { title: 't', rootModules: ['M'], rootDir: '/', builtAt: '', roots: [0] },
+  project: { title: 't', rootModules: ['M'], builtAt: '', roots: [0] },
   modules: [{ name: 'M', path: null, imports: [], doc: null, sections: [] }],
   decls,
   walkthroughs: [],
@@ -131,9 +131,17 @@ describe('fold (fixture)', () => {
     expect(opened.nodes.filter((n) => n.kind === 'decl' && ix.decls[n.decl!]!.external).length).toBe(area.members!.length);
   });
 
-  it('names library areas from module prefixes', () => {
-    expect(externalArea('Mathlib.Data.List.Basic')).toBe('Mathlib.Data');
-    expect(externalArea('Init.Prelude')).toBe('Init.Prelude');
+  it('names library cards by library, with Lean core together', () => {
+    expect(externalArea('Mathlib.Data.List.Basic')).toBe('Mathlib');
+    expect(externalArea('Init.Prelude')).toBe('Lean core');
+    expect(externalArea('Std.Data.HashMap')).toBe('Lean core');
     expect(externalArea(null)).toBe('Other');
+  });
+
+  it('leaves Lean core out when asked', () => {
+    const main = id('Fixture.main_result');
+    const base = { roots: [main], expanded: new Set([main]), expandedGroups: new Set<string>(), showNoise: false, showExternal: true };
+    expect(fold(ix, base).nodes.some((n) => n.id === 'ext:Lean core')).toBe(true);
+    expect(fold(ix, { ...base, showCore: false }).nodes.some((n) => n.kind === 'external')).toBe(false);
   });
 });

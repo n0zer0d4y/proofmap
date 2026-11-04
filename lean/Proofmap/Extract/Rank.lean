@@ -82,9 +82,20 @@ def transitiveDependencies (deps : Array (Array Nat)) : Array Nat := Id.run do
     below := below.set! u b
   return below.map (·.count)
 
-/-- Automatic roots: theorems no one uses, by number of transitive dependencies, top `k`. -/
+/-- Whether a name or docstring reads like a headline result: an equivalence, a reduction, a
+completeness or hardness statement, or a named theorem. -/
+def statesResult (name : String) (doc : Option String) : Bool :=
+  let words := #["iff", "reduces", "reduction", "complete", "hard", "equiv", "theorem", "characteriz"]
+  let text := (name ++ " " ++ doc.getD "").toLower
+  words.any fun w => (text.splitOn w).length > 1
+
+/-- Automatic roots: theorems no one uses, top `k`. Documented theorems come first, so a large
+undocumented internal lemma does not push out the documented results; within each group, by
+number of transitive dependencies, doubled for theorems whose name or docstring states a result
+(`statesResult`). -/
 def autoRoots (deps : Array (Array Nat)) (isTheorem : Nat → Bool) (name : Nat → String)
-    (k : Nat := 5) : Array Nat := Id.run do
+    (k : Nat := 5) (documented : Nat → Bool := fun _ => false) (headline : Nat → Bool := fun _ => false) :
+    Array Nat := Id.run do
   let n := deps.size
   let mut used : Array Bool := Array.replicate n false
   for u in [0:n] do
@@ -92,8 +103,12 @@ def autoRoots (deps : Array (Array Nat)) (isTheorem : Nat → Bool) (name : Nat 
       if v < n && v != u then used := used.set! v true
   let below := transitiveDependencies deps
   let candidates := (List.range n).toArray.filter fun i => isTheorem i && !used[i]!
+  -- Wording that states a result doubles a theorem's weight; it does not let a small lemma
+  -- (`foo_iff`) overtake the theorem the project builds up to.
+  let weight (i : Nat) : Nat := below[i]! * (if headline i then 2 else 1)
   let sorted := candidates.qsort fun a b =>
-    below[a]! > below[b]! || (below[a]! == below[b]! && name a < name b)
+    (documented a && !documented b) || (documented a == documented b &&
+      (weight a > weight b || (weight a == weight b && name a < name b)))
   return sorted.extract 0 k
 
 /-- The dependents count at the 90th percentile among theorems (the top-10% threshold). -/

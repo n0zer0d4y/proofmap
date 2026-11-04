@@ -2,7 +2,68 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [0.1.0] - unreleased
+## [0.2.0] - unreleased
+
+### Added
+
+- **Main result switcher** on the map when a project has several main results.
+- **Path finder choices depend on each other:** once one end is chosen, the other box offers only ends that connect to it (listed when the box is clicked), so every pair it offers has a path.
+- **Outline: Expand all and Collapse all.** On very large projects Expand all stops before the outline passes 5,000 rows, and says so.
+- **Health counts open their lists:** results without `sorry` or extra axioms, unfinished, extra-axiom, deprecated and unsafe declarations, and the results using each axiom.
+- **Standalone results** in the health view: documented theorems that nothing else uses are listed apart from possibly unused declarations.
+- **Comparison details:** selecting a changed result shows what it was in the older version (status, statement, code).
+- **Walkthrough case labels:** the step list shows the case a step works on where it changes.
+- **Missing names:** a link to a name that is not in the build says so and offers the closest matches.
+- **Lean core switch** on the map (Init, Std, Lean as one library card).
+- **Build messages:** `proofmap build` names the main results and page title it chose, and how to set them in `proofmap.toml`.
+- A folding legend, feedback for `copy` and for `p` on the map, arrowheads on edges, and an inline favicon.
+
+### Changed
+
+- **Data format version 2:** `project.rootDir` (an absolute path) is removed. Single-file pages record `project.pageToRoot`, the project folder relative to the page, and "Open in VS Code" works it out from where the page is opened. Pages, `--site` folders and `proofmap.json` contain no absolute local path. The viewer still reads version 1 files, for comparisons.
+- **Map cards are compact:** a preview of the statement (without the declaration's own name and universe list) instead of the full statement, so opening what a card rests on no longer changes its size. The full statement is in the details panel.
+- **Map camera:** the map opens at a readable zoom and pans to cards as they appear; tour steps and "Find selected" are centred.
+- **Libraries:** one card per library (Mathlib, Lean core) instead of one per module area. Lean core is hidden for the reader and mathematician presets.
+- **"Show more around this"** opens one ring at a time (first the selection, then what it rests on), and is disabled when nothing is left.
+- **Layout:** balanced placement, so cards sit level with the cards they connect to.
+- **Statements** are printed as inside the declaration's own namespace.
+- **Titles:** `mul` reads "times", `sq` reads "square", a capital letter after a lower-case part stays (`inP` is "In P"), and a single letter keeps its digits (`f3Enc` is "F3 enc").
+- **Main results:** documented theorems come first, then size, weighted towards names and docstrings that state a result.
+- **Outline:** keeps what is open and its scroll position across views, opens down to the selection, lists theorems before definitions, renders summaries as Markdown, and always shows the Lean name next to the title.
+- **Path finder:** chains are listed shortest first, and the shortest chain is always found.
+- **Compare** compares statements by their meaning (names written in full), so a snapshot from proofmap 0.1, which printed names differently, does not show statements as changed.
+- **Search** finds words inside Markdown and hyphenated phrases, and ranks main results, then the project's declarations, before other libraries.
+- **Details panel:** "Uses" and "Used by" are grouped by library (Lean core folded), generated helpers are left out of "Used by", and the rank badge appears only when it differs from the kind.
+- **Export:** SVG and PNG are in the map toolbar and contain the whole map; the SVG is shapes and text (no HTML inside), so it works in papers and vector editors.
+- **Theme** is remembered by the browser instead of travelling in links.
+- **Presets** keep the current view when changed; their view applies when the page opens.
+- **Guided tour** runs on the map and sits over the map, without repeating the details panel.
+- **Health:** steps are grouped by file in source order; the first count reads "Without sorry or extra axioms".
+- **Walkthrough:** a bullet with a single tactic is one step, source lines wrap, and the exit names the view it returns to.
+- **Sections:** Markdown headings made only of box-drawing characters are decoration, not sections.
+- **`proofmap serve`** reports the project folder to the page (on 127.0.0.1 only), for source links.
+
+### Fixed
+
+- Adding several cards at once (such as "Show on map" for a "Why?" chain) could draw the map backwards, with a foundation to the right of what uses it; a layout that would point an arrow backwards is now redone from scratch.
+- The view could leave the selected card or the cards just added outside the map after the layout settled.
+- The view tabs did nothing while a walkthrough was open.
+- A link or a click that selected a declaration not on the map left the map unchanged.
+- Enter, Escape, the arrow keys, `f` and `p` on a map toolbar control acted on the map instead of the control.
+- The guided tour drove an open walkthrough, or ran out of sight on the health and outline views; Escape did not end it.
+- Escape on the About dialog also closed an open walkthrough.
+- Back after opening a walkthrough dropped the selection.
+- Display settings such as "Code in cards" reset to the preset's defaults on every navigation.
+- After the first case of an induction, the walkthrough said "No goals left"; it now says the case is done, and that the proof is complete only at its end.
+- Collapsing a compound tactic that held the current step left the walkthrough inconsistent.
+- The path finder could report a longer chain than the shortest one when there were more than 200 chains.
+- Path-finder parameters stayed in the address of every other view.
+- Cards could show scroll bars inside the map.
+- Screen readers read edges by internal ids; every edge was a Tab stop.
+- A page on a static web host requested the live-reload address and logged a 404.
+- The minimap kept a light frame in dark mode.
+
+## [0.1.0] - 2026-10-31
 
 First release.
 

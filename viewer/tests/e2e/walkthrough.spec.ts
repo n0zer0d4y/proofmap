@@ -37,17 +37,22 @@ test('stepping through add_origin shows the expected goals', async ({ page }) =>
   await expect(page.locator('[data-view="map"]')).toBeVisible();
 });
 
-test('compound tactics can be collapsed; the scrubber jumps', async ({ page }) => {
+test('bullets are listed once; compound tactics collapse; the scrubber jumps', async ({ page }) => {
   await page.goto(`${fixtureUrl}#/map/Fixture.and_swap?wt=1`);
-  const view = page.getByLabel('Walkthrough of Fixture.and_swap');
-  await expect(view.locator('.wt-count')).toHaveText('Step 1 of 5');
-  await view.getByRole('button', { name: 'Collapse compound tactic' }).first().click();
+  let view = page.getByLabel('Walkthrough of Fixture.and_swap');
+  // `· exact hq` and its only tactic `exact hq` are one step.
+  await expect(view.locator('.wt-count')).toHaveText('Step 1 of 3');
+  await expect(view.getByRole('list', { name: 'Steps' }).getByRole('button', { name: 'exact hq', exact: true })).toHaveCount(0);
+  await page.goto(`${fixtureUrl}#/map/Fixture.two_goals?wt=1`);
+  view = page.getByLabel('Walkthrough of Fixture.two_goals');
   await expect(view.locator('.wt-count')).toHaveText('Step 1 of 4');
-  await view.getByLabel('Timeline of the proof steps').fill('3');
-  await expect(view.locator('.wt-goals h3 code')).toHaveText('exact hp');
-  await view.getByRole('list', { name: 'Steps' }).getByRole('button', { name: 'constructor' }).click();
-  await expect(view.locator('.wt-goals h3 code')).toHaveText('constructor');
-  await expect(view.getByRole('region', { name: 'Goals after' }).locator('.goal')).toHaveCount(2);
+  await view.getByLabel('Timeline of the proof steps').fill('2');
+  await expect(view.locator('.wt-goals h3 code')).toHaveText('omega');
+  // Collapsing the compound tactic that holds the current step makes it the current step.
+  await view.getByRole('button', { name: 'Collapse compound tactic' }).first().click();
+  await expect(view.locator('.wt-count')).toHaveText('Step 1 of 1');
+  await expect(view.locator('.wt-goals h3 code')).toHaveText('constructor <;> omega');
+  await expect(view.getByRole('region', { name: 'Goals after' })).toContainText('proof is complete');
 });
 
 test('a term-mode proof says so', async ({ page }) => {

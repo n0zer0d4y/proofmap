@@ -11,13 +11,25 @@ describe('URL hash state', () => {
       expanded: ['ClashDemo.value~Fixture.Clash.A', "Fixture.double_eq_add'"],
       groups: ['grp:12:Facts', 'ext:Init.Prelude'],
       preset: 'auditor' as const,
-      theme: 'dark' as const,
+      theme: null,
       showNoise: true,
-      pathFrom: 'Fixture.double',
-      pathTo: 'Fixture.main_result',
+      pathFrom: null,
+      pathTo: null,
       walkthrough: true,
     };
     expect(parse(serialize(s), 'map')).toEqual(s);
+  });
+
+  it('writes the path finder ends only on the paths view', () => {
+    const s = { ...emptyUrlState(), pathFrom: 'Fixture.double', pathTo: 'Fixture.main_result' };
+    expect(serialize({ ...s, view: 'health' })).toBe('#/health');
+    expect(parse(serialize({ ...s, view: 'paths' }), 'map')).toEqual({ ...s, view: 'paths' });
+  });
+
+  it('reads a theme from a link but never writes one', () => {
+    expect(parse('#/map?theme=dark', 'map').theme).toBe('dark');
+    expect(parse('#/map', 'map').theme).toBeNull();
+    expect(serialize({ ...emptyUrlState(), theme: 'dark' })).toBe('#/map');
   });
 
   it('keeps names readable', () => {
@@ -40,6 +52,7 @@ describe('URL hash state', () => {
     const a = emptyUrlState();
     expect(isNavigation(a, { ...a, focus: 'X' })).toBe(true);
     expect(isNavigation(a, { ...a, view: 'outline' })).toBe(true);
+    expect(isNavigation(a, { ...a, walkthrough: true })).toBe(true);
     expect(isNavigation(a, { ...a, expanded: ['X'] })).toBe(false);
   });
 });

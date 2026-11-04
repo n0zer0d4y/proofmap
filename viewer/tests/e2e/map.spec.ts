@@ -6,22 +6,34 @@ import { fixtureUrl } from './helpers';
 
 const card = (page: Page, name: string) => page.locator(`[data-decl="${name}"]`);
 
-test('cards show title, summary chip, kind and counts; expanding shows the linked statement', async ({ page }) => {
+test('cards show title, summary chip, kind and counts; + shows what a card rests on', async ({ page }) => {
   await page.goto(`${fixtureUrl}#/map?preset=reader`);
   await page.getByRole('tab', { name: 'Map' }).click();
   const main = card(page, 'Fixture.main_result');
   await expect(main).toContainText('Main result');
   await expect(main).toContainText('docstring');
   await expect(main).toContainText('theorem');
-  await expect(main).toContainText(/rests on \d+ · used by 0/);
+  await expect(main).toContainText(/uses \d+ · used by 0/);
   const dm = card(page, 'Fixture.double_mono');
   await dm.getByRole('button', { name: /Show what .* rests on/ }).click();
-  await expect(dm.locator('.signature')).toContainText('Fixture.double_mono');
-  // A linked name in the statement selects its declaration.
+  // Opening what a card rests on adds those cards; the card itself does not grow a statement.
+  await expect(card(page, 'Fixture.double_eq_add')).toBeVisible();
+  await expect(dm.locator('.signature')).toHaveCount(0);
+});
+
+test('cards preview the statement without repeating the name, with linked names', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map?preset=mathematician`);
+  const main = card(page, 'Fixture.main_result');
+  const dm = card(page, 'Fixture.double_mono');
+  await expect(dm.locator('.signature')).toBeVisible();
+  await expect(dm.locator('.signature')).not.toContainText('Fixture.double_mono');
+  // No scroll bar inside a card: the preview is clamped instead.
+  for (const c of [main, dm]) {
+    const scrolls = await c.locator('*').evaluateAll((els) => els.filter((e) => getComputedStyle(e).overflowY === 'auto' || getComputedStyle(e).overflowY === 'scroll').length);
+    expect(scrolls).toBe(0);
+  }
   await dm.locator('.sig-link', { hasText: 'Fixture.double' }).first().click();
   await expect(page.getByRole('complementary', { name: 'Details' })).toContainText('Fixture.double');
-  // Expanding added the cards it rests on.
-  await expect(card(page, 'Fixture.double_eq_add')).toBeVisible();
 });
 
 test('card snapshots in light and dark themes', async ({ page }) => {
@@ -116,8 +128,10 @@ test('controls: fit, minimap, filters, show more, back to main result', async ({
   await expect(card(page, 'Fixture.main_result')).toBeVisible();
   await expect(page.locator('.react-flow__minimap-node').first()).toBeAttached();
   await page.getByRole('button', { name: 'Fit' }).click();
-  // Externals can be hidden.
-  await expect(page.locator('.group-card')).not.toHaveCount(0);
+  // Lean core is one library card, off by default for mathematicians; other libraries can be hidden.
+  await expect(page.locator('.group-card')).toHaveCount(0);
+  await page.getByRole('checkbox', { name: 'Lean core' }).check();
+  await expect(page.locator('.group-card', { hasText: 'Lean core' })).toHaveCount(1);
   await page.getByLabel('Other libraries').uncheck();
   await expect(page.locator('.group-card')).toHaveCount(0);
   // Show more around the selection adds a ring of dependencies.

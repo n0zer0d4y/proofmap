@@ -608,7 +608,7 @@
       "decl": 73
     }
   ],
-  "schema": 1,
+  "schema": 2,
   "project": {
     "title": "Fixture",
     "standardAxioms": [
@@ -626,7 +626,6 @@
     "rootModules": [
       "Fixture"
     ],
-    "rootDir": "C:/fixture",
     "repoUrl": null,
     "repoRef": null,
     "footer": true,

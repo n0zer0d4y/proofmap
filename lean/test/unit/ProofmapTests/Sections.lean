@@ -57,6 +57,13 @@ def sectionTests : TestM Unit := do
   -- Fenced code in module docs is not a heading.
   let tree3 := tree "/-!\n# Real\n```\n# not a heading\n```\n-/\n"
   checkEq "fenced code skipped" ((outline tree3).size) 1
+  -- A Markdown heading made only of box-drawing characters is decoration, not a section.
+  let tree4 := tree "/-!
+# ═══════════
+# Definitions
+-/
+"
+  checkEq "decorative heading skipped" ((outline tree4).map fun s => (s.splitOn " ")[0]!) #["Definitions"]
   -- Banners (frame, title, frame) are headings, not leading comments.
   let banner := "-- ════════\n-- 1. DEFINITIONS\n-- More words.\n-- ════════\n\ndef x := 1\n"
   checkEq "banner is not a leading comment" (lead banner 6) none

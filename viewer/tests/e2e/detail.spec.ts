@@ -23,7 +23,9 @@ test('code block line numbers and text match the source file; VS Code link names
   expect(Number(await lines.first().getAttribute('data-line'))).toBe(49);
   // Highlighted (Shiki) tokens are present.
   await expect(detail.locator('.code span[style]').first()).toBeAttached();
-  await expect(detail.getByRole('link', { name: 'Open in VS Code' })).toHaveAttribute('href', 'vscode://file/C:/fixture/Fixture/Basic.lean:49');
+  // The page records the project folder relative to itself; the link is worked out from where
+  // the page is opened (no absolute path is stored in the page).
+  await expect(detail.getByRole('link', { name: 'Open in VS Code' })).toHaveAttribute('href', /^vscode:\/\/file\/.+\/tests\/out\/Fixture\/Basic\.lean:49$/);
 });
 
 test('docstring, statement with links, uses and used-by', async ({ page }) => {
@@ -50,9 +52,16 @@ test('why trace names the chain to the custom axiom and highlights it on the map
   await item.getByRole('button', { name: 'Show on map' }).click();
   for (const n of ['Fixture.tainted_result', 'Fixture.uses_custom_axiom_indirectly', 'Fixture.uses_custom_axiom', 'Fixture.customAxiom'])
     await expect(page.locator(`.react-flow__node.highlighted [data-decl="${n}"]`)).toBeVisible();
-  // "Show on map" selected the chain's source; go back to the tainted result for the sorry.
+  // "Show on map" selected the chain's source, and the view keeps it on screen.
   await expect(detail.locator('.fullname-text')).toHaveText('Fixture.customAxiom');
-  await page.locator('[data-decl="Fixture.tainted_result"] .card-head').click();
+  const flow = (await page.locator('.react-flow').boundingBox())!;
+  const source = (await page.locator('[data-decl="Fixture.customAxiom"]').boundingBox())!;
+  expect(source.x).toBeGreaterThanOrEqual(flow.x);
+  expect(source.x + source.width).toBeLessThanOrEqual(flow.x + flow.width);
+  // Back to the tainted result (through search) for the sorry.
+  const search = page.getByRole('combobox', { name: 'Search declarations' });
+  await search.fill('tainted_result');
+  await page.getByRole('option').filter({ hasText: 'Fixture.tainted_result' }).first().click();
   const sorry = detail.locator('.why-item', { hasText: 'sorry' });
   await sorry.getByRole('button', { name: 'Why?' }).click();
   await expect(sorry.locator('.chain li').last()).toHaveText('Fixture.unfinished contains sorry');

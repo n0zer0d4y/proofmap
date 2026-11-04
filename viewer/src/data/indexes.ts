@@ -55,12 +55,21 @@ export function buildIndexes(data: ProofmapData): Indexes {
   }
 
   // Search over project declarations and the externals they use directly.
+  const roots = new Set(data.project.roots);
   const mini = new MiniSearch<{ id: number; name: string; title: string; summary: string; module: string }>({
     fields: ['name', 'title', 'summary', 'module'],
     storeFields: [],
-    searchOptions: { boost: { name: 3, title: 2 }, prefix: true, fuzzy: 0.15 },
-    // Split names on dots and underscores too, so `double_eq` finds `Fixture.double_eq_add`.
-    tokenize: (text) => text.split(/[\s.,;:_()[\]{}`'"]+/u).filter(Boolean),
+    searchOptions: {
+      boost: { name: 3, title: 2 },
+      prefix: true,
+      fuzzy: 0.15,
+      // Main results first, then the project's own declarations, then other libraries'.
+      boostDocument: (docId) => (roots.has(docId as number) ? 3 : decls[docId as number]?.external ? 1 : 2),
+    },
+    // Split names on dots and underscores, and text on Markdown and punctuation, so `double_eq`
+    // finds `Fixture.double_eq_add`, `Fermat` finds "**Fermat's theorem**" and `four-squares` finds
+    // `sum_four_squares`.
+    tokenize: (text) => text.split(/[\s.,;:_()[\]{}`'"*#|$!?<>=+^~/-]+/u).filter(Boolean),
   });
   mini.addAll(
     decls

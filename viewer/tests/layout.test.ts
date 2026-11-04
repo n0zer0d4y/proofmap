@@ -37,6 +37,24 @@ describe('layout', () => {
     for (const e of f.edges) expect(pos[e.source]!.x).toBeLessThan(pos[e.target]!.x);
   });
 
+  it('adding a chain of new cards next to placed ones keeps every arrow left to right', async () => {
+    // The "Show on map" case: a placed result, then a chain of three new cards behind it at once.
+    const tainted = id('Fixture.tainted_result');
+    const before = fold(ix, { roots: [tainted], expanded: new Set([tainted]), expandedGroups: new Set(), showNoise: false, showExternal: false });
+    const placed = await layout(sized(before.nodes.map((n) => n.id)), before.edges);
+    const chain = ['Fixture.uses_custom_axiom_indirectly', 'Fixture.uses_custom_axiom', 'Fixture.customAxiom'].map(id);
+    const after = fold(ix, {
+      roots: [tainted],
+      expanded: new Set([tainted, ...chain]),
+      expandedGroups: new Set(),
+      showNoise: false,
+      showExternal: false,
+      pinned: new Set(chain),
+    });
+    const pos = await layout(sized(after.nodes.map((n) => n.id)), after.edges, placed);
+    for (const e of after.edges) expect(pos[e.source]!.x).toBeLessThan(pos[e.target]!.x);
+  });
+
   it('expanding a card keeps placed cards in order and moves them only by layer shifts', async () => {
     const main = id('Fixture.main_result');
     const base = { roots: [main], expandedGroups: new Set<string>(), showNoise: false, showExternal: true };

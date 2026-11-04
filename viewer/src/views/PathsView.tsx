@@ -4,11 +4,20 @@ import { DeclSearch } from '../components/SearchBox';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Indexes } from '../data/indexes';
 import { declNodeId, type Folded } from '../graph/fold';
-import { findPaths, relation } from '../graph/paths';
+import { findPaths, reachable, relation } from '../graph/paths';
 import { useStore } from '../state/store';
 import { edgeTypes, IxContext, nodeTypes, useLaidOutGraph } from './MapView';
 
 const NO_HIGHLIGHT: ReadonlySet<string> = new Set();
+
+/** Choices for the other end of a path: main results first, then nearest first, then by name. */
+function ordered(ix: Indexes, m: Map<number, number> | null): number[] | undefined {
+  if (!m) return undefined;
+  const roots = new Set(ix.data.project.roots);
+  return [...m.keys()].sort(
+    (a, b) => Number(roots.has(b)) - Number(roots.has(a)) || m.get(a)! - m.get(b)! || ix.decls[a]!.name.localeCompare(ix.decls[b]!.name),
+  );
+}
 
 /** Path finder: how does one result lead to another? Every chain within the
  * length cap is shown as a filtered map, and the shortest one as a numbered list in plain words. */
@@ -34,26 +43,71 @@ export function PathsView({ ix }: { ix: Indexes }) {
   }, [ix, paths]);
   const shortest = paths[0];
   const name = (id: number | null) => (id === null ? null : ix.decls[id]!);
+  // Dependent choices: once one end is chosen, the other box offers only ends that make a path
+  // (nearest first, main results first among equals), so every pair it offers has an answer.
+  const ups = useMemo(() => (from !== null ? reachable(ix, from, 'up') : null), [ix, from]);
+  const downs = useMemo(() => (to !== null ? reachable(ix, to, 'down') : null), [ix, to]);
+  const toChoices = useMemo(() => ordered(ix, ups), [ix, ups]);
+  const fromChoices = useMemo(() => ordered(ix, downs), [ix, downs]);
+  const toAllowed = useMemo(() => (ups ? new Set(ups.keys()) : undefined), [ups]);
+  const fromAllowed = useMemo(() => (downs ? new Set(downs.keys()) : undefined), [downs]);
+  // Choosing one end keeps the other only when the pair still has a path.
+  const chooseFrom = (id: number) => setPath(id, to !== null && reachable(ix, id, 'up').has(to) ? to : null);
+  const chooseTo = (id: number) => setPath(from !== null && reachable(ix, id, 'down').has(from) ? from : null, id);
   return (
     <div className="paths">
       <div className="paths-form" role="group" aria-label="Choose two results">
         <label>
-          From (foundation)
-          <DeclSearch ix={ix} onChoose={(id) => setPath(id, to)} placeholder={name(from)?.title ?? 'Search…'} label="Path from" />
+          From (foundation){fromChoices && <span className="muted"> · {fromChoices.length} lead to {name(to)!.title}</span>}
+          <DeclSearch
+            ix={ix}
+            onChoose={chooseFrom}
+            placeholder={name(from)?.title ?? (fromChoices ? 'Choose or search…' : 'Search…')}
+            label="Path from"
+            allowed={fromAllowed}
+            suggestions={fromChoices}
+          />
         </label>
         <button className="icon-button" onClick={() => setPath(to, from)} aria-label="Swap from and to" disabled={from === null && to === null}>
           ⇄
         </button>
         <label>
-          To (result)
-          <DeclSearch ix={ix} onChoose={(id) => setPath(from, id)} placeholder={name(to)?.title ?? 'Search…'} label="Path to" />
+          To (result){toChoices && <span className="muted"> · {toChoices.length} rest on {name(from)!.title}</span>}
+          <DeclSearch
+            ix={ix}
+            onChoose={chooseTo}
+            placeholder={name(to)?.title ?? (toChoices ? 'Choose or search…' : 'Search…')}
+            label="Path to"
+            allowed={toAllowed}
+            suggestions={toChoices}
+          />
         </label>
         <span className="paths-chosen">
           {name(from) && <span className="mono">{name(from)!.name}</span>} → {name(to) && <span className="mono">{name(to)!.name}</span>}
         </span>
+        {(from !== null || to !== null) && (
+          <button className="icon-button" onClick={() => setPath(null, null)}>
+            Clear
+          </button>
+        )}
       </div>
-      {(from === null || to === null) && (
-        <p className="empty">Pick a foundation and a result, or press <kbd>p</kbd> on two cards in the map.</p>
+      {from !== null && to === null && toChoices?.length === 0 && (
+        <p className="empty">
+          Nothing in this project rests on {name(from)!.title}, so no path starts there. Choose something it builds on instead, such as
+          a definition or a lemma it uses.
+        </p>
+      )}
+      {to !== null && from === null && fromChoices?.length === 0 && (
+        <p className="empty">{name(to)!.title} rests on nothing else in this project, so no path ends there.</p>
+      )}
+      {from === null && to === null && (
+        <p className="empty">
+          Pick a foundation and a result, or press <kbd>p</kbd> on two cards in the map. Once one is chosen, the other box offers only
+          choices that connect to it.
+        </p>
+      )}
+      {((from !== null && to === null && (toChoices?.length ?? 0) > 0) || (to !== null && from === null && (fromChoices?.length ?? 0) > 0)) && (
+        <p className="empty">Now choose the {from === null ? 'foundation' : 'result'}: click the box to see the choices.</p>
       )}
       {from !== null && to !== null && paths.length === 0 && (
         <p className="empty">
@@ -74,8 +128,8 @@ export function PathsView({ ix }: { ix: Indexes }) {
         <>
           <section className="paths-summary" aria-label="Shortest chain">
             <h3>
-              Shortest chain ({shortest.length - 1} step{shortest.length === 2 ? '' : 's'}); {paths.length} chain{paths.length === 1 ? '' : 's'} in all
-              {paths.length >= 200 ? ' (first 200)' : ''}
+              Shortest chain ({shortest.length - 1} step{shortest.length === 2 ? '' : 's'});{' '}
+              {paths.length >= 200 ? 'at least 200 chains (the 200 shortest are listed)' : `${paths.length} chain${paths.length === 1 ? '' : 's'} in all`}
             </h3>
             <ol>
               {shortest.slice(0, -1).map((id, i) => {

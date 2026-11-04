@@ -17,17 +17,18 @@ const SOURCE_CHIP: Record<string, string> = {
   ai: 'AI',
 };
 
-/** Estimated card height, so layout does not wait for the DOM (cards clamp their content). */
-export function cardHeight(ix: Indexes, id: number, expanded: boolean, showCode: boolean): number {
-  if (!expanded) return 112;
+/** Estimated card height, so layout does not wait for the DOM. Cards are compact: the statement
+ * is a preview of at most 4 lines and code at most 12, so heights stay close to each other. */
+export function cardHeight(ix: Indexes, id: number, statement: boolean, code: boolean): number {
   const d = ix.decls[id]!;
-  const sigLines = Math.min(d.signature.split('\n').length + Math.floor(d.signature.length / 40), 14);
-  const codeLines = showCode && d.code ? Math.min(d.code.split('\n').length, 16) : 0;
-  return 150 + sigLines * 17 + (codeLines ? codeLines * 16 + 24 : 0);
+  const sigLines = statement ? Math.min(d.signature.split('\n').length + Math.floor(d.signature.length / 44), 4) : 0;
+  const codeLines = code && d.code ? Math.min(d.code.split('\n').length, 12) : 0;
+  return 104 + (sigLines ? sigLines * 17 + 12 : 0) + (codeLines ? codeLines * 15 + 18 : 0);
 }
 
-/** A declaration card: collapsed shows title, summary with its source chip,
- * kind badge, status and counts; expanded adds the statement with linked names, code and links. */
+/** A declaration card: title, Lean name, a statement preview (or the summary), kind, status and
+ * counts. "+" shows what it rests on, without changing the card; the selected card adds its links
+ * (and its code with "Code in cards"). The full statement is in the details panel. */
 export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
   const d = ix.decls[id]!;
   const focus = useStore((s) => s.focus);
@@ -42,10 +43,11 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
   const expanded = expandedSet.has(id);
   const status = statusOf(d);
   // Project results only: the externals behind a tactic like `omega` would swamp the count.
-  const restsOn = [...d.deps.statement, ...d.deps.proof].filter((i) => !ix.decls[i]!.external).length;
-  const usedBy = ix.usedBy.statement[id]!.length + ix.usedBy.proof[id]!.length;
+  const restsOn = new Set([...d.deps.statement, ...d.deps.proof].filter((i) => !ix.decls[i]!.external && !ix.isNoise(i))).size;
+  const usedBy = new Set([...ix.usedBy.statement[id]!, ...ix.usedBy.proof[id]!].filter((i) => !ix.isNoise(i))).size;
   const links = sourceLinks(ix, d);
-  const showStatement = expanded || statementsExpanded;
+  const selected = focus === id;
+  const showStatement = statementsExpanded;
   return (
     <div
       className={`map-card status-border-${status}${focus === id ? ' selected' : ''}${expanded ? ' expanded' : ''}`}
@@ -76,13 +78,16 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
           <span className="chip">{SOURCE_CHIP[d.summary.source] ?? d.summary.source}</span>
         </div>
       )}
-      {showStatement && <Statement decl={d} ix={ix} onSelect={select} />}
-      {expanded && showCode && d.code && <pre className="card-code">{d.code}</pre>}
+      {showStatement && <Statement decl={d} ix={ix} onSelect={select} compact />}
+      {selected && showCode && d.code && <pre className="card-code">{d.code}</pre>}
       <div className="card-foot">
         <span className="badge">{d.kind}</span>
         {!d.external && (
-          <span className="counts" title="Direct dependencies / direct users">
-            rests on {restsOn} · used by {usedBy}
+          <span
+            className="counts"
+            title={`Uses ${restsOn} and is used by ${usedBy} results of this project directly. The map leaves out a dependency already reached through another card.`}
+          >
+            uses {restsOn} · used by {usedBy}
           </span>
         )}
         <span className="spacer" />
@@ -100,7 +105,7 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
           </button>
         )}
       </div>
-      {expanded && (links.vscode || links.github || d.walkthrough !== null) && (
+      {selected && (links.vscode || links.github || d.walkthrough !== null) && (
         <div className="card-links">
           {d.walkthrough !== null && (
             <button

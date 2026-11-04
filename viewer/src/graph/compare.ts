@@ -23,6 +23,15 @@ export interface Comparison {
   goneAxioms: string[];
   addedSet: Set<number>;
   changedSet: Set<number>;
+  /** The compared (older) version of each changed declaration, by current id. */
+  before: Map<number, Before>;
+}
+
+export interface Before {
+  signature: string;
+  code: string | null;
+  sorry: boolean;
+  nonstandardAxioms: string[];
 }
 
 function keys(data: ProofmapData): Map<string, Decl> {
@@ -31,6 +40,25 @@ function keys(data: ProofmapData): Map<string, Decl> {
   const count = new Map<string, number>();
   for (const d of project) count.set(d.name, (count.get(d.name) ?? 0) + 1);
   return new Map(project.map((d) => [count.get(d.name)! > 1 ? `${d.name}~${d.module ?? ''}` : d.name, d]));
+}
+
+/**
+ * A statement in a form that does not depend on how proofmap printed it: every linked name is
+ * written in full and the declaration's own name is left out. Versions of proofmap print names
+ * differently (0.2 prints them relative to the namespace), and that must not count as a change.
+ */
+export function canonicalStatement(data: ProofmapData, d: Decl): string {
+  const cps = Array.from(d.signature);
+  let out = '';
+  let at = 0;
+  for (const h of [...d.signatureHover].sort((x, y) => x.start - y.start)) {
+    if (h.start < at) continue;
+    out += cps.slice(at, h.start).join('') + (data.decls[h.decl]?.name ?? cps.slice(h.start, h.end).join(''));
+    at = h.end;
+  }
+  out += cps.slice(at).join('');
+  // The head (the declaration's own name and universe list) up to the first space.
+  return out.replace(/^\S+\s+/, '').replace(/\s+/g, ' ').trim();
 }
 
 const depNames = (data: ProofmapData, d: Decl) =>
@@ -47,6 +75,7 @@ export function compare(old: ProofmapData, cur: ProofmapData): Comparison {
   const changed: { id: number; what: ChangeKind[] }[] = [];
   const nowSorryFree: number[] = [];
   const nowSorry: number[] = [];
+  const older = new Map<number, Before>();
   for (const [k, d] of after) {
     const o = before.get(k);
     if (!o) {
@@ -54,11 +83,14 @@ export function compare(old: ProofmapData, cur: ProofmapData): Comparison {
       continue;
     }
     const what: ChangeKind[] = [];
-    if (o.signature !== d.signature) what.push('signature');
+    if (canonicalStatement(old, o) !== canonicalStatement(cur, d)) what.push('signature');
     if ((o.code ?? '').trim() !== (d.code ?? '').trim()) what.push('code');
     if (statusKey(o) !== statusKey(d)) what.push('status');
     if (depNames(old, o) !== depNames(cur, d)) what.push('dependencies');
-    if (what.length) changed.push({ id: d.id, what });
+    if (what.length) {
+      changed.push({ id: d.id, what });
+      older.set(d.id, { signature: o.signature, code: o.code, sorry: o.status.sorry, nonstandardAxioms: o.status.nonstandardAxioms });
+    }
     if (o.status.sorry && !d.status.sorry) nowSorryFree.push(d.id);
     if (!o.status.sorry && d.status.sorry) nowSorry.push(d.id);
   }
@@ -76,5 +108,6 @@ export function compare(old: ProofmapData, cur: ProofmapData): Comparison {
     goneAxioms: [...a0].filter((a) => !a1.has(a)).sort(),
     addedSet: new Set(added),
     changedSet: new Set(changed.map((c) => c.id)),
+    before: older,
   };
 }

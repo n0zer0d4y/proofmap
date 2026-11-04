@@ -4,8 +4,8 @@
 
 ```jsonc
 {
-  "schema": 1,
-  "generator": { "name": "proofmap", "version": "0.1.0", "lean": "4.29.0" },
+  "schema": 2,
+  "generator": { "name": "proofmap", "version": "0.2.0", "lean": "4.29.0" },
   "project": { "title": "...", "rootModules": ["Mathlib.NumberTheory.SumFourSquares"], "roots": [1024], "...": "..." },
   "modules": [ { "name": "Mathlib.NumberTheory.SumFourSquares", "path": ".lake/packages/mathlib/Mathlib/NumberTheory/SumFourSquares.lean", "...": "..." } ],
   "decls": [ { "id": 1024, "name": "Nat.sum_four_squares", "...": "..." } ],
@@ -14,9 +14,13 @@
 }
 ```
 
+## Paths
+
+Module `path`s are relative to the project folder. The file records no absolute path of the computer it was built on. A single-file page also records `project.pageToRoot`, the project folder relative to the page, so the viewer can link to source files when the page is opened from the project.
+
 ## Versioning
 
-`schema` is the format version, currently `1`. Fields may be added within a version; a reader should ignore fields it does not know. Removing a field or changing its meaning raises the version.
+`schema` is the format version, currently `2`. Fields may be added within a version; a reader should ignore fields it does not know. Removing a field or changing its meaning raises the version.
 
 ## Declarations
 
@@ -25,7 +29,7 @@
 - **Project declarations** (`external: false`) come from the root modules and carry everything: source `range` (1-based lines, 0-based columns), `code`, `docstring`, `leadingComment` (the comment just above it), `summary` with its `source` (`attr`, `config`, `docstring`, `comment` or `section`), `sectionPath` into the module's section tree, `size`, `rank`, `step` and `tags`.
 - **External declarations** (`external: true`) are from other libraries and appear only when a project declaration uses them directly. They carry their name, kind, module and signature, but no code and no dependencies.
 - `flags` that start with `noise:` (such as `noise:instance`, `noise:aux`, `noise:matcher`) mark generated declarations the viewer hides by default. `noise:generated` marks a project declaration that has no source range, which is how Lean's generated helpers (match splitters, congruence lemmas, `deriving` helpers) are recognised across Lean versions. The others (`private`, `deprecated`, `unsafe`, `partial`) are informational.
-- `signature` is the pretty-printed statement; `signatureHover` gives the code-point ranges in it that name other declarations.
+- `signature` is the pretty-printed statement, with names written as inside the declaration's own namespace; `signatureHover` gives the code-point ranges in it that name other declarations.
 
 ## Dependencies
 

@@ -4,9 +4,10 @@ import { PRESETS, VIEWS, type Preset, type View } from './presets';
  * The part of the state mirrored into the URL hash, so links can be shared
  * and the back button works, including under `file://`:
  *
- *   #/map/Fixture.main_result?exp=Fixture.double,Fixture.add_origin&preset=reader&theme=dark
+ *   #/map/Fixture.main_result?exp=Fixture.double,Fixture.add_origin&preset=reader
  *
  * Declarations are named by `keyOf` (name, or `name~module` when the name is not unique).
+ * The theme is a per-browser preference: a `theme=` parameter is still read, but never written.
  */
 export type Theme = 'system' | 'light' | 'dark';
 
@@ -19,7 +20,8 @@ export interface UrlState {
   /** Opened group and boundary cards on the map. */
   groups: string[];
   preset: Preset | null;
-  theme: Theme;
+  /** Only set when the link names a theme; null leaves the reader's own preference. */
+  theme: Theme | null;
   showNoise: boolean;
   pathFrom: string | null;
   pathTo: string | null;
@@ -33,7 +35,7 @@ export const emptyUrlState = (view: View = 'map'): UrlState => ({
   expanded: [],
   groups: [],
   preset: null,
-  theme: 'system',
+  theme: null,
   showNoise: false,
   pathFrom: null,
   pathTo: null,
@@ -50,10 +52,10 @@ export function serialize(s: UrlState): string {
   if (s.expanded.length) q.push(`exp=${s.expanded.map(enc).join(',')}`);
   if (s.groups.length) q.push(`grp=${s.groups.map(enc).join(',')}`);
   if (s.preset) q.push(`preset=${s.preset}`);
-  if (s.theme !== 'system') q.push(`theme=${s.theme}`);
   if (s.showNoise) q.push('noise=1');
-  if (s.pathFrom) q.push(`from=${enc(s.pathFrom)}`);
-  if (s.pathTo) q.push(`to=${enc(s.pathTo)}`);
+  // The path finder's ends belong to its view only.
+  if (s.view === 'paths' && s.pathFrom) q.push(`from=${enc(s.pathFrom)}`);
+  if (s.view === 'paths' && s.pathTo) q.push(`to=${enc(s.pathTo)}`);
   if (s.walkthrough) q.push('wt=1');
   return q.length ? `${h}?${q.join('&')}` : h;
 }
@@ -81,6 +83,7 @@ export function parse(hash: string, fallbackView: View): UrlState {
   return s;
 }
 
-/** A change of view or focus is a navigation (new history entry); anything else replaces. */
+/** A change of view, focus, anchor or walkthrough is a navigation (new history entry), so Back
+ * undoes it; anything else replaces the current entry. */
 export const isNavigation = (a: UrlState, b: UrlState) =>
-  a.view !== b.view || a.focus !== b.focus || a.anchor !== b.anchor;
+  a.view !== b.view || a.focus !== b.focus || a.anchor !== b.anchor || a.walkthrough !== b.walkthrough;

@@ -41,6 +41,37 @@ export interface StepItem {
   hasChildren: boolean;
 }
 
+/**
+ * Steps that only repeat their parent: a bullet `· t` whose single child is `t` itself. The child is
+ * left out of the step list, and its own children move up one level under the bullet.
+ */
+export function duplicateBullets(tactics: string[], depths: number[]): Set<number> {
+  const out = new Set<number>();
+  for (let i = 0; i + 1 < tactics.length; i++) {
+    const t = tactics[i]!.trimStart();
+    if (!t.startsWith('·') || depths[i + 1] !== depths[i]! + 1) continue;
+    if (tactics[i + 1]!.trim() !== t.slice(1).trim()) continue;
+    // Single child: no other step one level below the bullet before the bullet's subtree ends.
+    let single = true;
+    for (let j = i + 2; j < depths.length && depths[j]! > depths[i]!; j++) if (depths[j] === depths[i]! + 1) single = false;
+    if (single) out.add(i + 1);
+  }
+  return out;
+}
+
+/** The step indices inside the subtree of step `i` (its children, their children, …). */
+export function subtreeOf(depths: number[], i: number): number[] {
+  const out: number[] = [];
+  for (let j = i + 1; j < depths.length && depths[j]! > depths[i]!; j++) out.push(j);
+  return out;
+}
+
+/** The case a step works on (`zero` for a goal starting `case zero`), or null. */
+export function caseOf(goalsBefore: string[]): string | null {
+  const first = goalsBefore[0]?.split('\n')[0] ?? '';
+  return first.startsWith('case ') ? first.slice(5).trim() : null;
+}
+
 /** The steps that are visible when the given compound steps are collapsed. */
 export function visibleSteps(depths: number[], collapsed: ReadonlySet<number>): StepItem[] {
   const out: StepItem[] = [];

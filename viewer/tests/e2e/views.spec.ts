@@ -16,7 +16,7 @@ test('outline: roots, expansion, "also used here", selection, print mode', async
   const tree = page.getByRole('tree', { name: 'Outline of the main results' });
   const rootTitles = data.project.roots.map((r) => data.decls[r]!.title);
   for (const t of rootTitles) await expect(tree.getByRole('button', { name: t, exact: true }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Expand 3 levels' }).click();
+  await page.getByRole('button', { name: 'Expand all' }).click();
   // double_eq_add is used by both double_double and double_mono: once in full, once as a link.
   await expect(tree.getByRole('button', { name: '↪ also used here' }).first()).toBeVisible();
   await tree.getByRole('button', { name: 'Double equals add', exact: true }).first().click();
@@ -49,7 +49,7 @@ test('health numbers match the extracted data', async ({ page }) => {
   const stat = (label: string) =>
     counts.locator('.stat').filter({ has: page.locator('.stat-label', { hasText: new RegExp('^' + label) }) }).locator('.stat-value');
   await expect(stat('Results and definitions')).toHaveText(String(visible.length));
-  await expect(stat('Fully proved')).toHaveText(String(visible.filter((d) => !d.status.sorry && !d.status.nonstandardAxioms.length).length));
+  await expect(stat('Without sorry or extra axioms')).toHaveText(String(visible.filter((d) => !d.status.sorry && !d.status.nonstandardAxioms.length).length));
   await expect(stat('Contain sorry')).toHaveText(String(visible.filter((d) => d.status.sorry).length));
   await expect(stat('Extra axioms')).toHaveText(String(visible.filter((d) => d.status.nonstandardAxioms.length).length));
   await expect(page.getByRole('region', { name: 'Unfinished proofs' })).toContainText('Fixture.unfinished: 2 results rest on it');
@@ -72,17 +72,20 @@ test('guided tour visits the outline in order', async ({ page }) => {
   await expect(tour).toBeHidden();
 });
 
-test('export: the SVG opens and shows the same cards; the PNG is a PNG', async ({ page, browser }) => {
+test('export: the whole map as a real SVG and a PNG', async ({ page, browser }) => {
   await page.goto(`${fixtureUrl}#/map?theme=light`);
   await expect(page.locator('[data-decl="Fixture.main_result"]')).toBeVisible();
   await page.waitForTimeout(400);
-  const onScreen = (await page.locator('.react-flow__node .card-title').allTextContents()).sort();
+  const titles = (await page.locator('.react-flow__node .card-title').allTextContents()).sort();
+  const cards = await page.locator('.react-flow__node').count();
   const [svgDl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'SVG' }).click()]);
-  const svgPath = await svgDl.path();
-  const svg = readFileSync(svgPath, 'utf8');
+  const svg = readFileSync(await svgDl.path(), 'utf8');
   expect(svg.startsWith('<svg')).toBe(true);
-  for (const t of onScreen) expect(svg).toContain(t);
-  // Render the exported SVG on its own page and check its size matches the map.
+  // Shapes and text only: vector editors and LaTeX cannot render HTML inside an SVG.
+  expect(svg).not.toContain('foreignObject');
+  // Every card of the map, not only those on screen.
+  expect(svg.match(/<g>/g)?.length).toBe(cards);
+  for (const t of titles) expect(svg).toContain(t.split(' ')[0]!);
   const view = await browser.newPage();
   await view.setContent(`<img id="x" src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}">`);
   const size = await view.evaluate(() => new Promise<[number, number]>((r) => {
@@ -90,9 +93,8 @@ test('export: the SVG opens and shows the same cards; the PNG is a PNG', async (
     const done = () => r([img.naturalWidth, img.naturalHeight]);
     if (img.complete) done(); else img.onload = done;
   }));
-  const box = await page.locator('[data-view="map"] .react-flow').boundingBox();
-  expect(size[0]).toBe(Math.round(box!.width));
-  expect(size[1]).toBe(Math.round(box!.height));
+  expect(size[0]).toBeGreaterThan(200);
+  expect(size[1]).toBeGreaterThan(100);
   await view.close();
   const [pngDl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'PNG' }).click()]);
   const png = readFileSync(await pngDl.path());

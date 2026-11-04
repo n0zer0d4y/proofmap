@@ -181,13 +181,23 @@ def runBuild (args : List String) : IO UInt32 := do
       if let some f := a.pageJson then
         Package.writeAtomic f (Package.Wire.encode data).1.compress
       if a.site.isNone || a.outGiven then
-        match ← Package.writeSingleFile a.out data with
+        -- The page records the project folder relative to itself (for "Open in VS Code"), never
+        -- the absolute path, so a page that is shared does not reveal the builder's folders.
+        let outDir := ((← IO.currentDir) / a.out).parent.getD (← IO.currentDir)
+        let page := { data with project := { data.project with pageToRoot := Util.relativeDir outDir opts.rootDir } }
+        match ← Package.writeSingleFile a.out page with
         | .error e =>
           IO.eprintln s!"proofmap: {e}"
           return (2 : UInt32)
         | .ok note =>
           IO.println s!"proofmap: wrote {a.out} ({counts})"
           if let some n := note then IO.println s!"proofmap: {n}"
+      -- Say what was chosen automatically, and how to choose it instead.
+      if opts.overrides.roots.isEmpty && !data.project.roots.isEmpty then
+        let names := data.project.roots.toList.filterMap fun i => (data.decls[i]?).map (toString ·.name)
+        IO.println s!"proofmap: main results (chosen automatically): {", ".intercalate names} (set roots in proofmap.toml to choose them)"
+      if opts.title.isNone then
+        IO.println s!"proofmap: page title \"{data.project.title}\" (set title in proofmap.toml to change it)"
       if a.timings then IO.eprintln s!"proofmap: write output: {(← IO.monoMsNow) - t} ms"
       return (0 : UInt32)
     catch e =>
@@ -239,8 +249,10 @@ def runCompare (args : List String) : IO UInt32 := do
       IO.eprintln s!"proofmap: {f} is not JSON: {e}"
       return none
     | .ok j =>
-      if (j.getObjValAs? Nat "schema").toOption != some 1 then
-        IO.eprintln s!"proofmap: {f} is not a proofmap.json (schema 1); write one with `proofmap build --json FILE`"
+      -- Version 1 files (proofmap 0.1) differ only in `project.rootDir`; both compare.
+      let version := (j.getObjValAs? Nat "schema").toOption
+      if version != some 1 && version != some Schema.schemaVersion then
+        IO.eprintln s!"proofmap: {f} is not a proofmap.json (schema 1 or {Schema.schemaVersion}); write one with `proofmap build --json FILE`"
         return none
       return some (text, j)
   let some (oldText, oldJson) ← read oldFile | return 1

@@ -31,7 +31,9 @@ export function CompareView({ ix }: { ix: Indexes }) {
       .text()
       .then((text) => {
         const old = JSON.parse(text) as ProofmapData;
-        if (old.schema !== 1 || !Array.isArray(old.decls)) throw new Error('not a proofmap.json (schema 1)');
+        // Version 1 files (proofmap 0.1) compare too: they differ only in `project.rootDir`.
+        const version = (old as { schema: number }).schema;
+        if ((version !== 1 && version !== 2) || !Array.isArray(old.decls)) throw new Error('not a proofmap.json (schema 1 or 2)');
         setComparison(compare(old, ix.data));
       })
       .catch((e: unknown) => setError(`Could not read ${file.name}: ${e instanceof Error ? e.message : String(e)}`));

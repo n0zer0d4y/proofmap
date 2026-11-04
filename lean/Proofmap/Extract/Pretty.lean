@@ -11,7 +11,7 @@ open Lean Meta
 /-- Built-in glossary: name fragments to plain words. Extended by `[glossary]` in config. -/
 def defaultGlossary : Array (String × String) := #[
   ("iff", "if and only if"), ("eq", "equals"), ("ne", "not equal"), ("le", "≤"), ("lt", "<"),
-  ("ge", "≥"), ("gt", ">"), ("mul", "×"), ("npComplete", "NP-complete"), ("np", "NP"),
+  ("ge", "≥"), ("gt", ">"), ("mul", "times"), ("sq", "square"), ("npComplete", "NP-complete"), ("np", "NP"),
   ("sat", "SAT"), ("pos", "positive"), ("neg", "negative"), ("succ", "successor"),
   ("pred", "predecessor"), ("mem", "membership"), ("inj", "injective"), ("surj", "surjective"),
   ("comm", "commutative"), ("assoc", "associative"), ("aux", "helper"), ("def", "definition"),
@@ -33,7 +33,8 @@ def splitCamel (s : String) : Array String := Id.run do
     let boundary := match prev? with
       | some p =>
         (p.isLower && c.isUpper) || (p.isUpper && c.isUpper && next?.any Char.isLower) ||
-        (p.isAlpha && c.isDigit) || (p.isDigit && c.isAlpha)
+        -- A single letter keeps its digits (`f3Enc` → `f3`, `Enc`).
+        (p.isAlpha && c.isDigit && cur.length > 1) || (p.isDigit && c.isAlpha)
       | none => false
     if boundary && !cur.isEmpty then
       parts := parts.push cur
@@ -56,10 +57,12 @@ def humanize (glossary : Array (String × String)) (n : Name) : String :=
   let words := (base.splitOn "_").filter (· != "") |>.toArray.flatMap fun w =>
     match lookup glossary w with
     | some e => #[e]
-    | none => (splitCamel w).map fun p =>
+    | none => (splitCamel w).mapIdx fun i p =>
       match lookup glossary p with
       | some e => e
-      | none => if isAcronym p then p else p.toLower
+      | none =>
+        -- Acronyms stay, and so does a capital letter after a lower-case part (`inP` → "in P").
+        if isAcronym p || (i > 0 && p.length == 1 && p.all Char.isUpper) then p else p.toLower
   let text := " ".intercalate words.toList
   let text := match text.toList with
     | c :: cs => String.ofList (c.toUpper :: cs)
@@ -94,11 +97,14 @@ private partial def spansOf (infos : PrettyPrinter.InfoPerPos) :
         if text == full || full.endsWith ("." ++ text) then
           modify fun (pos, acc) => (pos, acc.push { start, stop, const := c })
 
-/-- Pretty-printed signature at width 100, with hover spans for the constants it names.
-Falls back to the bare name if printing fails. -/
+/-- Pretty-printed signature at width 100, with hover spans for the constants it names. Names
+are printed as inside the declaration's own namespace (as `namespace X` would show them), so a
+statement about `Foo.Bar` does not repeat `Foo.` on every name. Falls back to the bare name if
+printing fails. -/
 def signatureOf (n : Name) : MetaM (String × Array HoverSpan) := do
   try
-    let f ← PrettyPrinter.ppSignature n
+    let f ← withTheReader Core.Context (fun ctx => { ctx with currNamespace := n.getPrefix, openDecls := [] })
+      (PrettyPrinter.ppSignature n)
     let tagged := Widget.TaggedText.prettyTagged f.fmt 0 100
     let ((), (_, spans)) := (spansOf f.infos tagged).run (0, #[])
     return (tagged.stripTags, spans.qsort fun a b => a.start < b.start)

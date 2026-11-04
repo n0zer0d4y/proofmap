@@ -85,9 +85,26 @@ export function App() {
           {notice}
         </p>
       )}
+      <StatusLine />
       <Footer ix={ix} />
       <TourPanel ix={ix} />
     </div>
+  );
+}
+
+/** Short feedback for actions with no other visible result (a path finder pick, a copy). */
+function StatusLine() {
+  const text = useStore((s) => s.notice);
+  const setNotice = useStore((s) => s.setNotice);
+  useEffect(() => {
+    if (!text) return;
+    const t = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(t);
+  }, [text, setNotice]);
+  return (
+    <p className="status-line" role="status" aria-live="polite">
+      {text}
+    </p>
   );
 }
 

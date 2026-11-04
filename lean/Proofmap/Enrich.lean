@@ -86,7 +86,9 @@ def enrich (rootDir : System.FilePath) (dividerPatterns : Array Regex.Regex) (ba
   let threshold := Extract.Rank.topTenPercentThreshold dependents isThm
   let (roots, unmatched) ←
     if ov.roots.isEmpty then
-      pure ((Extract.Rank.autoRoots deps isThm nameOf).map (visible[·]!), #[])
+      let documented (k : Nat) := (out[visible[k]!]!.docstring.getD "").trimAscii.toString != ""
+      let headline (k : Nat) := Extract.Rank.statesResult (toString out[visible[k]!]!.name) out[visible[k]!]!.docstring
+      pure ((Extract.Rank.autoRoots deps isThm nameOf (documented := documented) (headline := headline)).map (visible[·]!), #[])
     else
       let found := ov.roots.map fun n => (n, visible.filter fun i => out[i]!.name == n)
       pure (found.flatMap (·.2), (found.filter (·.2.isEmpty)).map (·.1))

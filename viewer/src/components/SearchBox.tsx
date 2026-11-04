@@ -2,26 +2,39 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Indexes } from '../data/indexes';
 import { useStore } from '../state/store';
 
-/** A combobox over the declarations: type, then arrow keys and Enter (or click) choose one. */
+/**
+ * A combobox over the declarations: type, then arrow keys and Enter (or click) choose one.
+ * `allowed` limits the choices (the path finder offers only ends that make a path), and
+ * `suggestions` are listed before anything is typed.
+ */
 export function DeclSearch({
   ix,
   onChoose,
   placeholder,
   label,
   inputRef,
+  allowed,
+  suggestions,
 }: {
   ix: Indexes;
   onChoose: (id: number) => void;
   placeholder: string;
   label: string;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  allowed?: ReadonlySet<number>;
+  suggestions?: number[];
 }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
   const own = useRef<HTMLInputElement>(null);
   const input = inputRef ?? own;
-  const hits = useMemo(() => (query.trim() ? ix.search(query.trim(), 12) : []), [ix, query]);
+  const hits = useMemo(() => {
+    const q = query.trim();
+    if (!q) return (suggestions ?? []).slice(0, 40).map((id) => ({ id, name: ix.decls[id]!.name, title: ix.decls[id]!.title }));
+    if (!allowed) return ix.search(q, 12);
+    return ix.search(q, 1000).filter((h) => allowed.has(h.id)).slice(0, 12);
+  }, [ix, query, allowed, suggestions]);
   const listId = useMemo(() => `results-${label.replace(/\W/g, '-')}`, [label]);
   const choose = (id: number) => {
     onChoose(id);
@@ -39,7 +52,7 @@ export function DeclSearch({
         role="combobox"
         aria-expanded={open && hits.length > 0}
         aria-controls={listId}
-        aria-activedescendant={hits[active] ? `${listId}-${hits[active].id}` : undefined}
+        aria-activedescendant={open && hits[active] ? `${listId}-${hits[active].id}` : undefined}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);

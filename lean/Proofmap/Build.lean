@@ -167,7 +167,7 @@ def extract (opts : BuildOptions) : IO ProofmapData := do
     generator := { version := version, lean := Lean.versionString }
     project := {
       title, rootModules := opts.rootModules.map toString, repoUrl := opts.repoUrl, repoRef
-      rootDir := Util.slashes opts.rootDir, builtAt := ← Util.nowIsoUtc, roots
+      builtAt := ← Util.nowIsoUtc, roots
       standardAxioms := opts.standardAxioms, preset := opts.preset, footer := opts.footer }
     modules, decls, glossary := opts.glossary }
   if !opts.walkthrough then return data

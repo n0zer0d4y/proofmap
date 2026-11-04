@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { closedGoals, diffAfter, diffBefore, visibleSteps } from '../src/graph/goals';
+import { caseOf, closedGoals, diffAfter, diffBefore, duplicateBullets, subtreeOf, visibleSteps } from '../src/graph/goals';
 
 describe('goal diffs', () => {
   const before = ['x y : Int\n⊢ { x := x + 0, y := y + 0 } = { x := x, y := y }'];
@@ -30,5 +30,20 @@ describe('collapsing compound tactics', () => {
   it('hides the children of a collapsed step', () => {
     expect(visibleSteps(depths, new Set([1])).map((s) => s.index)).toEqual([0, 1, 3, 4]);
     expect(visibleSteps(depths, new Set([1, 3])).map((s) => s.index)).toEqual([0, 1, 3]);
+  });
+});
+
+describe('walkthrough step list', () => {
+  it('leaves out a bullet copy of its only tactic', () => {
+    const tactics = ['induction n', '· exact ⟨0, rfl⟩', 'exact ⟨0, rfl⟩', '· simp', 'simp', 'omega'];
+    const depths = [0, 1, 2, 1, 2, 2];
+    // The second bullet has two children, so its copy stays.
+    expect([...duplicateBullets(tactics, depths)]).toEqual([2]);
+  });
+  it('finds a step subtree and its case', () => {
+    expect(subtreeOf([0, 1, 2, 1, 0], 1)).toEqual([2]);
+    expect(subtreeOf([0, 1, 2, 1, 0], 0)).toEqual([1, 2, 3]);
+    expect(caseOf(['case zero\n⊢ 0 = 0'])).toBe('zero');
+    expect(caseOf(['⊢ 0 = 0'])).toBeNull();
   });
 });

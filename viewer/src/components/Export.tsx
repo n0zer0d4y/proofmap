@@ -1,40 +1,47 @@
-import { toPng, toSvg } from 'html-to-image';
 import { useState } from 'react';
-import { useStore } from '../state/store';
+import type { SvgPalette } from '../graph/svg';
+
+/** The page's theme colours, for the exported picture. */
+export function currentPalette(): SvgPalette {
+  const css = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  return {
+    background: getComputedStyle(document.body).backgroundColor || v('--bg', '#ffffff'),
+    card: v('--bg-raised', '#ffffff'),
+    border: v('--border', '#d0d0d0'),
+    text: v('--fg', '#1a1a1a'),
+    muted: v('--fg-muted', '#666666'),
+    edge: v('--edge', '#8a8f98'),
+    status: { ok: v('--ok', '#2f8a4f'), sorry: v('--sorry', '#c0392b'), axiom: v('--axiom', '#c98a1e'), external: v('--fg-muted', '#9aa0aa') },
+  };
+}
 
 /**
- * Export the current view as SVG or PNG, as it is on screen. The download is
- * a data URL, so it works from a page opened with file:// too.
+ * SVG and PNG of the whole map. `make` builds the picture from the map's layout, so every card is
+ * included, not only the part on screen. The download is a data URL, so it works from a page
+ * opened with file:// too.
  */
-export function ExportButton({ title }: { title: string }) {
+export function ExportButtons({ fileName, make }: { fileName: string; make: (kind: 'svg' | 'png') => Promise<string | null> }) {
   const [busy, setBusy] = useState(false);
-  const view = useStore((s) => s.view);
   const run = async (kind: 'svg' | 'png') => {
-    const el = document.querySelector<HTMLElement>(`[data-view="${view}"] .react-flow`) ?? document.querySelector<HTMLElement>(`[data-view="${view}"]`);
-    if (!el) return;
     setBusy(true);
     try {
-      const bg = getComputedStyle(document.body).backgroundColor;
-      const options = {
-        backgroundColor: bg,
-        // Controls are not part of the picture.
-        filter: (n: Node) => !(n instanceof HTMLElement && (n.classList.contains('react-flow__minimap') || n.classList.contains('map-legend'))),
-      };
-      const url = kind === 'svg' ? await toSvg(el, options) : await toPng(el, { ...options, pixelRatio: 2 });
+      const url = await make(kind);
+      if (!url) return;
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${title.replace(/[^\w.-]+/g, '_')}-${view}.${kind}`;
+      a.download = `${fileName.replace(/[^\w.-]+/g, '_')}-map.${kind}`;
       a.click();
     } finally {
       setBusy(false);
     }
   };
   return (
-    <span className="export" role="group" aria-label="Export the current view">
-      <button className="icon-button" disabled={busy} onClick={() => void run('svg')}>
+    <span className="export" role="group" aria-label="Export the map">
+      <button className="icon-button" disabled={busy} onClick={() => void run('svg')} title="The whole map as a vector picture">
         SVG
       </button>
-      <button className="icon-button" disabled={busy} onClick={() => void run('png')}>
+      <button className="icon-button" disabled={busy} onClick={() => void run('png')} title="The whole map as an image">
         PNG
       </button>
     </span>

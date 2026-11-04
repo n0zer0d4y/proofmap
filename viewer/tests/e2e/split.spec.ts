@@ -41,12 +41,12 @@ test('walkthroughs and helper details load from beside the page', async ({ page 
 
   // Walkthrough from its chunk.
   await page.goto(`${pageUrl}#/map/Fixture.and_swap?wt=1`);
-  await expect(page.getByLabel('Walkthrough of Fixture.and_swap').locator('.wt-count')).toHaveText('Step 1 of 5');
+  await expect(page.getByLabel('Walkthrough of Fixture.and_swap').locator('.wt-count')).toHaveText('Step 1 of 3');
 
   // A helper selected before its details load shows its stub, then its real statement.
   await page.goto(`${pageUrl}#/map/Fixture.Point.x`);
   const detail = page.getByRole('complementary', { name: 'Details' });
-  await expect(detail).toContainText('self : Fixture.Point', { timeout: 10_000 });
+  await expect(detail).toContainText('Fixture.Point.x (self : Point) : Int', { timeout: 10_000 });
 });
 
 test('a missing helpers file is reported, not hidden', async ({ page }) => {

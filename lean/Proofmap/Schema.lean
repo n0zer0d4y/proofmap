@@ -12,7 +12,7 @@ namespace Proofmap.Schema
 
 open Lean (Json ToJson toJson)
 
-def schemaVersion : Nat := 1
+def schemaVersion : Nat := 2
 
 private def nullable [ToJson α] : Option α → Json
   | some a => toJson a
@@ -47,7 +47,9 @@ structure Project where
   rootModules : Array String
   repoUrl : Option String := none
   repoRef : Option String := none
-  rootDir : String
+  /-- The project folder relative to the page (single-file pages only). Pages never record an
+  absolute path; the viewer finds the project from the page's own location. -/
+  pageToRoot : Option String := none
   builtAt : String
   roots : Array Nat
   standardAxioms : Array String
@@ -58,7 +60,7 @@ instance : ToJson Project where
   toJson p := Json.mkObj <|
     [("title", toJson p.title), ("rootModules", toJson p.rootModules),
      ("repoUrl", nullable p.repoUrl), ("repoRef", nullable p.repoRef),
-     ("rootDir", toJson p.rootDir), ("builtAt", toJson p.builtAt), ("roots", toJson p.roots),
+     ("pageToRoot", nullable p.pageToRoot), ("builtAt", toJson p.builtAt), ("roots", toJson p.roots),
      ("standardAxioms", toJson p.standardAxioms), ("footer", toJson p.footer)] ++
     (match p.preset with | some s => [("preset", toJson s)] | none => [])
 
