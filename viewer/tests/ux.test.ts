@@ -67,6 +67,12 @@ describe('outline', () => {
       expect(rows.some((r) => r.id === target)).toBe(true);
     }
   });
+  it('computes the children of each row once per page', () => {
+    const r = roots[0]!;
+    expect(outlineChildren(ix, r)).toBe(outlineChildren(ix, r));
+    // A rebuilt index (helper details loaded) starts afresh.
+    expect(outlineChildren(buildIndexes(data), r)).toEqual(outlineChildren(ix, r));
+  });
   it('lists theorems before definitions within a step', () => {
     for (const r of roots) {
       const kids = outlineChildren(ix, r);

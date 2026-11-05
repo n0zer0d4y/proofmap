@@ -7,7 +7,20 @@ import { reduceDeps } from './reduce';
  * section, then source position. The same result can be used in several places; in the tree it
  * is shown in full at its first place and as an "also used here" link elsewhere.
  */
-export function outlineChildren(ix: Indexes, id: number): number[] {
+export function outlineChildren(ix: Indexes, id: number): readonly number[] {
+  // The transitive reduction behind this is the costly part, and the outline, the tour, the map's
+  // "Show more" and Expand all ask for the same declarations again and again: computed once per
+  // page and declaration.
+  let cache = childrenCache.get(ix);
+  if (!cache) childrenCache.set(ix, (cache = new Map()));
+  let kids = cache.get(id);
+  if (!kids) cache.set(id, (kids = computeChildren(ix, id)));
+  return kids;
+}
+
+const childrenCache = new WeakMap<Indexes, Map<number, readonly number[]>>();
+
+function computeChildren(ix: Indexes, id: number): number[] {
   const d = ix.decls[id]!;
   const proof = reduceDeps(ix.decls, d.deps.proof, 'proof');
   const statement = reduceDeps(ix.decls, d.deps.statement, 'statement');

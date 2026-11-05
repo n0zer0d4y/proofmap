@@ -16,15 +16,54 @@ test('outline: roots, expansion, "also used here", selection, print mode', async
   const tree = page.getByRole('tree', { name: 'Outline of the main results' });
   const rootTitles = data.project.roots.map((r) => data.decls[r]!.title);
   for (const t of rootTitles) await expect(tree.getByRole('button', { name: t, exact: true }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Expand all' }).click();
+  await page.getByRole('button', { name: 'Expand all', exact: true }).click();
   // double_eq_add is used by both double_double and double_mono: once in full, once as a link.
   await expect(tree.getByRole('button', { name: '↪ also used here' }).first()).toBeVisible();
   await tree.getByRole('button', { name: 'Double equals add', exact: true }).first().click();
   await expect(page.locator('.detail .fullname-text')).toHaveText('Fixture.double_eq_add');
-  // Print mode: the outline becomes a document with statements; the chrome is hidden.
+  // Print mode: the outline becomes a document with statements; the chrome is hidden. The
+  // statements are made for printing only (Print / PDF, or the browser's own print).
+  await page.evaluate(() => (window.print = () => undefined));
+  await page.getByRole('button', { name: 'Print / PDF' }).click();
   await page.emulateMedia({ media: 'print' });
   await expect(page.locator('.header')).toBeHidden();
   await expect(tree.locator('.print-only .signature').first()).toBeVisible();
+  await page.emulateMedia({ media: 'screen' });
+});
+
+test('outline: printing gives the whole outline at full page width, not the visible window', async ({ page }) => {
+  // A short window, so the expanded outline is taller than the screen.
+  await page.setViewportSize({ width: 1000, height: 360 });
+  await page.goto(`${fixtureUrl}#/outline`);
+  await page.getByRole('button', { name: 'Expand all', exact: true }).click();
+  await page.evaluate(() => (window.print = () => undefined));
+  await page.getByRole('button', { name: 'Print / PDF' }).click();
+  await page.emulateMedia({ media: 'print' });
+  const tree = page.getByRole('tree', { name: 'Outline of the main results' });
+  await expect(tree.locator('.print-only .signature').first()).toBeVisible();
+  const layout = await tree.evaluate((el) => {
+    // Every box around the outline grows with it: none of them clips or scrolls its content.
+    const clipping: string[] = [];
+    for (let a: Element | null = el; a; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.overflowY !== 'visible' && a.scrollHeight > a.clientHeight + 1) clipping.push(`${a.tagName}.${a.className}`);
+    }
+    const rows = el.querySelectorAll('[role="treeitem"]');
+    return {
+      clipping,
+      treeWidth: el.getBoundingClientRect().width,
+      pageWidth: document.documentElement.clientWidth,
+      lastRowBottom: rows[rows.length - 1]!.getBoundingClientRect().bottom + window.scrollY,
+      docHeight: document.documentElement.scrollHeight,
+      detail: [...document.querySelectorAll('[data-panel]')].map((p) => p.getBoundingClientRect().width),
+    };
+  });
+  expect(layout.clipping).toEqual([]);
+  expect(layout.lastRowBottom).toBeGreaterThan(360);
+  expect(layout.lastRowBottom).toBeLessThanOrEqual(layout.docHeight + 1);
+  // The outline takes the page's width; the details panel leaves no empty column.
+  expect(layout.treeWidth).toBeGreaterThan(layout.pageWidth * 0.9);
+  expect(layout.detail.filter((w) => w > 0)).toHaveLength(1);
   await page.emulateMedia({ media: 'screen' });
 });
 
@@ -58,6 +97,9 @@ test('health numbers match the extracted data', async ({ page }) => {
 });
 
 test('guided tour visits the outline in order', async ({ page }) => {
+  // Every step of the tour (22 on the fixture), each with a layout: longer than the default limit
+  // when the machine is busy.
+  test.setTimeout(120_000);
   await page.goto(fixtureUrl);
   const expected = tourSteps(ix, data.project.roots).map((i) => data.decls[i]!.title);
   await page.getByRole('button', { name: 'Walk me through it' }).click();
@@ -100,4 +142,22 @@ test('export: the whole map as a real SVG and a PNG', async ({ page, browser }) 
   const png = readFileSync(await pngDl.path());
   expect(png.subarray(1, 4).toString()).toBe('PNG');
   expect(pngDl.suggestedFilename()).toMatch(/^Fixture-map\.png$/);
+});
+
+test('long names in lists wrap instead of being cut to an ellipsis, on a narrow window', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 800 });
+  await page.goto(`${fixtureUrl}#/health`);
+  await page.getByRole('button', { name: /Results and definitions/ }).click();
+  const names = page.locator('.health .decl-list .linklike');
+  await expect(names.first()).toBeVisible();
+  // Every name lies wholly inside its row (a row that clips would hide it behind an ellipsis).
+  const cut = await names.evaluateAll((els) =>
+    els
+      .filter((e) => {
+        const r = e.getBoundingClientRect(), row = e.closest('li')!.getBoundingClientRect();
+        return r.width < 8 || r.right > row.right + 1 || e.scrollWidth > e.clientWidth + 1;
+      })
+      .map((e) => e.textContent),
+  );
+  expect(cut).toEqual([]);
 });

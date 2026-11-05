@@ -66,14 +66,14 @@ export function App() {
     <div className="app">
       <Header ix={ix} />
       <main className="main">
-        <Group orientation="horizontal" style={{ height: '100%' }}>
-          <Panel defaultSize="64%" minSize="30%">
+        <Group className="panels" orientation="horizontal" style={{ height: '100%' }}>
+          <Panel className="view-panel" defaultSize="64%" minSize="30%">
             <div className="panel" style={{ overflow: 'hidden' }}>
               <CurrentView ix={ix} />
             </div>
           </Panel>
           <Separator className="separator" aria-label="Resize details panel" />
-          <Panel defaultSize="36%" minSize="20%">
+          <Panel className="detail-panel" defaultSize="36%" minSize="20%">
             <div className="panel">
               <DetailPanel ix={ix} />
             </div>

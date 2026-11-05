@@ -21,16 +21,22 @@ test('cards show title, summary chip, kind and counts; + shows what a card rests
   await expect(dm.locator('.signature')).toHaveCount(0);
 });
 
-test('cards preview the statement without repeating the name, with linked names', async ({ page }) => {
+test('cards show the statement without repeating the name, with linked names', async ({ page }) => {
   await page.goto(`${fixtureUrl}#/map?preset=mathematician`);
   const main = card(page, 'Fixture.main_result');
   const dm = card(page, 'Fixture.double_mono');
   await expect(dm.locator('.signature')).toBeVisible();
   await expect(dm.locator('.signature')).not.toContainText('Fixture.double_mono');
-  // No scroll bar inside a card: the preview is clamped instead.
+  // The whole statement can be read on the card: nothing is cut off or faded; a statement longer
+  // than the box scrolls (the scroll bar appears only then).
   for (const c of [main, dm]) {
-    const scrolls = await c.locator('*').evaluateAll((els) => els.filter((e) => getComputedStyle(e).overflowY === 'auto' || getComputedStyle(e).overflowY === 'scroll').length);
-    expect(scrolls).toBe(0);
+    const sig = await c.locator('.signature').evaluate((e) => {
+      const s = getComputedStyle(e);
+      return { overflowY: s.overflowY, mask: s.maskImage || s.webkitMaskImage || 'none', fits: e.scrollHeight <= e.clientHeight, noWheel: e.classList.contains('nowheel') };
+    });
+    expect(sig.overflowY).toBe('auto');
+    expect(sig.mask === 'none' || sig.mask === '').toBe(true);
+    expect(sig.noWheel).toBe(true);
   }
   await dm.locator('.sig-link', { hasText: 'Fixture.double' }).first().click();
   await expect(page.getByRole('complementary', { name: 'Details' })).toContainText('Fixture.double');
@@ -143,4 +149,43 @@ test('controls: fit, minimap, filters, show more, back to main result', async ({
   await expect(page.locator('.toolbar-title')).toContainText('Double monotone');
   await page.getByRole('button', { name: 'Back to main result' }).click();
   await expect(page.locator('.toolbar-title')).toContainText('Main result');
+});
+
+test('code in cards scrolls inside the card instead of being cut off', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.main_result`);
+  await page.getByRole('checkbox', { name: 'Code in cards' }).check();
+  const code = page.locator('[data-decl="Fixture.main_result"] .card-code');
+  await expect(code).toBeVisible();
+  expect(await code.evaluate((e) => getComputedStyle(e).overflowY)).toBe('auto');
+  expect(await code.evaluate((e) => e.classList.contains('nowheel'))).toBe(true);
+});
+
+test('a highlighted chain draws its lines in the highlight colour, as moving dashes', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.tainted_result`);
+  const item = page.getByRole('complementary', { name: 'Details' }).locator('.why-item', { hasText: 'Fixture.customAxiom' });
+  await item.getByRole('button', { name: 'Why?' }).click();
+  await item.getByRole('button', { name: 'Show on map' }).click();
+  const line = page.locator('.react-flow__edge.highlighted path').first();
+  await expect(line).toBeAttached();
+  const style = await line.evaluate((e) => ({ dash: getComputedStyle(e).strokeDasharray, animation: getComputedStyle(e).animationName }));
+  expect(style.dash).not.toBe('none');
+  expect(style.animation).toBe('proofmap-flow');
+});
+
+test('a statement longer than its box scrolls inside the card, nothing is cut off', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.main_result`);
+  const sig = page.locator('[data-decl="Fixture.main_result"] .signature');
+  await expect(sig).toBeVisible();
+  // Shrink the box so the statement is longer than it: it must scroll to its end.
+  const end = await sig.evaluate((e) => {
+    e.style.maxHeight = '30px';
+    e.scrollTop = e.scrollHeight;
+    return { scrolled: e.scrollTop > 0, overflowY: getComputedStyle(e).overflowY };
+  });
+  expect(end).toEqual({ scrolled: true, overflowY: 'auto' });
+});
+
+test('the main result control says what it is', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map`);
+  await expect(page.locator('.map-toolbar .toolbar-title')).toContainText('Main result');
 });

@@ -5,18 +5,45 @@ import { StatusBadge } from '../components/StatusBadge';
 import type { Indexes } from '../data/indexes';
 import { declNodeId, type Folded } from '../graph/fold';
 import { findPaths, reachable, relation } from '../graph/paths';
+import { isCoreLibrary, libraryOf } from '../data/library';
 import { useStore } from '../state/store';
 import { edgeTypes, IxContext, nodeTypes, useLaidOutGraph } from './MapView';
 
 const NO_HIGHLIGHT: ReadonlySet<string> = new Set();
 
-/** Choices for the other end of a path: main results first, then nearest first, then by name. */
+/** Where a declaration comes from, for ordering choices: this project, other libraries, Lean core. */
+function origin(ix: Indexes, id: number): number {
+  const d = ix.decls[id]!;
+  return !d.external ? 0 : isCoreLibrary(libraryOf(d.module)) ? 2 : 1;
+}
+
+/** Choices for the other end of a path: the project's own first (Lean core last), main results
+ * first, then nearest first, then by name. */
 function ordered(ix: Indexes, m: Map<number, number> | null): number[] | undefined {
   if (!m) return undefined;
   const roots = new Set(ix.data.project.roots);
   return [...m.keys()].sort(
-    (a, b) => Number(roots.has(b)) - Number(roots.has(a)) || m.get(a)! - m.get(b)! || ix.decls[a]!.name.localeCompare(ix.decls[b]!.name),
+    (a, b) =>
+      origin(ix, a) - origin(ix, b) ||
+      Number(roots.has(b)) - Number(roots.has(a)) ||
+      m.get(a)! - m.get(b)! ||
+      ix.decls[a]!.name.localeCompare(ix.decls[b]!.name),
   );
+}
+
+/** Before anything is chosen: every project declaration that can start a path (something rests on
+ * it), the most used first, and every one that can end a path (it rests on something), main
+ * results first, then the ones resting on most. */
+function startChoices(ix: Indexes): { from: number[]; to: number[] } {
+  const users = (id: number) => new Set([...ix.usedBy.statement[id]!, ...ix.usedBy.proof[id]!].filter((u) => !ix.isNoise(u))).size;
+  const uses = (id: number) => new Set([...ix.decls[id]!.deps.statement, ...ix.decls[id]!.deps.proof].filter((u) => !ix.isNoise(u))).size;
+  const own = ix.visible.filter((id) => !ix.decls[id]!.external);
+  const roots = new Set(ix.data.project.roots);
+  const byName = (a: number, b: number) => ix.decls[a]!.name.localeCompare(ix.decls[b]!.name);
+  return {
+    from: own.filter((id) => users(id) > 0).sort((a, b) => users(b) - users(a) || byName(a, b)),
+    to: own.filter((id) => uses(id) > 0).sort((a, b) => Number(roots.has(b)) - Number(roots.has(a)) || uses(b) - uses(a) || byName(a, b)),
+  };
 }
 
 /** Path finder: how does one result lead to another? Every chain within the
@@ -48,6 +75,7 @@ export function PathsView({ ix }: { ix: Indexes }) {
   const ups = useMemo(() => (from !== null ? reachable(ix, from, 'up') : null), [ix, from]);
   const downs = useMemo(() => (to !== null ? reachable(ix, to, 'down') : null), [ix, to]);
   const toChoices = useMemo(() => ordered(ix, ups), [ix, ups]);
+  const start = useMemo(() => startChoices(ix), [ix]);
   const fromChoices = useMemo(() => ordered(ix, downs), [ix, downs]);
   const toAllowed = useMemo(() => (ups ? new Set(ups.keys()) : undefined), [ups]);
   const fromAllowed = useMemo(() => (downs ? new Set(downs.keys()) : undefined), [downs]);
@@ -58,28 +86,42 @@ export function PathsView({ ix }: { ix: Indexes }) {
     <div className="paths">
       <div className="paths-form" role="group" aria-label="Choose two results">
         <label>
-          From (foundation){fromChoices && <span className="muted"> · {fromChoices.length} lead to {name(to)!.title}</span>}
+          <span className="paths-label">
+            From (foundation)
+            {fromChoices && (
+              <span className="paths-hint">
+                {fromChoices.length} lead to {name(to)!.title}
+              </span>
+            )}
+          </span>
           <DeclSearch
             ix={ix}
             onChoose={chooseFrom}
-            placeholder={name(from)?.title ?? (fromChoices ? 'Choose or search…' : 'Search…')}
+            placeholder={name(from)?.title ?? 'Choose or search…'}
             label="Path from"
             allowed={fromAllowed}
-            suggestions={fromChoices}
+            suggestions={fromChoices ?? start.from}
           />
         </label>
         <button className="icon-button" onClick={() => setPath(to, from)} aria-label="Swap from and to" disabled={from === null && to === null}>
           ⇄
         </button>
         <label>
-          To (result){toChoices && <span className="muted"> · {toChoices.length} rest on {name(from)!.title}</span>}
+          <span className="paths-label">
+            To (result)
+            {toChoices && (
+              <span className="paths-hint">
+                {toChoices.length} rest on {name(from)!.title}
+              </span>
+            )}
+          </span>
           <DeclSearch
             ix={ix}
             onChoose={chooseTo}
-            placeholder={name(to)?.title ?? (toChoices ? 'Choose or search…' : 'Search…')}
+            placeholder={name(to)?.title ?? 'Choose or search…'}
             label="Path to"
             allowed={toAllowed}
-            suggestions={toChoices}
+            suggestions={toChoices ?? start.to}
           />
         </label>
         <span className="paths-chosen">

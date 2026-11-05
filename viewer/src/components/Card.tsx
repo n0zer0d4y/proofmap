@@ -17,18 +17,19 @@ const SOURCE_CHIP: Record<string, string> = {
   ai: 'AI',
 };
 
-/** Estimated card height, so layout does not wait for the DOM. Cards are compact: the statement
- * is a preview of at most 4 lines and code at most 12, so heights stay close to each other. */
+/** Estimated card height, so layout does not wait for the DOM. The statement is a preview of at
+ * most 4 lines; code is shown in a scrolling block of at most 16 lines. */
 export function cardHeight(ix: Indexes, id: number, statement: boolean, code: boolean): number {
   const d = ix.decls[id]!;
-  const sigLines = statement ? Math.min(d.signature.split('\n').length + Math.floor(d.signature.length / 44), 4) : 0;
-  const codeLines = code && d.code ? Math.min(d.code.split('\n').length, 12) : 0;
+  const sigLines = statement ? Math.min(d.signature.split('\n').length + Math.floor(d.signature.length / 44), 8) : 0;
+  const codeLines = code && d.code ? Math.min(d.code.split('\n').length, 16) : 0;
   return 104 + (sigLines ? sigLines * 17 + 12 : 0) + (codeLines ? codeLines * 15 + 18 : 0);
 }
 
 /** A declaration card: title, Lean name, a statement preview (or the summary), kind, status and
- * counts. "+" shows what it rests on, without changing the card; the selected card adds its links
- * (and its code with "Code in cards"). The full statement is in the details panel. */
+ * counts. "+" shows what it rests on; with "Code in cards", opened and selected cards also show
+ * their code in a scrolling block. The selected card adds its links. The full statement is in the
+ * details panel. */
 export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
   const d = ix.decls[id]!;
   const focus = useStore((s) => s.focus);
@@ -79,7 +80,8 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
         </div>
       )}
       {showStatement && <Statement decl={d} ix={ix} onSelect={select} compact />}
-      {selected && showCode && d.code && <pre className="card-code">{d.code}</pre>}
+      {/* Code scrolls inside the card (and scrolling it does not zoom the map). */}
+      {(selected || expanded) && showCode && d.code && <pre className="card-code nowheel nodrag">{d.code}</pre>}
       <div className="card-foot">
         <span className="badge">{d.kind}</span>
         {!d.external && (

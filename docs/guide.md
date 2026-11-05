@@ -23,17 +23,17 @@ Every status is shown by colour **and** by an icon and words, so it reads withou
 
 The map starts at a main result and shows what it rests on, laid out left to right with the result on the right; arrows point from what is used to what uses it. It shows a readable amount at a time: helpers that Lean generates (instances, auxiliary lemmas, matchers) are hidden, and declarations from other libraries are gathered into one card per library (Mathlib, Lean core). Lean core is hidden for readers and mathematicians.
 
-- **Cards** show a declaration's status, title, Lean name, a short preview of its statement (or its one-line summary), and how many results of the project it uses and how many use it. Click a card to select it; the details panel then shows it in full. **+** (or Enter) shows what the card rests on.
+- **Cards** show a declaration's status, title, Lean name, its statement (or its one-line summary; a long statement scrolls inside the card), and how many results of the project it uses and how many use it. Click a card to select it; the details panel then shows it in full. **+** (or Enter) shows what the card rests on.
 - **Edges** read as sentences (hover one): a solid line means "is used in the proof of", a dashed line "appears in the statement of", a dotted line "is used through hidden helpers".
 - **Group cards** ("+12 in The prime case") and library cards open in place.
-- **Toolbar:** the main result shown (a list when the project has several), _Fit_, _Find selected_, _Focus map here_ (rebuild the map around the selection), _Show more around this_ (one more ring of what the selection rests on, each click), _Back to main result_, the _Other libraries_, _Lean core_, _Generated helpers_ and _Code in cards_ switches, and _SVG_ / _PNG_.
+- **Toolbar:** _Main result_, the result the map is built around (a list when the project has several), _Fit_, _Find selected_, _Focus map here_ (rebuild the map around the selection), _Show more around this_ (one more ring of what the selection rests on, each click), _Back to main result_, the _Other libraries_, _Lean core_, _Generated helpers_ and _Code in cards_ switches, and _SVG_ / _PNG_.
 - **Keyboard:** with the map focused, arrow keys move between cards, Enter shows what a card rests on, Escape hides it, `f` builds the map around the selection, `p` picks it for the path finder. On a toolbar button or switch, keys act on that control.
 - **Following a link:** selecting something that is not on the map (from search, a link, the health view or a statement) rebuilds the map around it.
 - The view keeps cards readable: it opens at a zoom where text can be read, and pans to cards as they appear. The legend can be folded away.
 
 ### Outline
 
-The proof as a table of contents: each main result, then what it rests on (theorems before definitions), indented, each with its summary. A declaration used in several places appears in full the first time and as "also used here" afterwards. _Expand all_ and _Collapse all_ open and close every row (on very large projects, Expand all stops before 5,000 rows). Selecting something opens the outline down to it. What is open and where you scrolled stay as they were when you come back from another view. The outline prints well (the print layout drops the controls).
+The proof as a table of contents: each main result, then what it rests on (theorems before definitions), indented, each with its summary. A declaration used in several places appears in full the first time and as "also used here" afterwards. _Expand all_ and _Collapse all_ open and close every row (on very large projects, Expand all stops before 2,000 rows). Selecting something opens the outline down to it. What is open and where you scrolled stay as they were when you come back from another view. _Print / PDF_ prints the outline as it is open, with each declaration's statement, across as many pages as it needs at full page width; the controls and the details panel are left out.
 
 ![The outline view](images/outline.png)
 
@@ -58,7 +58,7 @@ Walkthroughs are in the page only when it was built with `proofmap build --walkt
 
 ### Path finder
 
-Pick a **from** and a **to** (search boxes, or `p` on the map). Once one end is chosen, the other box offers only the declarations that connect to it; click the box to see them. The page shows the chains between them up to a length limit, shortest first, as a small map, and the shortest one as a numbered list in plain words: "`Int.lt_of_sum_four_squares_eq_mul` is used in the proof of `Int.exists_sq_add_sq_add_one_eq_mul`, which is used in the proof of ...".
+Pick a **from** and a **to** (search boxes, or `p` on the map). Click a box to see its choices without typing. Once one end is chosen, the other box offers only the declarations that connect to it, the project's own first. The page shows the chains between them up to a length limit, shortest first, as a small map, and the shortest one as a numbered list in plain words: "`Int.lt_of_sum_four_squares_eq_mul` is used in the proof of `Int.exists_sq_add_sq_add_one_eq_mul`, which is used in the proof of ...".
 
 ### Health
 

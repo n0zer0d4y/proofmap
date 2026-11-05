@@ -96,6 +96,7 @@ function sentence(ix: Indexes, e: MapEdge, byId: Map<string, MapNode>): string {
  */
 export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: ReadonlySet<string>, resetKey: unknown) {
   const flow = useReactFlow();
+  const expanded = useStore((s) => s.expanded);
   const showCode = useStore((s) => s.showCode);
   const statementsExpanded = useStore((s) => s.statementsExpanded);
   const focus = useStore((s) => s.focus);
@@ -126,10 +127,10 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
         height:
           measured[n.id]?.height ??
           (n.kind === 'decl'
-            ? cardHeight(ix, n.decl!, statementsExpanded, showCode && n.decl === focus)
+            ? cardHeight(ix, n.decl!, statementsExpanded, showCode && (n.decl === focus || expanded.has(n.decl!)))
             : 96),
       })),
-    [folded, ix, statementsExpanded, showCode, focus, measured],
+    [folded, ix, statementsExpanded, showCode, focus, expanded, measured],
   );
   const sizeOf = useCallback((id: string) => sizes.find((s) => s.id === id) ?? { width: CARD_WIDTH, height: 112 }, [sizes]);
 
@@ -184,10 +185,17 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
       const fit = Math.min(box.width / b.width, box.height / b.height) * 0.9;
       const zoom = Math.max(MIN_READABLE_ZOOM, Math.min(Math.max(v.zoom, MIN_READABLE_ZOOM), fit));
       const duration = animate ? 300 : 0;
+      let cx = b.x + b.width / 2, cy = b.y + b.height / 2;
       if (fit < MIN_READABLE_ZOOM && sel && positions[sel]) {
         const p = positions[sel]!, s = sizeOf(sel);
-        void flow.setCenter(p.x + s.width / 2 + box.width / zoom / 6, p.y + s.height / 2, { zoom, duration });
-      } else void flow.setCenter(b.x + b.width / 2, b.y + b.height / 2, { zoom, duration });
+        cx = p.x + s.width / 2 + box.width / zoom / 6;
+        cy = p.y + s.height / 2;
+      }
+      // Already there (within a few pixels): no new move, so small layout updates do not keep the
+      // view animating.
+      const cur = { x: left + box.width / v.zoom / 2, y: top + box.height / v.zoom / 2 };
+      if (Math.abs(cur.x - cx) * zoom < 12 && Math.abs(cur.y - cy) * zoom < 12 && Math.abs(v.zoom - zoom) < 0.01) return;
+      void flow.setCenter(cx, cy, { zoom, duration });
     };
     if (!fitted.current) {
       if (!allMeasured) return;
@@ -257,7 +265,7 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
       // Read aloud instead of React Flow's "Edge from d12 to d40"; edges are not Tab stops.
       ariaLabel: text,
       focusable: false,
-      markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: tainted ? STATUS_COLOR[tainted] : 'var(--edge)' },
+      markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: onChain ? 'var(--axiom)' : tainted ? STATUS_COLOR[tainted] : 'var(--edge)' },
       data: { edge: e, sentence: text, tainted },
     };
   });
@@ -524,7 +532,7 @@ function MapToolbar({
     <div className="map-toolbar" role="toolbar" aria-label="Map controls">
       {roots.length > 1 ? (
         <label className="toolbar-title">
-          <span className="sr-only">Main result shown on the map</span>★{' '}
+          <span className="toolbar-label">★ Main result</span>
           <select
             className="control"
             value={roots.includes(anchor) ? String(anchor) : ''}
@@ -545,7 +553,8 @@ function MapToolbar({
         </label>
       ) : (
         <span className="toolbar-title" title={ix.decls[anchor]!.name}>
-          ★ {ix.decls[anchor]!.title}
+          <span className="toolbar-label">★ Main result</span>
+          {ix.decls[anchor]!.title}
         </span>
       )}
       <button className="icon-button" onClick={onFit}>

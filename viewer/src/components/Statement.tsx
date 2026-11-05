@@ -57,5 +57,6 @@ export function Statement({ decl, ix, onSelect, compact = false }: { decl: Decl;
     at = h.end;
   }
   if (at < cps.length) parts.push(cps.slice(at).join(''));
-  return <pre className={compact ? 'signature compact' : 'signature'}>{parts}</pre>;
+  // On a card, a long statement scrolls; scrolling it does not zoom the map.
+  return <pre className={compact ? 'signature compact nowheel nodrag' : 'signature'}>{parts}</pre>;
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { fixtureUrl } from './helpers';
@@ -34,11 +35,11 @@ test('outline: expand all and collapse all', async ({ page }) => {
   await page.goto(`${fixtureUrl}#/outline`);
   const rows = page.locator('[data-view="outline"] [role="treeitem"]');
   const roots = await rows.count();
-  await page.getByRole('button', { name: 'Expand all' }).click();
+  await page.getByRole('button', { name: 'Expand all', exact: true }).click();
   await expect.poll(() => rows.count()).toBeGreaterThan(roots);
   // Everything is open: no closed row is left.
   await expect(page.locator('[data-view="outline"] [aria-expanded="false"]')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Collapse all' }).click();
+  await page.getByRole('button', { name: 'Collapse all', exact: true }).click();
   await expect(page.locator('[data-view="outline"] [aria-expanded="true"]')).toHaveCount(0);
 });
 
@@ -63,4 +64,26 @@ test('compare: a file that is not proofmap data is reported', async ({ page }) =
   await page.goto(`${fixtureUrl}#/compare`);
   await page.locator('[data-view="compare"] input[type="file"]').setInputFiles({ name: 'notes.json', mimeType: 'application/json', buffer: Buffer.from('{"hello": 1}') });
   await expect(page.locator('[data-view="compare"]')).toContainText('Could not read notes.json');
+});
+
+test('path finder: the choice count sits on the label line, so the bar keeps its height', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/paths`);
+  const bar = page.locator('.paths-form');
+  const empty = (await bar.boundingBox())!.height;
+  await page.goto(`${fixtureUrl}#/paths?from=Fixture.double`);
+  await expect(page.locator('.paths-hint')).toContainText('rest on');
+  expect((await bar.boundingBox())!.height).toBe(empty);
+});
+
+test('path finder: an empty box lists its choices on click, the project first', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/paths`);
+  await page.getByRole('combobox', { name: 'Path from' }).click();
+  const options = page.getByRole('listbox', { name: 'Path from: results' }).getByRole('option');
+  await expect(options.first()).toBeVisible();
+  // Starts that something rests on, from this project (no Lean core basics such as Eq or Nat).
+  const data = JSON.parse(readFileSync(fixtureFile('fixture.json'), 'utf8')) as { decls: { name: string; external: boolean }[] };
+  const own = new Set(data.decls.filter((d) => !d.external).map((d) => d.name));
+  const names = await options.locator('.hit-name').allTextContents();
+  expect(names.length).toBeGreaterThan(3);
+  expect(names.filter((n) => !own.has(n))).toEqual([]);
 });

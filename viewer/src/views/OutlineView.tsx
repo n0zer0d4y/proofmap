@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { MarkdownInline } from '../components/Markdown';
 import { Statement } from '../components/Statement';
 import { StatusBadge } from '../components/StatusBadge';
@@ -7,7 +8,7 @@ import { outlinePathTo, outlineRows } from '../graph/outline';
 import { useStore } from '../state/store';
 
 /** Expand all stops before the outline would show more rows than this at once. */
-const MAX_ROWS = 5000;
+const MAX_ROWS = 2000;
 
 /**
  * The outline: the same information as the map, as a collapsible list that
@@ -58,6 +59,20 @@ export function OutlineView({ ix }: { ix: Indexes }) {
   };
   const firstRow = (id: number) => document.getElementById(`outline-${id}`);
 
+  // The statements for print are made only for printing (the button, or the browser's own print):
+  // kept on screen for every row, they made a large outline slow to open and close.
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    const before = () => flushSync(() => setPrinting(true));
+    const after = () => setPrinting(false);
+    window.addEventListener('beforeprint', before);
+    window.addEventListener('afterprint', after);
+    return () => {
+      window.removeEventListener('beforeprint', before);
+      window.removeEventListener('afterprint', after);
+    };
+  }, []);
+
   // Restore the scroll position on return, and remember it while scrolling.
   const scroller = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -106,6 +121,7 @@ export function OutlineView({ ix }: { ix: Indexes }) {
         <button
           className="icon-button"
           onClick={() => {
+            flushSync(() => setPrinting(true));
             document.documentElement.classList.add('printing');
             window.print();
             setTimeout(() => document.documentElement.classList.remove('printing'), 500);
@@ -187,7 +203,7 @@ export function OutlineView({ ix }: { ix: Indexes }) {
                   )}
                 </div>
               )}
-              {r.first && (
+              {r.first && printing && (
                 <div className="print-only">
                   <Statement decl={d} ix={ix} onSelect={select} />
                 </div>

@@ -100,6 +100,7 @@ code, pre, .mono { font-family: var(--mono); font-size: 0.92em; }
 .search li { padding: 6px 8px; border-radius: 6px; cursor: pointer; }
 .search li[aria-selected='true'] { background: var(--bg-sunken); }
 .search .hit-name { color: var(--fg-muted); font-size: 12px; }
+.search .hit-module { font-size: 11px; }
 
 /* Main area */
 .main { flex: 1; min-height: 0; }
@@ -165,6 +166,7 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .react-flow__minimap-mask { fill: color-mix(in srgb, var(--bg) 70%, transparent); stroke: var(--border); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .toolbar-title select { font-weight: 600; width: 230px; flex: none; text-overflow: ellipsis; }
+.toolbar-title .toolbar-label { font-weight: 400; color: var(--fg-muted); margin-right: 6px; }
 .map-toolbar .toolbar-title:has(select) { flex: none; max-width: none; overflow: visible; }
 .map-card { background: var(--bg-raised); border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--radius);
   padding: 8px 10px; box-shadow: var(--shadow); font-size: 13px; color: var(--fg); cursor: pointer; }
@@ -182,13 +184,12 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .card-foot { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--fg-muted); }
 .card-foot .counts { white-space: nowrap; }
 .card-toggle { border: 1px solid var(--border); background: var(--bg); border-radius: 6px; padding: 0 8px; cursor: pointer; min-width: 26px; }
-.card-code { max-height: calc(12 * 1.4em); overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.4; background: var(--bg-sunken); border-radius: 6px; padding: 6px 8px; margin: 6px 0 0; }
+.card-code { max-height: calc(16 * 1.4em); overflow: auto; white-space: pre; font-size: 11px; line-height: 1.4; background: var(--bg-sunken); border-radius: 6px; padding: 6px 8px; margin: 6px 0 0; }
 .card-links { display: flex; gap: 10px; margin-top: 6px; font-size: 12px; }
 .card-links a { color: var(--accent); }
-/* Cards show a preview of the statement: at most 4 lines, wrapped, never a scroll bar inside a card.
-   The full statement is in the details panel. */
-.map-card .signature { font-size: 11.5px; line-height: 1.45; max-height: calc(4 * 1.45em + 12px); overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2em), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2em), transparent); }
+/* Cards show the statement, wrapped, up to 8 lines high; a longer one scrolls inside the card
+   (the scroll bar appears only then). */
+.map-card .signature { font-size: 11.5px; line-height: 1.45; max-height: calc(8 * 1.45em + 12px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px; }
 .sig-link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; }
 .map-toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: var(--bg-raised);
   border-bottom: 1px solid var(--border); padding: 6px 10px; }
@@ -215,7 +216,11 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .detail details > summary { cursor: pointer; color: var(--fg-muted); font-size: 12px; margin-bottom: 6px; }
 .detail .filter { width: 100%; margin-bottom: 6px; }
 .decl-list { margin: 0; padding-left: 0; list-style: none; }
-.decl-list li { padding: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A long name wraps (at dots and underscores if it must) rather than being cut: names are buttons,
+   and a cut button shows nothing but the ellipsis. */
+.decl-list li { padding: 1px 0; display: flex; gap: 4px; align-items: baseline; min-width: 0; }
+.decl-list li > .linklike { text-align: left; min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+.decl-list li > .status { flex: none; }
 .why { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; background: var(--bg-sunken); }
 .why-item + .why-item { margin-top: 8px; }
 .chain { margin: 6px 0; padding-left: 22px; }
@@ -236,13 +241,19 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .term:hover .term-card, .term:focus .term-card { display: block; }
 /* Highlighted chain on the map */
 .react-flow__node.highlighted .map-card { outline: 3px solid var(--axiom); outline-offset: 2px; }
-.react-flow__edge.highlighted path:first-of-type { stroke-width: 3 !important; }
+/* A highlighted chain (a tour step's way down, a "Why?" chain): its lines take the cards' orange
+   and run as moving dashes from what is used to what uses it. Still for readers who ask for less motion. */
+.react-flow__edge.highlighted path:first-of-type { stroke: var(--axiom) !important; stroke-width: 2.5 !important; stroke-dasharray: 9 6 !important; animation: proofmap-flow 0.9s linear infinite; }
+@keyframes proofmap-flow { to { stroke-dashoffset: -15; } }
+@media (prefers-reduced-motion: reduce) { .react-flow__edge.highlighted path:first-of-type { animation: none; } }
 
 /* Outline */
 .outline { height: 100%; overflow: auto; }
 .outline-toolbar { display: flex; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--border); background: var(--bg-raised); position: sticky; top: 0; z-index: 2; }
 .outline ul[role='tree'] { list-style: none; margin: 0; padding: 8px 0; }
 .outline-row { padding: 4px 12px; border-left: 3px solid transparent;
+  /* Rows out of view are not laid out or painted, so a long outline stays quick. */
+  content-visibility: auto; contain-intrinsic-size: auto 46px;
   /* Indent guides: one faint line per level. */
   background-image: repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px 20px);
   background-size: calc(var(--depth, 0) * 20px) 100%; background-repeat: no-repeat; background-position: 15px 0; }
@@ -260,6 +271,9 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .paths { display: flex; flex-direction: column; height: 100%; }
 .paths-form { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-raised); }
 .paths-form label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--fg-muted); }
+/* The label and how many choices connect, on one line, so the bar keeps its height. */
+.paths-label { display: flex; gap: 8px; align-items: baseline; white-space: nowrap; }
+.paths-hint { color: var(--accent); max-width: 32ch; overflow: hidden; text-overflow: ellipsis; }
 .paths-chosen { font-size: 12px; color: var(--fg-muted); }
 .paths-summary { padding: 8px 16px; border-bottom: 1px solid var(--border); max-height: 35%; overflow: auto; }
 .paths-summary h3 { font-size: 13px; margin: 0 0 4px; }
@@ -280,6 +294,7 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .muted { color: var(--fg-muted); }
 .columns { columns: 3 22ch; }
+.columns > li { break-inside: avoid; }
 .progress { display: grid; grid-template-columns: minmax(0, 1fr) 120px 6ch; gap: 8px; align-items: center; font-size: 12px; margin: 2px 0; }
 .progress-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar { height: 8px; background: var(--sorry-bg); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
@@ -298,8 +313,13 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 @media print {
   .header, .footer, .separator, .detail, .outline-toolbar, .tour, .chevron { display: none !important; }
   .print-only { display: block; }
-  .main, .panel, .outline { height: auto !important; overflow: visible !important; }
-  [data-panel] { flex: 1 1 100% !important; }
+  /* One full-width column that grows with the outline, so the printer paginates all of it
+     instead of the visible window: the panels' screen sizes and scroll boxes are undone. */
+  html, body, #root, .app, .main, .panels, .view-panel, .panel, .outline {
+    height: auto !important; max-height: none !important; overflow: visible !important; }
+  .app, .panels, .panels > [data-panel] { display: block !important; }
+  .panels > [data-panel] { width: 100% !important; flex: none !important; overflow: visible !important; }
+  .panels > [data-panel]:has(> .detail-panel) { display: none !important; }
   .outline-row { break-inside: avoid; }
 }
 
@@ -351,3 +371,4 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .wt-steps .linklike { text-decoration: none; text-align: left; }
 .wt-case { font-size: 11px; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
 .outline-note { margin: 8px 12px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-sunken); font-size: 13px; }
+@media print { .outline-row { content-visibility: visible; } }

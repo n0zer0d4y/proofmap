@@ -31,7 +31,7 @@ export function DeclSearch({
   const input = inputRef ?? own;
   const hits = useMemo(() => {
     const q = query.trim();
-    if (!q) return (suggestions ?? []).slice(0, 40).map((id) => ({ id, name: ix.decls[id]!.name, title: ix.decls[id]!.title }));
+    if (!q) return (suggestions ?? []).slice(0, 100).map((id) => ({ id, name: ix.decls[id]!.name, title: ix.decls[id]!.title }));
     if (!allowed) return ix.search(q, 12);
     return ix.search(q, 1000).filter((h) => allowed.has(h.id)).slice(0, 12);
   }, [ix, query, allowed, suggestions]);
@@ -93,6 +93,8 @@ export function DeclSearch({
             >
               <div>{h.title}</div>
               <div className="hit-name mono">{h.name}</div>
+              {/* The same name in several modules: say which one. */}
+              {(ix.byName.get(h.name)?.length ?? 0) > 1 && <div className="hit-module muted">{ix.decls[h.id]!.module}</div>}
             </li>
           ))}
         </ul>
