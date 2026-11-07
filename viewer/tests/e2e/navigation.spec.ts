@@ -48,6 +48,28 @@ test('the tour shows each step on the map, and Escape ends it', async ({ page })
   await expect(tour).toBeHidden();
 });
 
+test('the tour panel belongs to the map: above the legend, gone on other views, back on the map', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(`${fixtureUrl}#/map`);
+  await page.getByRole('button', { name: 'Walk me through it' }).click();
+  const tour = page.getByRole('dialog', { name: 'Guided tour' });
+  await tour.getByRole('button', { name: 'Next →' }).click();
+  await expect(tour).toContainText('Step 2 of');
+  // Stacked above the legend: the two boxes do not overlap.
+  const legend = page.locator('.map-legend');
+  const t = (await tour.boundingBox())!;
+  const l = (await legend.boundingBox())!;
+  expect(t.y + t.height).toBeLessThanOrEqual(l.y);
+  // Other views do not show it.
+  for (const tab of ['Health', 'Outline']) {
+    await page.getByRole('tab', { name: tab }).click();
+    await expect(tour).toBeHidden();
+  }
+  // Back on the map, the tour is where it was.
+  await page.getByRole('tab', { name: 'Map' }).click();
+  await expect(tour).toContainText('Step 2 of');
+});
+
 test('a link to a declaration not on the map rebuilds the map around it', async ({ page }) => {
   await page.goto(`${fixtureUrl}#/map/Fixture.tainted_result`);
   await expect(page.locator('[data-decl="Fixture.tainted_result"]')).toBeVisible();

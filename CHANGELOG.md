@@ -55,6 +55,7 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - A link or a click that selected a declaration not on the map left the map unchanged.
 - Enter, Escape, the arrow keys, `f` and `p` on a map toolbar control acted on the map instead of the control.
 - The guided tour drove an open walkthrough, or ran out of sight on the health and outline views; Escape did not end it.
+- The guided tour's panel stayed on screen on every view and covered the map's legend. It now belongs to the map: it sits above the legend, is hidden on other views, and is back at the same step when you return to the map.
 - Escape on the About dialog also closed an open walkthrough.
 - Back after opening a walkthrough dropped the selection.
 - Display settings such as "Code in cards" reset to the preset's defaults on every navigation.

@@ -300,8 +300,10 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .bar { height: 8px; background: var(--sorry-bg); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
 .bar > span { display: block; height: 100%; background: var(--ok); }
 /* Tour */
-/* Over the map's lower left, so the details panel stays readable during the tour. */
-.tour { position: fixed; left: 24px; bottom: 48px; z-index: 40; width: min(420px, calc(100vw - 48px)); max-height: 60vh; overflow: auto;
+/* In the map's lower left corner, above the legend: the tour shows each step on the map, so it
+   appears only there, and the details panel stays readable beside it. */
+.map-corner { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: calc(100% - 30px); }
+.tour { width: min(420px, calc(100vw - 48px)); max-height: 50vh; overflow: auto;
   background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; }
 .tour h3 { margin: 4px 0 6px; font-size: 16px; }
 .tour-head { display: flex; justify-content: space-between; }

@@ -9,7 +9,6 @@ import { helperDetailsPending, loadHelperDetails } from './data/wire';
 import { compare } from './graph/compare';
 import { PRESETS, type Preset } from './state/presets';
 import { syncWithUrl, useStore } from './state/store';
-import { TourPanel } from './components/Tour';
 import { HealthView } from './views/HealthView';
 import { MapView } from './views/MapView';
 import { OutlineView } from './views/OutlineView';
@@ -87,7 +86,6 @@ export function App() {
       )}
       <StatusLine />
       <Footer ix={ix} />
-      <TourPanel ix={ix} />
     </div>
   );
 }

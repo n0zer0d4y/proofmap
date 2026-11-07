@@ -72,7 +72,7 @@ Shows what changed since an older version: results added, removed and changed (s
 
 ### Walk me through it
 
-A guided tour: it starts at the main result and walks down the outline on the map, one card at a time, narrated by the summaries. _Next_ and _Back_ move through it; _End the tour_ (or Escape) stops it.
+A guided tour: it starts at the main result and walks down the outline on the map, one card at a time, narrated by the summaries. Its panel sits in the map's lower left corner, above the legend, and shows only on the map; another view hides it, and it is back at the same step when you return. _Next_ and _Back_ move through it; _End the tour_ (or Escape) stops it.
 
 ## Presets: where to start
 

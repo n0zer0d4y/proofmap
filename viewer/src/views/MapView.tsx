@@ -24,6 +24,7 @@ import { isTainted, worstStatus } from '../graph/propagate';
 import type { Positions } from '../layout/elk-graph';
 import { requestLayout } from '../layout/client';
 import { currentPalette, ExportButtons } from '../components/Export';
+import { TourPanel } from '../components/Tour';
 import { mapSvg, svgToPng } from '../graph/svg';
 import { useStore } from '../state/store';
 
@@ -473,7 +474,12 @@ function MapInner({ ix }: { ix: Indexes }) {
         proOptions={{ hideAttribution: true }}
       >
         <MiniMap pannable zoomable ariaLabel="Overview of the map" nodeColor={(n) => minimapColor(ix, (n.data as CardData).node)} />
-        <Legend />
+        {/* The guided tour belongs to the map: it shows only here, stacked above the legend so
+            neither covers the other. */}
+        <Panel position="bottom-left" className="map-corner nowheel nopan">
+          <TourPanel ix={ix} />
+          <Legend />
+        </Panel>
       </ReactFlow>
     </div>
   );
@@ -619,14 +625,14 @@ function Legend() {
   };
   if (!open)
     return (
-      <Panel position="bottom-left" className="map-legend folded">
+      <div className="map-legend folded">
         <button className="linklike" onClick={toggle} aria-expanded={false}>
           Legend
         </button>
-      </Panel>
+      </div>
     );
   return (
-    <Panel position="bottom-left" className="map-legend" aria-label="Legend">
+    <div className="map-legend" role="group" aria-label="Legend">
       <button className="linklike legend-close" onClick={toggle} aria-expanded aria-label="Hide the legend">
         ×
       </button>
@@ -642,7 +648,7 @@ function Legend() {
       <span className="status status-ok">✓ proved</span>
       <span className="status status-sorry">✗ sorry</span>
       <span className="status status-axiom">! extra axiom</span>
-    </Panel>
+    </div>
   );
 }
 
