@@ -10,12 +10,12 @@ A proofmap page is one HTML file (or one folder, for a site). It needs no server
 
 Every status is shown by colour **and** by an icon and words, so it reads without colour too:
 
-| Mark    | Meaning                                                            |
-| ------- | ------------------------------------------------------------------ |
-| ✓ green | Proved, using only the standard axioms.                            |
-| ✗ red   | Contains `sorry`: an unfinished proof, here or somewhere below it. |
-| ! amber | Uses a non-standard axiom (an extra assumption).                   |
-| ○ grey  | From another library (Mathlib, core); not checked by this page.    |
+| Mark    | Words                                             | Meaning                                                                                                                                                    |
+| ------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✓ green | **Proved** (theorems), **Complete** (other kinds) | No `sorry` and only the standard axioms, in it and in everything it rests on. Counts and the legend say "Complete", which is true of a proved theorem too. |
+| ✗ red   | **Has sorry**                                     | A `sorry` in it or somewhere below it; the details panel names where ("Rests on sorry in X").                                                              |
+| ! amber | **Extra axiom**                                   | It rests on an axiom beyond the standard three; the details panel names it, or says "Trusts compiled code" for `native_decide`.                            |
+| ○ grey  | **Other library**                                 | From another library (Mathlib, core); not checked by this page.                                                                                            |
 
 ## Views
 
@@ -39,7 +39,7 @@ The proof as a table of contents: each main result, then what it rests on (theor
 
 ### Detail panel
 
-For the selected declaration: where it lives (module and section), its title and Lean name (with a copy button), badges explaining its kind, its summary and docstring (Markdown, with maths), the comment above it in the source, its statement with linked names (hover a name for its statement, click to go there), the source with the file's line numbers, links to open the line in VS Code or on GitHub, and the lists of what it uses and what uses it.
+For the selected declaration: where it lives (module and section), its title and Lean name (with a copy button), badges explaining its kind, how many of the main results rest on it ("Needed for 2 of 5 main results", with a small meter; hover it for their names), its summary and docstring (Markdown, with maths), the comment above it in the source, its statement with linked names (hover a name for its statement, click to go there), the source with the file's line numbers, links to open the line in VS Code or on GitHub, and the lists of what it uses and what uses it.
 
 When a result depends on `sorry` or an extra axiom, **Why?** names the chain down to where it comes from, and **Show on map** highlights that chain.
 
@@ -62,13 +62,13 @@ Pick a **from** and a **to** (search boxes, or `p` on the map). Click a box to s
 
 ### Health
 
-Counts of results without `sorry` or extra axioms, and of unfinished, extra-axiom, deprecated and unsafe declarations (click a count to list them); each `sorry` with how many results rest on it; which axioms are used and by which results; the longest proofs; **standalone results** (documented theorems that nothing else uses, usually findings in their own right); declarations that may be unused (a refactoring aid; scripts and documents outside Lean are not read, so a result checked only there appears too); and progress per module and per step, with steps grouped by file in source order. Declarations that Lean generated without a source location, such as match splitters and congruence lemmas, are left out of these lists, and the page says how many there are.
+Counts of complete declarations and of those that have sorry, use extra axioms, or are deprecated or unsafe (click a count to list them); where the sorry is, each with how many results rest on it; which axioms are used and by which results; the longest proofs; **standalone results** (documented theorems that nothing else uses, usually findings in their own right); declarations that may be unused (a refactoring aid; scripts and documents outside Lean are not read, so a result checked only there appears too); and progress per module and per step, with steps grouped by file in source order. Declarations that Lean generated without a source location, such as match splitters and congruence lemmas, are left out of these lists, and the page says how many there are.
 
 ![The health view](images/health.png)
 
 ### Compare
 
-Shows what changed since an older version: results added, removed and changed (statement, code, status or dependencies), and status changes such as "now sorry-free: 12". Selecting a changed result shows, in the details panel, what it was in the older version. Open it on a page made by `proofmap compare OLD.json NEW.json`, or choose an older `proofmap.json` (from `proofmap build --json`) right in the view. While a comparison is loaded, new and changed results carry a badge on the map.
+Shows what changed since an older version: results added, removed and changed (statement, code, status or dependencies), and status changes such as "no longer has sorry: 12". Selecting a changed result shows, in the details panel, what it was in the older version. Open it on a page made by `proofmap compare OLD.json NEW.json`, or choose an older `proofmap.json` (from `proofmap build --json`) right in the view. While a comparison is loaded, new and changed results carry a badge on the map.
 
 ### Walk me through it
 

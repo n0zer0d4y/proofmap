@@ -211,6 +211,13 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 
 /* Detail panel additions */
 .detail .badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+/* "Needed for 2 of 5 main results" and its meter: one segment per main result (a plain bar beyond 12). */
+.needed { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; }
+.needed-meter { display: inline-flex; gap: 2px; align-items: center; }
+.needed-meter i { display: block; width: 10px; height: 8px; border-radius: 2px; background: var(--border); }
+.needed-meter i.on { background: var(--accent); }
+.needed-meter:has(b) { width: 80px; height: 8px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.needed-meter b { display: block; height: 100%; background: var(--accent); }
 .detail .plain { margin: 0; }
 .detail .chip { display: inline-block; margin-top: 4px; }
 .detail details > summary { cursor: pointer; color: var(--fg-muted); font-size: 12px; margin-bottom: 6px; }

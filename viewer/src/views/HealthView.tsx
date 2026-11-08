@@ -10,9 +10,9 @@ type ListKey = keyof Health['lists'];
 
 const LIST_TITLES: Record<ListKey, string> = {
   total: 'All results and definitions',
-  proved: 'Without sorry or extra axioms',
-  sorry: 'Resting on sorry',
-  nonstandard: 'Resting on an extra axiom',
+  proved: 'Complete',
+  sorry: 'Has sorry',
+  nonstandard: 'Extra axioms',
   deprecated: 'Deprecated',
   unsafe: 'Unsafe or partial',
 };
@@ -37,8 +37,8 @@ export function HealthView({ ix }: { ix: Indexes }) {
     <div className="health">
       <section className="stat-row" aria-label="Counts">
         {stat('total', 'Results and definitions')}
-        {stat('proved', 'Without sorry or extra axioms', 'ok')}
-        {stat('sorry', <Term term="sorry">Contain sorry</Term>, h.sorry ? 'sorry' : undefined)}
+        {stat('proved', 'Complete', 'ok')}
+        {stat('sorry', <Term term="sorry">Has sorry</Term>, h.sorry ? 'sorry' : undefined)}
         {stat('nonstandard', <Term term="axiom">Extra axioms</Term>, h.nonstandard ? 'axiom' : undefined)}
         {stat('deprecated', <Term term="deprecated">Deprecated</Term>)}
         {stat('unsafe', <Term term="unsafe">Unsafe or partial</Term>)}
@@ -52,10 +52,10 @@ export function HealthView({ ix }: { ix: Indexes }) {
         </section>
       )}
 
-      <section aria-label="Unfinished proofs">
-        <h3>Unfinished proofs (sorry)</h3>
+      <section aria-label="Where the sorry is">
+        <h3>Where the sorry is ({h.sorrySources.length})</h3>
         {h.sorrySources.length === 0 ? (
-          <p className="plain">No proof contains sorry. ✓</p>
+          <p className="plain">Nothing has sorry. ✓</p>
         ) : (
           <ul className="decl-list">
             {h.sorrySources.map((s) => (
@@ -86,7 +86,7 @@ export function HealthView({ ix }: { ix: Indexes }) {
                     {a.count}
                   </button>
                 </td>
-                <td>{a.name === 'sorryAx' ? 'unfinished proof' : a.standard ? 'standard' : 'extra assumption'}</td>
+                <td>{a.name === 'sorryAx' ? 'sorry' : a.standard ? 'standard' : 'extra axiom'}</td>
               </tr>
             ))}
           </tbody>

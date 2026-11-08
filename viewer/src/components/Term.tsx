@@ -11,7 +11,7 @@ export const JARGON: Record<string, { label: string; text: string }> = {
   ctor: { label: 'constructor', text: 'One of the ways to build a value of an inductive type.' },
   recursor: { label: 'recursor', text: 'The principle for defining functions on, or proving facts about, an inductive type.' },
   instance: { label: 'instance', text: 'An implementation Lean finds automatically (for example how to add two points).' },
-  axiom: { label: 'axiom', text: 'A statement assumed without proof. Lean uses three standard ones; anything else is an extra assumption.' },
+  axiom: { label: 'axiom', text: 'A statement assumed without proof. Lean uses three standard ones; anything else is an extra axiom.' },
   opaque: { label: 'opaque', text: 'A constant whose definition is hidden from the rest of the proof.' },
   quot: { label: 'quotient', text: 'A built-in operation for forming quotient types.' },
   result: { label: 'main result', text: 'One of the headline results of the project.' },

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Indexes } from '../data/indexes';
 import { isCoreLibrary, libraryOf, plainText } from '../data/library';
+import { trustsCompiledCode } from '../data/status';
+import { mainResultsNeeding } from '../graph/needed';
 import { extraAxioms, whyChain } from '../graph/why';
 import { useStore } from '../state/store';
 import { CodeBlock } from './CodeBlock';
@@ -63,6 +65,7 @@ export function DetailPanel({ ix }: { ix: Indexes }) {
           ))}
         {d.external && <Term term="external" />}
       </div>
+      <NeededFor ix={ix} id={focus} />
 
       {extras.length > 0 && (
         <section className="why" aria-label="Why this result is not fully proved">
@@ -148,17 +151,43 @@ export function DetailPanel({ ix }: { ix: Indexes }) {
   );
 }
 
+/** Where a sorry or an extra axiom comes from: always named in the sentence ("Rests on sorry in X"),
+ * since the status covers everything below; "Why?" shows the chain down to it. */
 function WhyItem({ ix, from, axiom }: { ix: Indexes; from: number; axiom: string }) {
-  const [chain, setChain] = useState<number[] | null>(null);
+  const [open, setOpen] = useState(false);
   const select = useStore((s) => s.select);
   const showChain = useStore((s) => s.showChain);
-  const label = axiom === 'sorryAx' ? 'an unfinished proof (sorry)' : `the axiom ${axiom}`;
+  const found = useMemo(() => whyChain(ix, from, axiom) ?? [], [ix, from, axiom]);
+  const chain = open ? found : null;
+  const isSorry = axiom === 'sorryAx';
+  const source = found.length ? found[found.length - 1]! : null;
+  const sourceLink =
+    source !== null ? (
+      <button className="linklike" onClick={() => select(source)}>
+        {ix.decls[source]!.name}
+      </button>
+    ) : null;
+  const sentence = isSorry ? (
+    source === from ? (
+      <>Its own proof has sorry.</>
+    ) : sourceLink ? (
+      <>Rests on sorry in {sourceLink}.</>
+    ) : (
+      <>Rests on sorry.</>
+    )
+  ) : trustsCompiledCode(axiom) ? (
+    <>Trusts compiled code (native_decide).</>
+  ) : (
+    <>
+      Uses the axiom <code>{axiom}</code>.
+    </>
+  );
   return (
     <div className="why-item">
       <p className="plain">
-        <span className={`status status-${axiom === 'sorryAx' ? 'sorry' : 'axiom'}`}>{axiom === 'sorryAx' ? '✗' : '!'}</span> Rests on {label}.{' '}
-        {!chain && (
-          <button className="icon-button" onClick={() => setChain(whyChain(ix, from, axiom) ?? [])}>
+        <span className={`status status-${isSorry ? 'sorry' : 'axiom'}`}>{isSorry ? '✗' : '!'}</span> {sentence}{' '}
+        {!open && found.length !== 1 && (
+          <button className="icon-button" onClick={() => setOpen(true)}>
             Why?
           </button>
         )}
@@ -171,7 +200,7 @@ function WhyItem({ ix, from, axiom }: { ix: Indexes; from: number; axiom: string
                 <button className="linklike" onClick={() => select(id)}>
                   {ix.decls[id]!.name}
                 </button>
-                {i === chain.length - 1 && (axiom === 'sorryAx' ? ' contains sorry' : ' is the axiom')}
+                {i === chain.length - 1 && (isSorry ? ' has sorry' : ' is the axiom')}
               </li>
             ))}
           </ol>
@@ -192,7 +221,9 @@ function BeforeSection({ ix, id }: { ix: Indexes; id: number }) {
   if (!comparison || !old) return null;
   const d = ix.decls[id]!;
   const what = comparison.changed.find((c) => c.id === id)?.what ?? [];
-  const status = (sorry: boolean, axioms: string[]) => (sorry ? 'rests on sorry' : axioms.length ? `rests on ${axioms.join(', ')}` : 'proved');
+  // The same words as the status badges; the axioms are named when there are extra ones.
+  const status = (sorry: boolean, axioms: string[]) =>
+    sorry ? 'Has sorry' : axioms.length ? `Extra axiom (${axioms.join(', ')})` : d.kind === 'theorem' ? 'Proved' : 'Complete';
   return (
     <section className="before" aria-label="In the compared version">
       <h3>In the compared version</h3>
@@ -355,5 +386,28 @@ function DeclGroup({
       </summary>
       {list}
     </details>
+  );
+}
+
+/** How many of the main results rest on this declaration, as one line with a small meter (one
+ * segment per main result). Not shown for a main result itself; its badge already says so. */
+function NeededFor({ ix, id }: { ix: Indexes; id: number }) {
+  const roots = ix.data.project.roots;
+  if (!roots.length || roots.includes(id)) return null;
+  const needing = mainResultsNeeding(ix, id);
+  const n = needing.length;
+  const names = needing.map((r) => ix.decls[r]!.title).join(', ');
+  const words = n === 0 ? 'Needed for no main result' : `Needed for ${n} of ${roots.length} main result${roots.length === 1 ? '' : 's'}`;
+  return (
+    <div className={`needed${n === 0 ? ' muted' : ''}`} title={n ? names : undefined}>
+      <span>{words}</span>
+      <span className="needed-meter" aria-hidden="true">
+        {roots.length <= 12 ? (
+          roots.map((r, i) => <i key={r} className={i < n ? 'on' : ''} />)
+        ) : (
+          <b style={{ width: `${(100 * n) / roots.length}%` }} />
+        )}
+      </span>
+    </div>
   );
 }

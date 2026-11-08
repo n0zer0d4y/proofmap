@@ -42,6 +42,8 @@ test('why trace names the chain to the custom axiom and highlights it on the map
   await page.goto(`${fixtureUrl}#/map/Fixture.tainted_result`);
   const detail = page.getByRole('complementary', { name: 'Details' });
   const item = detail.locator('.why-item', { hasText: 'Fixture.customAxiom' });
+  // The sentence names the axiom before "Why?" is opened.
+  await expect(item).toContainText('Uses the axiom Fixture.customAxiom.');
   await item.getByRole('button', { name: 'Why?' }).click();
   await expect(item.locator('.chain li')).toHaveText([
     'Fixture.tainted_result',
@@ -63,8 +65,23 @@ test('why trace names the chain to the custom axiom and highlights it on the map
   await search.fill('tainted_result');
   await page.getByRole('option').filter({ hasText: 'Fixture.tainted_result' }).first().click();
   const sorry = detail.locator('.why-item', { hasText: 'sorry' });
+  // The status covers everything below, so the sentence says where the sorry is.
+  await expect(sorry).toContainText('Rests on sorry in Fixture.unfinished.');
   await sorry.getByRole('button', { name: 'Why?' }).click();
-  await expect(sorry.locator('.chain li').last()).toHaveText('Fixture.unfinished contains sorry');
+  await expect(sorry.locator('.chain li').last()).toHaveText('Fixture.unfinished has sorry');
+});
+
+test('details say how many main results rest on the selection, with a meter', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.double`);
+  const detail = page.getByRole('complementary', { name: 'Details' });
+  const needed = detail.locator('.needed');
+  await expect(needed).toHaveText('Needed for 2 of 5 main results');
+  await expect(needed.locator('.needed-meter i')).toHaveCount(5);
+  await expect(needed.locator('.needed-meter i.on')).toHaveCount(2);
+  // A main result itself has no such line; its badge says what it is.
+  await page.goto(`${fixtureUrl}#/map/Fixture.main_result`);
+  await expect(detail.locator('.fullname-text')).toHaveText('Fixture.main_result');
+  await expect(detail.locator('.needed')).toHaveCount(0);
 });
 
 test('glossary hover cards explain jargon', async ({ page }) => {

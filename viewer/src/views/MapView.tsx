@@ -645,8 +645,8 @@ function Legend() {
       <span>
         <svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" stroke="var(--edge)" strokeWidth="1.6" strokeDasharray="2 5" /></svg> through hidden helpers
       </span>
-      <span className="status status-ok">✓ proved</span>
-      <span className="status status-sorry">✗ sorry</span>
+      <span className="status status-ok">✓ proved or complete</span>
+      <span className="status status-sorry">✗ has sorry</span>
       <span className="status status-axiom">! extra axiom</span>
     </div>
   );

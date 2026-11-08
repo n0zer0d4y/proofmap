@@ -15,7 +15,7 @@ test('a compare page lists the planted changes', async ({ page }) => {
   await expect(stat('Added')).toHaveText('1');
   await expect(stat('Removed')).toHaveText('1');
   await expect(stat('Changed')).toHaveText('4');
-  await expect(stat('Now sorry-free')).toHaveText('3');
+  await expect(stat('No longer has sorry')).toHaveText('3');
   await expect(view.getByRole('region', { name: 'Added declarations' })).toContainText('Fixture.double_three');
   await expect(view.getByRole('region', { name: 'Removed declarations' })).toContainText('Fixture.classical_fact');
   const changed = view.getByRole('region', { name: 'Changed declarations' }).getByRole('listitem');

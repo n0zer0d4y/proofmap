@@ -87,8 +87,8 @@ export function CompareView({ ix }: { ix: Indexes }) {
         <Stat label="Added" value={c.added.length} tone={c.added.length ? 'ok' : undefined} />
         <Stat label="Removed" value={c.removed.length} />
         <Stat label="Changed" value={c.changed.length} />
-        <Stat label="Now sorry-free" value={c.nowSorryFree.length} tone={c.nowSorryFree.length ? 'ok' : undefined} />
-        <Stat label="Newly depending on sorry" value={c.nowSorry.length} tone={c.nowSorry.length ? 'sorry' : undefined} />
+        <Stat label="No longer has sorry" value={c.nowSorryFree.length} tone={c.nowSorryFree.length ? 'ok' : undefined} />
+        <Stat label="Now has sorry" value={c.nowSorry.length} tone={c.nowSorry.length ? 'sorry' : undefined} />
       </section>
       {(c.newAxioms.length > 0 || c.goneAxioms.length > 0) && (
         <section aria-label="Axiom changes">

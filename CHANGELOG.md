@@ -7,9 +7,10 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 ### Added
 
 - **Main result switcher** on the map when a project has several main results.
+- **Needed for:** the details panel says how many of the main results rest on the selected declaration ("Needed for 2 of 5 main results"), with a small meter; hover it for their names.
 - **Path finder choices depend on each other:** clicking a box lists its choices without typing; once one end is chosen, the other box offers only ends that connect to it, so every pair it offers has a path. The project's own declarations come first, Lean core last.
 - **Outline: Expand all and Collapse all.** On very large projects Expand all stops before the outline passes 2,000 rows, and says so.
-- **Health counts open their lists:** results without `sorry` or extra axioms, unfinished, extra-axiom, deprecated and unsafe declarations, and the results using each axiom.
+- **Health counts open their lists:** complete declarations, those that have `sorry` or use extra axioms, deprecated and unsafe ones, and the results using each axiom.
 - **Standalone results** in the health view: documented theorems that nothing else uses are listed apart from possibly unused declarations.
 - **Comparison details:** selecting a changed result shows what it was in the older version (status, statement, code).
 - **Walkthrough case labels:** the step list shows the case a step works on where it changes.
@@ -21,6 +22,7 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 
 ### Changed
 
+- **Status words are the same everywhere:** **Proved** for a theorem and **Complete** for other kinds (and in counts and the legend), **Has sorry**, **Extra axiom** and **Other library**. The details panel names where a `sorry` or an extra axiom comes from ("Rests on sorry in X", "Uses the axiom X", "Trusts compiled code" for `native_decide`). Health lists "Where the sorry is"; Compare counts "No longer has sorry" and "Now has sorry".
 - **Data format version 2:** `project.rootDir` (an absolute path) is removed. Single-file pages record `project.pageToRoot`, the project folder relative to the page, and "Open in VS Code" works it out from where the page is opened. Pages, `--site` folders and `proofmap.json` contain no absolute local path. The viewer still reads version 1 files, for comparisons.
 - **Map cards:** the statement is shown without the declaration's own name and universe list, up to 8 lines high, and a longer one scrolls inside the card; opening what a card rests on no longer changes its size. With "Code in cards", opened and selected cards show their code in a scrolling block. The map toolbar labels its main result control "Main result".
 - **Map camera:** the map opens at a readable zoom and pans to cards as they appear; tour steps and "Find selected" are centred.
@@ -38,8 +40,8 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - **Export:** SVG and PNG are in the map toolbar and contain the whole map; the SVG is shapes and text (no HTML inside), so it works in papers and vector editors.
 - **Theme** is remembered by the browser instead of travelling in links.
 - **Presets** keep the current view when changed; their view applies when the page opens.
-- **Guided tour** runs on the map and sits over the map, without repeating the details panel.
-- **Health:** steps are grouped by file in source order; the first count reads "Without sorry or extra axioms".
+- **Guided tour** runs on the map; its panel sits in the map's lower left corner, above the legend, without repeating the details panel.
+- **Health:** steps are grouped by file in source order.
 - **Walkthrough:** a bullet with a single tactic is one step, source lines wrap, and the exit names the view it returns to.
 - **Sections:** Markdown headings made only of box-drawing characters are decoration, not sections.
 - **`proofmap serve`** reports the project folder to the page (on 127.0.0.1 only), for source links.
@@ -63,7 +65,7 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - Collapsing a compound tactic that held the current step left the walkthrough inconsistent.
 - The path finder could report a longer chain than the shortest one when there were more than 200 chains.
 - Path-finder parameters stayed in the address of every other view.
-- Cards could show scroll bars inside the map.
+- Cards showed scroll bars even when their content fitted.
 - Screen readers read edges by internal ids; every edge was a Tab stop.
 - A page on a static web host requested the live-reload address and logged a 404.
 - The minimap kept a light frame in dark mode.

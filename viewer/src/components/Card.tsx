@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
 import type { Indexes } from '../data/indexes';
-import { STATUS_LABEL, statusOf } from '../data/status';
+import { STATUS_LABEL, statusOf, statusText } from '../data/status';
 import { useStore } from '../state/store';
 import { sourceLinks } from './links';
 import { Statement } from './Statement';
@@ -55,7 +55,7 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
       style={{ width: CARD_WIDTH }}
       data-decl={d.name}
       role="group"
-      aria-label={`${d.title}, ${STATUS_LABEL[status].text}`}
+      aria-label={`${d.title}, ${statusText(d)}`}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       <div className="card-head">

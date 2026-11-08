@@ -63,7 +63,7 @@ sq = "square"
 
 ### `[axioms]`
 
-`standard` lists the axioms that do not count as extra assumptions. Any other axiom a result depends on is flagged in amber, with a "Why?" chain that names where it comes from. `sorry` is always flagged, in red.
+`standard` lists the axioms that do not count as extra axioms. Any other axiom a result depends on is flagged in amber, with a "Why?" chain that names where it comes from. `sorry` is always flagged, in red.
 
 ### `[walkthrough]`
 

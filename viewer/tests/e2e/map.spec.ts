@@ -73,7 +73,7 @@ test('status: tainted results are coloured and labelled, not only by colour', as
   await page.goto(`${fixtureUrl}#/map?at=Fixture.tainted_result`);
   const t = card(page, 'Fixture.tainted_result');
   await expect(t).toHaveClass(/status-border-sorry/);
-  await expect(t).toHaveAttribute('aria-label', /Contains sorry/);
+  await expect(t).toHaveAttribute('aria-label', /Has sorry/);
   await expect(t.locator('.status')).toHaveText('✗');
   const ax = card(page, 'Fixture.uses_custom_axiom_indirectly');
   await expect(ax).toHaveClass(/status-border-axiom/);

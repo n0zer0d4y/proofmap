@@ -88,10 +88,10 @@ test('health numbers match the extracted data', async ({ page }) => {
   const stat = (label: string) =>
     counts.locator('.stat').filter({ has: page.locator('.stat-label', { hasText: new RegExp('^' + label) }) }).locator('.stat-value');
   await expect(stat('Results and definitions')).toHaveText(String(visible.length));
-  await expect(stat('Without sorry or extra axioms')).toHaveText(String(visible.filter((d) => !d.status.sorry && !d.status.nonstandardAxioms.length).length));
-  await expect(stat('Contain sorry')).toHaveText(String(visible.filter((d) => d.status.sorry).length));
+  await expect(stat('Complete')).toHaveText(String(visible.filter((d) => !d.status.sorry && !d.status.nonstandardAxioms.length).length));
+  await expect(stat('Has sorry')).toHaveText(String(visible.filter((d) => d.status.sorry).length));
   await expect(stat('Extra axioms')).toHaveText(String(visible.filter((d) => d.status.nonstandardAxioms.length).length));
-  await expect(page.getByRole('region', { name: 'Unfinished proofs' })).toContainText('Fixture.unfinished: 2 results rest on it');
+  await expect(page.getByRole('region', { name: 'Where the sorry is' })).toContainText('Fixture.unfinished: 2 results rest on it');
   await expect(page.getByRole('region', { name: 'Axioms' })).toContainText('Fixture.customAxiom');
   await expect(page.getByRole('meter').first()).toBeVisible();
 });
@@ -116,7 +116,8 @@ test('guided tour visits the outline in order', async ({ page }) => {
 
 test('export: the whole map as a real SVG and a PNG', async ({ page, browser }) => {
   await page.goto(`${fixtureUrl}#/map?theme=light`);
-  await expect(page.locator('[data-decl="Fixture.main_result"]')).toBeVisible();
+  // The first layout can take longer than the default wait on a loaded machine (WebKit).
+  await expect(page.locator('[data-decl="Fixture.main_result"]')).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(400);
   const titles = (await page.locator('.react-flow__node .card-title').allTextContents()).sort();
   const cards = await page.locator('.react-flow__node').count();
