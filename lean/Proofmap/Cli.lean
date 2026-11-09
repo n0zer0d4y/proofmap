@@ -205,9 +205,11 @@ def runBuild (args : List String) : IO UInt32 := do
         Package.writeAtomic f (Package.Wire.encode data).1.compress
       if a.site.isNone || a.outGiven then
         -- The page records the project folder relative to itself (for "Open in VS Code"), never
-        -- the absolute path, so a page that is shared does not reveal the builder's folders.
+        -- the absolute path, and only when the page is inside the project, so a page that is
+        -- shared does not reveal the builder's folders.
         let outDir := ((← IO.currentDir) / a.out).parent.getD (← IO.currentDir)
-        let page := { data with project := { data.project with pageToRoot := Util.relativeDir outDir opts.rootDir } }
+        let pageToRoot := (Util.relativeDir outDir opts.rootDir).bind Util.upOnly
+        let page := { data with project := { data.project with pageToRoot } }
         match ← Package.writeSingleFile a.out page with
         | .error e =>
           IO.eprintln s!"proofmap: {e}"
@@ -215,6 +217,8 @@ def runBuild (args : List String) : IO UInt32 := do
         | .ok note =>
           IO.println s!"proofmap: wrote {a.out} ({counts})"
           if let some n := note then IO.println s!"proofmap: {n}"
+          if pageToRoot.isNone then
+            IO.println "proofmap: the page is outside the project folder, so it has no \"Open in VS Code\" links (where the project is would reveal your folders); write it inside the project, or use proofmap serve"
       -- Say what was chosen automatically, and how to choose it instead.
       if opts.overrides.roots.isEmpty && !data.project.roots.isEmpty then
         let names := data.project.roots.toList.filterMap fun i => (data.decls[i]?).map (toString ·.name)

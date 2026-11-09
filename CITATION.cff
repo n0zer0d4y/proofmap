@@ -7,7 +7,7 @@ authors:
 repository-code: "https://github.com/n0zer0d4y/proofmap"
 url: "https://github.com/n0zer0d4y/proofmap"
 license: Apache-2.0
-version: 0.3.0
+version: 0.3.1
 keywords:
   - Lean 4
   - theorem proving

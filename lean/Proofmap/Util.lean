@@ -42,6 +42,12 @@ def relativeDir (fromDir toDir : System.FilePath) : Option String :=
   if common == 0 && !(a.isEmpty && b.isEmpty) && (slashes fromDir).take 1 != "/" then none
   else some ("/".intercalate (List.replicate (a.length - common) ".." ++ b.drop common))
 
+/-- `rel` (from `relativeDir`) when it only climbs (`""`, `".."`, `"../.."`), that is when the page is
+in the project folder or below it. A path that climbs out and then names folders (`../../me/proj`)
+would reveal the folders around the project, so it is not recorded. -/
+def upOnly (rel : String) : Option String :=
+  if (rel.splitOn "/").all fun s => s == ".." || s == "" then some rel else none
+
 /-- `file` relative to `root` with forward slashes, if it is inside it (compared without case
 where the file system ignores case). -/
 def relativeTo? (root file : System.FilePath) : Option String :=

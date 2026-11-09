@@ -2,6 +2,13 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-11-09
+
+### Fixed
+
+- A page written outside its project folder (`proofmap build --out ../pages/proof.html`) recorded the way to the project from the page, which named the folders around the project; such a page now records nothing and has no "Open in VS Code" links, and `proofmap build` says so. A page inside the project, as `proofmap.html` is by default, records only how many folders up the project is, as before.
+- The header could take two rows on Linux at laptop widths, where the default font is wider than on Windows: in browser windows 1100 pixels wide or more, it now stays one row whatever the fonts, and a long title gives way first, ending in "…" (the full title is in its tooltip).
+
 ## [0.3.0] - 2026-11-09
 
 ### Added

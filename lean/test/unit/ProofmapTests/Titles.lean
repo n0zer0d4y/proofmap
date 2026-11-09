@@ -27,5 +27,10 @@ def pageToRootTests : TestM Unit := do
   checkEq "page in a subfolder" (relativeDir "/home/a/proj/docs" "/home/a/proj") (some "..")
   checkEq "page two levels down" (relativeDir "/home/a/proj/docs/site" "/home/a/proj") (some "../..")
   checkEq "page beside the project" (relativeDir "/home/a/out" "/home/a/proj") (some "../proj")
+  -- Only a path that climbs is recorded: one that names folders would reveal them.
+  checkEq "recorded: page in the project folder" (upOnly "") (some "")
+  checkEq "recorded: page below the project" (upOnly "../..") (some "../..")
+  checkEq "not recorded: page beside the project" (upOnly "../proj") none
+  checkEq "not recorded: page far from the project" (upOnly "../../../Users/me/Projects/proj") none
   if System.Platform.isWindows then
     checkEq "different drives" (relativeDir "D:/out" "C:/proj") none

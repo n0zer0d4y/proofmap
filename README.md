@@ -34,7 +34,7 @@ Everything runs on your machine. proofmap sends nothing anywhere, and the page l
 
 - **proofmap runs your project's code, as `lake build` does.** It imports the compiled modules, which runs their initializers. With `--walkthrough`, it also elaborates the source files again. Run it only on code you would also build.
 - **Nothing leaves your machine.** proofmap makes no network requests. The page loads no fonts, scripts or analytics. `proofmap serve` listens on 127.0.0.1 only, and answers only requests addressed to it.
-- **The page contains your code.** It includes your declarations' source, statements and comments, so share it only as you would share the code. When the project is a git checkout, it also includes the repository's address (from `origin`, without credentials) for source links; `repoUrl = ""` in `proofmap.toml` leaves it out. It contains no absolute path of your computer: file paths are relative to the project.
+- **The page contains your code.** It includes your declarations' source, statements and comments, so share it only as you would share the code. When the project is a git checkout, it also includes the repository's address (from `origin`, without credentials) for source links; `repoUrl = ""` in `proofmap.toml` leaves it out. It contains no folder of your computer: file paths are relative to the project, and a page written outside the project does not record where the project is.
 
 To report a security problem, use "Report a vulnerability" on the repository's Security tab rather than a public issue.
 
@@ -93,14 +93,14 @@ Add proofmap to the lakefile. In `lakefile.toml`:
 [[require]]
 name = "proofmap"
 git = "https://github.com/n0zer0d4y/proofmap"
-rev = "v0.3.0"
+rev = "v0.3.1"
 subDir = "lean"
 ```
 
 Or in `lakefile.lean`:
 
 ```lean
-require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.3.0" / "lean"
+require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.3.1" / "lean"
 ```
 
 Then:

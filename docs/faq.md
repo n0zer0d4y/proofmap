@@ -10,7 +10,7 @@ proofmap loads the project the way `lake build` and documentation tools such as 
 
 ### Does anything leave my machine? Can I use it on private code?
 
-Nothing leaves your machine, so yes. proofmap makes no network requests, and the generated page loads nothing from the network (no fonts, scripts or analytics). `proofmap serve` listens on 127.0.0.1 only and answers only requests addressed to it. The page does contain your declarations' source code, statements and comments, so share it only as you would share the code. It contains no absolute path of your computer: file paths are relative to the project.
+Nothing leaves your machine, so yes. proofmap makes no network requests, and the generated page loads nothing from the network (no fonts, scripts or analytics). `proofmap serve` listens on 127.0.0.1 only and answers only requests addressed to it. The page does contain your declarations' source code, statements and comments, so share it only as you would share the code. It contains no folder of your computer: file paths are relative to the project, and a page written outside the project does not record where the project is.
 
 ### `proofmap build` says it is "using 1 worker". Can it go faster?
 

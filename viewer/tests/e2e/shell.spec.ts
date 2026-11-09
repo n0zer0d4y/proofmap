@@ -99,6 +99,11 @@ test('the header stays one row on a laptop width, even with a long title', async
   // A long CITATION.cff-style title must not push the controls onto a second row.
   await page.locator('.header h1').evaluate((h) => (h.textContent = 'prime-gaps-and-sieve-bounds: four certified results on prime gaps and the large sieve inequality'));
   expect((await header.boundingBox())!.height).toBe(oneRow);
+  // Nor must a wider font, such as Linux's default sans (wider spacing stands in for it here, since
+  // the fonts differ by machine): the title gives way, ending in an ellipsis, and nothing spills out.
+  await page.addStyleTag({ content: '.header, .header * { letter-spacing: 2.5px !important; }' });
+  expect((await header.boundingBox())!.height).toBe(oneRow);
+  expect(await header.evaluate((h) => h.scrollWidth <= h.clientWidth)).toBe(true);
   // Docs keeps its name for screen readers when only its icon shows.
   await expect(page.getByRole('button', { name: 'Docs' })).toBeVisible();
 });
