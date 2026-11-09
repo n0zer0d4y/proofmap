@@ -189,3 +189,27 @@ test('the main result control says what it is', async ({ page }) => {
   await page.goto(`${fixtureUrl}#/map`);
   await expect(page.locator('.map-toolbar .toolbar-title')).toContainText('Main result');
 });
+
+test('the main result opens and closes like any other card', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map`);
+  const main = page.locator('.react-flow__node:has([data-decl="Fixture.main_result"])');
+  const cards = page.locator('.react-flow__node');
+  await expect(main).toBeVisible();
+  const toggle = main.locator('.card-toggle');
+  // Open by default, so its button closes it.
+  await expect(toggle).toHaveText('−');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  const open = await cards.count();
+  expect(open).toBeGreaterThan(1);
+  await toggle.click();
+  await expect(cards).toHaveCount(1);
+  await expect(toggle).toHaveText('+');
+  await toggle.click();
+  await expect(cards).toHaveCount(open);
+  // The keyboard does the same: Escape on the main result closes it.
+  await main.locator('.card-title').click();
+  await page.keyboard.press('Escape');
+  await expect(cards).toHaveCount(1);
+  await page.keyboard.press('Enter');
+  await expect(cards).toHaveCount(open);
+});

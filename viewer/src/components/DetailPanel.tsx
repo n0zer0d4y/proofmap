@@ -5,6 +5,7 @@ import { trustsCompiledCode } from '../data/status';
 import { mainResultsNeeding } from '../graph/needed';
 import { extraAxioms, whyChain } from '../graph/why';
 import { useStore } from '../state/store';
+import { breakable } from './breakable';
 import { CodeBlock } from './CodeBlock';
 import { sourceLinks } from './links';
 import { Markdown } from './Markdown';
@@ -57,7 +58,8 @@ export function DetailPanel({ ix }: { ix: Indexes }) {
       </div>
       <div className="badges">
         <Term term={d.kind} />
-        {d.rank !== d.kind && <Term term={d.rank} />}
+        {/* The rank only when it says more than the kind: a main result, or a lemma. */}
+        {(d.rank === 'result' || d.rank === 'lemma') && <Term term={d.rank} />}
         {d.flags
           .filter((f) => !f.startsWith('noise:'))
           .map((f) => (
@@ -363,7 +365,7 @@ function DeclGroup({
           <li key={i}>
             <StatusBadge decl={d} />{' '}
             <button className="linklike" onClick={() => onSelect(i)} title={d.title}>
-              {d.name}
+              {breakable(d.name)}
             </button>
             {ix.byName.get(d.name)!.length > 1 && <span className="muted"> · {d.module}</span>}
           </li>

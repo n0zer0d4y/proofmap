@@ -51,7 +51,7 @@ sq = "square"
 |---|---|
 | `title` | The page title. Default: the root module names. `--title` overrides it. |
 | `rootModules` | The modules to map. Each one brings in itself and **all its built submodules**, so `["Mathlib.NumberTheory"]` maps `Mathlib.NumberTheory.SumFourSquares` too. Default: the libraries in the lakefile (each `lean_lib`, its `roots` or `globs`, else its name). `--root MODULE` overrides it. Modules without a built `.olean` are skipped with a warning; run `lake build` first, which `proofmap build` does unless you pass `--no-lake-build`. |
-| `roots` | Full names of the main results. The page opens on them, the outline starts from them, and they get the rank `result`. Default: the theorems nothing else in the project uses, ordered by how much they rest on, at most five. A name that matches nothing is reported, with the closest name proofmap knows. |
+| `roots` | Full names of the main results. The page opens on them, the outline starts from them, and they get the rank `result`. Default: up to five theorems that nothing else in the project uses, documented ones first, then by how much they rest on; a name or docstring that states a result ("iff", "reduces", "complete", "theorem" and similar words) counts double. `proofmap build` prints the ones it chose. A name that matches nothing is reported, with the closest name proofmap knows. |
 | `repoUrl` | A GitHub (or similar) URL. Declarations get links to their lines, at the commit that was mapped when the project is a git checkout. |
 
 ### `[display]`

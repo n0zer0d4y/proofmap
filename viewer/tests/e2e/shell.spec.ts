@@ -60,3 +60,33 @@ test('the back button works under file://', async ({ page }) => {
   await page.goForward();
   await expect(details).toContainText('Fixture.main_result');
 });
+
+test('the About dialog closes from its top right corner, like any window', async ({ page }) => {
+  await page.goto(fixtureUrl);
+  await page.getByRole('button', { name: 'About' }).click();
+  const dialog = page.getByRole('dialog', { name: 'About proofmap' });
+  const box = (await dialog.boundingBox())!;
+  const close = dialog.getByRole('button', { name: 'Close' });
+  await expect(close).toHaveCount(1);
+  const c = (await close.boundingBox())!;
+  // In the top right corner: level with the title row, against the right edge.
+  expect(c.y - box.y).toBeLessThan(40);
+  expect(box.x + box.width - (c.x + c.width)).toBeLessThan(40);
+  await expect(dialog).toContainText('Data format');
+  await expect(dialog.getByRole('button', { name: 'Copy details' })).toBeVisible();
+  await close.click();
+  await expect(dialog).toBeHidden();
+});
+
+test('dropdowns keep their chevron away from the edge', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map`);
+  for (const select of [page.getByLabel('Persona preset'), page.locator('.map-toolbar select')]) {
+    const style = await select.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { appearance: s.appearance, paddingRight: parseFloat(s.paddingRight), image: s.backgroundImage };
+    });
+    expect(style.appearance).toBe('none');
+    expect(style.image).toContain('svg');
+    expect(style.paddingRight).toBeGreaterThanOrEqual(24);
+  }
+});

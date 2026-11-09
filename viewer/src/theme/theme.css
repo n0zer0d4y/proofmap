@@ -23,17 +23,24 @@
   --radius: 8px;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%235c616b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* Kind badges: one hue per kind, none of them the status green, red or amber. */
+  --k-theorem: #1d4ed8; --k-theorem-bg: #e7eeff; --k-lemma: #0b6a96; --k-lemma-bg: #e1f2fb;
+  --k-def: #0f766e; --k-def-bg: #dcf4f0; --k-abbrev: #3f6b7a; --k-abbrev-bg: #e5eff2;
+  --k-structure: #6d28d9; --k-structure-bg: #efe8ff; --k-inductive: #9b1fa8; --k-inductive-bg: #fae8fc;
+  --k-ctor: #b4195a; --k-ctor-bg: #fde6ef; --k-instance: #4338ca; --k-instance-bg: #ebebfe;
+  --k-axiom: #b9400b; --k-axiom-bg: #ffece1; --k-other: #555b66; --k-other-bg: #eceef1;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #14161a;
-    --bg-raised: #1c1f24;
-    --bg-sunken: #0f1114;
-    --fg: #e6e7ea;
-    --fg-muted: #9aa0aa;
-    --border: #2e333b;
+    --bg: #101011;
+    --bg-raised: #18191b;
+    --bg-sunken: #0b0b0c;
+    --fg: #e9eaed;
+    --fg-muted: #9a9ea6;
+    --border: #2a2b2f;
     --accent: #7aa2ff;
     --accent-fg: #0b1020;
     --focus: #7aa2ff;
@@ -44,19 +51,25 @@
     --ok-bg: #16281f;
     --sorry-bg: #2d1717;
     --axiom-bg: #2b2213;
-    --external-bg: #20242b;
+    --external-bg: #1f2023;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 8px rgb(0 0 0 / 0.3);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%239a9ea6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --k-theorem: #9db8ff; --k-theorem-bg: #1b2747; --k-lemma: #8fd3f5; --k-lemma-bg: #122d3b;
+    --k-def: #6fe0cf; --k-def-bg: #10302c; --k-abbrev: #a7c7d2; --k-abbrev-bg: #1b2a30;
+    --k-structure: #c7b4ff; --k-structure-bg: #2a2045; --k-inductive: #f0a6fb; --k-inductive-bg: #361a3c;
+    --k-ctor: #f9a6c9; --k-ctor-bg: #3b1729; --k-instance: #b0b7ff; --k-instance-bg: #24264a;
+    --k-axiom: #ffb58a; --k-axiom-bg: #3b2014; --k-other: #b4bac4; --k-other-bg: #252930;
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #14161a;
-  --bg-raised: #1c1f24;
-  --bg-sunken: #0f1114;
-  --fg: #e6e7ea;
-  --fg-muted: #9aa0aa;
-  --border: #2e333b;
+  --bg: #101011;
+  --bg-raised: #18191b;
+  --bg-sunken: #0b0b0c;
+  --fg: #e9eaed;
+  --fg-muted: #9a9ea6;
+  --border: #2a2b2f;
   --accent: #7aa2ff;
   --accent-fg: #0b1020;
   --focus: #7aa2ff;
@@ -67,8 +80,14 @@
   --ok-bg: #16281f;
   --sorry-bg: #2d1717;
   --axiom-bg: #2b2213;
-  --external-bg: #20242b;
+  --external-bg: #1f2023;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 8px rgb(0 0 0 / 0.3);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%239a9ea6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --k-theorem: #9db8ff; --k-theorem-bg: #1b2747; --k-lemma: #8fd3f5; --k-lemma-bg: #122d3b;
+  --k-def: #6fe0cf; --k-def-bg: #10302c; --k-abbrev: #a7c7d2; --k-abbrev-bg: #1b2a30;
+  --k-structure: #c7b4ff; --k-structure-bg: #2a2045; --k-inductive: #f0a6fb; --k-inductive-bg: #361a3c;
+  --k-ctor: #f9a6c9; --k-ctor-bg: #3b1729; --k-instance: #b0b7ff; --k-instance-bg: #24264a;
+  --k-axiom: #ffb58a; --k-axiom-bg: #3b2014; --k-other: #b4bac4; --k-other-bg: #252930;
 }
 
 * { box-sizing: border-box; }
@@ -90,6 +109,9 @@ code, pre, .mono { font-family: var(--mono); font-size: 0.92em; }
 .spacer { flex: 1; }
 .control { border: 1px solid var(--border); background: var(--bg-raised); border-radius: 6px; padding: 4px 8px; }
 .icon-button { border: 1px solid var(--border); background: var(--bg-raised); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+/* Dropdowns draw their own chevron, inset from the edge, instead of the browser's arrow against it. */
+select.control { appearance: none; -webkit-appearance: none; padding-right: 28px; background-image: var(--select-chevron);
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 12px 12px; cursor: pointer; }
 
 /* Search */
 .search { position: relative; }
@@ -122,6 +144,22 @@ code, pre, .mono { font-family: var(--mono); font-size: 0.92em; }
 /* Badges and status */
 .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 1px 6px; border-radius: 999px;
   border: 1px solid var(--border); color: var(--fg-muted); white-space: nowrap; }
+/* Kinds: a soft tint of the kind's hue, the same on cards, in the details panel and in lists. */
+.badge[class*='kind-'] { color: var(--kc); background: var(--kb); border-color: transparent; font-weight: 600; }
+.kind-theorem { --kc: var(--k-theorem); --kb: var(--k-theorem-bg); }
+.kind-lemma { --kc: var(--k-lemma); --kb: var(--k-lemma-bg); }
+.kind-def { --kc: var(--k-def); --kb: var(--k-def-bg); }
+.kind-abbrev { --kc: var(--k-abbrev); --kb: var(--k-abbrev-bg); }
+.kind-structure { --kc: var(--k-structure); --kb: var(--k-structure-bg); }
+.kind-inductive { --kc: var(--k-inductive); --kb: var(--k-inductive-bg); }
+.kind-ctor { --kc: var(--k-ctor); --kb: var(--k-ctor-bg); }
+.kind-instance { --kc: var(--k-instance); --kb: var(--k-instance-bg); }
+.kind-axiom { --kc: var(--k-axiom); --kb: var(--k-axiom-bg); }
+.kind-other { --kc: var(--k-other); --kb: var(--k-other-bg); }
+/* A main result is filled with the accent, like its star; flags are outlines (unsafe and partial in red). */
+.badge.badge-main { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.badge.badge-warn { color: var(--sorry); border-color: var(--sorry); }
+.term-plain { color: inherit; }
 .status { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
 .status-ok { color: var(--ok); }
 .status-sorry { color: var(--sorry); }
@@ -136,6 +174,17 @@ dialog { border: 1px solid var(--border); border-radius: var(--radius); backgrou
   max-width: min(640px, 90vw); box-shadow: var(--shadow); }
 dialog::backdrop { background: rgb(0 0 0 / 0.35); }
 dialog pre { white-space: pre-wrap; font-size: 12px; }
+/* Title and close button share the top row; the close button sits at the top right. */
+.dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dialog-head h2 { margin: 0; font-size: 20px; }
+.dialog-head form { margin: -6px -8px 0 0; }
+.dialog-close { width: 32px; height: 32px; border: 0; border-radius: 6px; background: none; color: var(--fg-muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.dialog-close:hover { background: var(--bg-sunken); color: var(--fg); }
+.about-facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 0 0 12px; font-size: 13px; }
+.about-facts > div { display: contents; }
+.about-facts dt { color: var(--fg-muted); }
+.about-facts dd { margin: 0; overflow-wrap: anywhere; }
+.dialog-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
 
 /* Simple lists used by placeholder views */
 .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
@@ -289,11 +338,40 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .health { padding: 16px; overflow: auto; height: 100%; }
 .health section { margin-bottom: 20px; }
 .health h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); margin: 0 0 8px; }
+/* A list's kind badge beside its heading keeps the badge's own lettering. */
+.health h3 .badge { text-transform: none; letter-spacing: normal; margin-left: 4px; vertical-align: 1px; }
 .stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 .stat { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; background: var(--bg-raised); }
 .stat-value { font-size: 22px; font-weight: 700; }
 .stat-label { font-size: 12px; color: var(--fg-muted); }
 .stat-ok .stat-value { color: var(--ok); }
+.stat-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; white-space: nowrap; }
+.stat-note { font-size: 11px; font-weight: 600; }
+.stat-note.ok { color: var(--ok); } .stat-note.sorry { color: var(--sorry); } .stat-note.axiom { color: var(--axiom); }
+/* Health tiles: groups in one row; every tile has the width of the widest (set by the view, at
+   least 136px), and whole groups wrap when the row does not fit. */
+.health-tiles { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
+.health .health-tiles { margin-bottom: 8px; }
+.tile-group { display: flex; flex-direction: column; gap: 6px; }
+.tile-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-muted); }
+.tiles { display: flex; gap: 8px; }
+.health-tiles .stat { width: var(--tile-w, 136px); height: 78px; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 10px 12px; border-top: 3px solid var(--border); }
+.health-tiles .stat-value { font-size: 24px; line-height: 1; }
+.health-tiles .stat-label { white-space: nowrap; }
+.health-tiles .stat-theorem { border-top-color: var(--k-theorem); } .stat-theorem .stat-value { color: var(--k-theorem); }
+.health-tiles .stat-def { border-top-color: var(--k-def); } .stat-def .stat-value { color: var(--k-def); }
+.health-tiles .stat-main { border-top-color: var(--accent); } .stat-main .stat-value { color: var(--accent); }
+.health-tiles .stat-ok { border-top-color: var(--ok); }
+.health-tiles .stat-sorry { border-top-color: var(--sorry); }
+.health-tiles .stat-axiom { border-top-color: var(--axiom); }
+/* Health's top-10 lists: number, name (wrapping between its parts, left-aligned) and count on one row. */
+.top-list { list-style: none; padding-left: 0; counter-reset: top; }
+.top-list > li { display: flex; gap: 6px; align-items: baseline; counter-increment: top; }
+.top-list > li::before { content: counter(top) "."; flex: none; min-width: 3ch; text-align: right; color: var(--fg-muted); }
+.top-list > li > .linklike { text-align: left; min-width: 0; }
+.top-list > li > .muted { flex: none; }
+.kind-split { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--fg-muted); margin: 0 0 20px; }
 .stat-sorry .stat-value { color: var(--sorry); }
 .stat-axiom .stat-value { color: var(--axiom); }
 .table { border-collapse: collapse; font-size: 13px; }

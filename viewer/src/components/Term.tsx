@@ -26,11 +26,31 @@ export const JARGON: Record<string, { label: string; text: string }> = {
   'NP-complete': { label: 'NP-complete', text: 'Among the hardest problems whose solutions can be checked quickly.' },
 };
 
-export function Term({ term, children }: { term: string; children?: React.ReactNode }) {
+/**
+ * Badge colours: each kind of declaration has its own hue (none of them the status green, red or
+ * amber); a main result is filled with the accent; flags are outlines (unsafe and partial in red).
+ */
+const BADGE_CLASS: Record<string, string> = {
+  theorem: 'kind-theorem', lemma: 'kind-lemma', def: 'kind-def', abbrev: 'kind-abbrev', structure: 'kind-structure',
+  inductive: 'kind-inductive', ctor: 'kind-ctor', instance: 'kind-instance', axiom: 'kind-axiom',
+  opaque: 'kind-other', recursor: 'kind-other', quot: 'kind-other',
+  result: 'badge-main', private: 'badge-flag', deprecated: 'badge-flag', external: 'badge-flag', unsafe: 'badge-warn', partial: 'badge-warn',
+};
+export const badgeClass = (term: string) => BADGE_CLASS[term] ?? '';
+
+/** Plural names of the kinds, for counts ("37 structures"). */
+export const KIND_PLURAL: Record<string, string> = {
+  def: 'definitions', abbrev: 'abbreviations', structure: 'structures', inductive: 'inductive types', ctor: 'constructors',
+  instance: 'instances', opaque: 'opaque constants', recursor: 'recursors', quot: 'quotients', theorem: 'theorems', axiom: 'axioms',
+};
+
+/** A badge with a hover card. `plain` keeps the hover card but drops the badge look (for labels). */
+export function Term({ term, children, plain = false }: { term: string; children?: React.ReactNode; plain?: boolean }) {
   const j = JARGON[term];
-  if (!j) return <span className="badge">{children ?? term}</span>;
+  const look = plain ? 'term-plain' : `badge ${badgeClass(term)}`;
+  if (!j) return <span className={look}>{children ?? term}</span>;
   return (
-    <span className="badge term" tabIndex={0} aria-describedby={`term-${term.replace(/\W/g, '-')}`}>
+    <span className={`${look} term`} tabIndex={0} aria-describedby={`term-${term.replace(/\W/g, '-')}`}>
       {children ?? j.label}
       <span className="term-card" role="tooltip" id={`term-${term.replace(/\W/g, '-')}`}>
         <strong>{j.label}</strong>: {j.text}

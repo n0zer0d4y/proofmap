@@ -2,7 +2,7 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [0.2.0] - unreleased
+## [0.2.0] - 2026-11-09
 
 ### Added
 
@@ -18,6 +18,9 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - **Lean core switch** on the map (Init, Std, Lean as one library card).
 - **Build messages:** `proofmap build` names the main results and page title it chose, and how to set them in `proofmap.toml`.
 - A folding legend, feedback for `copy` and for `p` on the map, arrowheads on edges, and an inline favicon.
+- **Health counts the project:** theorems (with "all proved" or how many are not), definitions and types, and main results, beside the completeness and hygiene counts, with the definitions and types counted by kind. The tiles share one width, the widest one's, so larger numbers widen them all together.
+- **Coloured kind badges:** each kind (theorem, definition, structure, inductive type, constructor, instance, axiom and others) has its own colour on map cards, in the details panel and in Health's lists (beside a list's heading when every row is the same kind, on each row otherwise); a main result is filled with the accent colour, and unsafe or partial are outlined in red.
+- **About** lists the proofmap and Lean versions, when the page was built, its data format and the browser, with **Copy details** for a bug report.
 - **Highlighted chains** (a tour step, a "Why?" chain) draw their lines in the highlight colour as moving dashes, still for readers who ask for less motion.
 
 ### Changed
@@ -39,6 +42,7 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - **Details panel:** "Uses" and "Used by" are grouped by library (Lean core folded), generated helpers are left out of "Used by", and the rank badge appears only when it differs from the kind.
 - **Export:** SVG and PNG are in the map toolbar and contain the whole map; the SVG is shapes and text (no HTML inside), so it works in papers and vector editors.
 - **Theme** is remembered by the browser instead of travelling in links.
+- **Dark theme:** a near-neutral black (the page is `#101011`) with panels and wells one step apart, so the accent and badge colours are not glaring against it.
 - **Presets** keep the current view when changed; their view applies when the page opens.
 - **Guided tour** runs on the map; its panel sits in the map's lower left corner, above the legend, without repeating the details panel.
 - **Health:** steps are grouped by file in source order.
@@ -51,7 +55,7 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - Adding several cards at once (such as "Show on map" for a "Why?" chain) could draw the map backwards, with a foundation to the right of what uses it; a layout that would point an arrow backwards is now redone from scratch.
 - The view could leave the selected card or the cards just added outside the map after the layout settled.
 - Opening rows in the outline of a large project was slow: every row carried a hidden statement for printing. Statements are now made only when printing, so Expand all on a 13,759-declaration page takes well under a second.
-- On narrower windows, long names in lists (health, the details panel) showed only an ellipsis; they wrap now.
+- On narrower windows, long names in lists (health, the details panel) showed only an ellipsis or ran into the next column; they wrap now, between their parts (after a `.` or `_`) rather than inside a word, and Health's top-10 lists keep each number, name and count on one row.
 - Printing the outline (or saving it as PDF) gave only the part on screen, squeezed into the left of the page beside an empty column for the details panel; it now prints the whole outline across as many pages as it needs, at full width.
 - The view tabs did nothing while a walkthrough was open.
 - A link or a click that selected a declaration not on the map left the map unchanged.
@@ -69,6 +73,11 @@ All notable changes to proofmap are listed here. The format follows [Keep a Chan
 - Screen readers read edges by internal ids; every edge was a Tab stop.
 - A page on a static web host requested the live-reload address and logged a 404.
 - The minimap kept a light frame in dark mode.
+- The details panel repeated the kind as a second badge (a structure also showed "definition"); the rank badge now appears only for a main result or a lemma.
+- Health's tile labels were drawn as badges.
+- The About dialog closed only from a button at its bottom; it closes from its top right corner now, like any window.
+- The chevrons of the Main result and preset dropdowns sat against their edge; they are inset now, and the dropdowns are as tall as the buttons beside them.
+- The main result's card showed **+** although it was open, and the button did nothing. It shows **−** now and closes the main result; Enter, Escape and "Show more around this" agree with it.
 
 ## [0.1.0] - 2026-10-31
 

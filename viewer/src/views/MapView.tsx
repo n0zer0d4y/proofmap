@@ -26,6 +26,7 @@ import { requestLayout } from '../layout/client';
 import { currentPalette, ExportButtons } from '../components/Export';
 import { TourPanel } from '../components/Tour';
 import { mapSvg, svgToPng } from '../graph/svg';
+import { isOpen, mapAnchor, openAll, openCards, toggleOpen } from '../state/mapOpen';
 import { useStore } from '../state/store';
 
 /** The map: the anchor result and what it rests on, laid out left to right,
@@ -97,7 +98,11 @@ function sentence(ix: Indexes, e: MapEdge, byId: Map<string, MapNode>): string {
  */
 export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: ReadonlySet<string>, resetKey: unknown) {
   const flow = useReactFlow();
+  const anchor = useStore((s) => s.anchor);
+  const anchorClosed = useStore((s) => s.anchorClosed);
   const expanded = useStore((s) => s.expanded);
+  // Open cards show their code with "Code in cards"; the main result counts as open unless closed.
+  const open = useMemo(() => openCards(ix, { anchor, anchorClosed, expanded }), [ix, anchor, anchorClosed, expanded]);
   const showCode = useStore((s) => s.showCode);
   const statementsExpanded = useStore((s) => s.statementsExpanded);
   const focus = useStore((s) => s.focus);
@@ -128,10 +133,10 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
         height:
           measured[n.id]?.height ??
           (n.kind === 'decl'
-            ? cardHeight(ix, n.decl!, statementsExpanded, showCode && (n.decl === focus || expanded.has(n.decl!)))
+            ? cardHeight(ix, n.decl!, statementsExpanded, showCode && (n.decl === focus || open.has(n.decl!)))
             : 96),
       })),
-    [folded, ix, statementsExpanded, showCode, focus, expanded, measured],
+    [folded, ix, statementsExpanded, showCode, focus, open, measured],
   );
   const sizeOf = useCallback((id: string) => sizes.find((s) => s.id === id) ?? { width: CARD_WIDTH, height: 112 }, [sizes]);
 
@@ -306,8 +311,9 @@ function boundsOf(ids: string[], positions: Positions, size: (id: string) => { w
 function MapInner({ ix }: { ix: Indexes }) {
   const flow = useReactFlow();
   const anchorState = useStore((s) => s.anchor);
-  const anchor = anchorState ?? ix.data.project.roots[0] ?? ix.visible[0] ?? null;
+  const anchor = mapAnchor(ix, anchorState);
   const expanded = useStore((s) => s.expanded);
+  const anchorClosed = useStore((s) => s.anchorClosed);
   const expandedGroups = useStore((s) => s.expandedGroups);
   const showNoise = useStore((s) => s.showNoise);
   const showExternal = useStore((s) => s.showExternal);
@@ -321,14 +327,14 @@ function MapInner({ ix }: { ix: Indexes }) {
     if (anchor === null) return { nodes: [], edges: [] };
     return fold(ix, {
       roots: [anchor],
-      expanded: new Set([anchor, ...expanded]),
+      expanded: openCards(ix, { anchor, anchorClosed, expanded }),
       expandedGroups,
       showNoise,
       showExternal,
       showCore,
       pinned: new Set(highlight),
     });
-  }, [ix, anchor, expanded, expandedGroups, showNoise, showExternal, showCore, highlight]);
+  }, [ix, anchor, anchorClosed, expanded, expandedGroups, showNoise, showExternal, showCore, highlight]);
   const highlighted = useMemo(() => new Set(highlight.map(declNodeId)), [highlight]);
 
   const { nodes, edges, positions, onNodesChange, byId, sizeOf, onMoveStart } = useLaidOutGraph(ix, folded, highlighted, anchor);
@@ -396,11 +402,11 @@ function MapInner({ ix }: { ix: Indexes }) {
       }
       case 'Enter':
         e.preventDefault();
-        if (!s.expanded.has(cur)) s.toggleExpanded(cur);
+        if (!isOpen(ix, s, cur)) toggleOpen(ix, cur);
         break;
       case 'Escape':
         e.preventDefault();
-        if (s.expanded.has(cur)) s.toggleExpanded(cur);
+        if (isOpen(ix, s, cur)) toggleOpen(ix, cur);
         break;
       case 'f':
         e.preventDefault();
@@ -533,7 +539,7 @@ function MapToolbar({
   const s = useStore();
   const focus = s.focus;
   const roots = ix.data.project.roots;
-  const ring = focus !== null ? nextRing(ix, focus, s.expanded) : [];
+  const ring = focus !== null ? nextRing(ix, focus, openCards(ix, s)) : [];
   return (
     <div className="map-toolbar" role="toolbar" aria-label="Map controls">
       {roots.length > 1 ? (
@@ -576,7 +582,7 @@ function MapToolbar({
         className="icon-button"
         disabled={ring.length === 0}
         title={focus === null ? 'Select a result first' : ring.length === 0 ? 'Everything around this result is already shown' : `Show what ${ring.length === 1 ? 'it rests on' : `${ring.length} more results rest on`}`}
-        onClick={() => s.setExpanded([...s.expanded, ...ring])}
+        onClick={() => openAll(ix, ring)}
       >
         Show more around this
       </button>

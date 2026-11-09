@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { breakable } from '../components/breakable';
 import { StatusBadge } from '../components/StatusBadge';
-import { Term } from '../components/Term';
+import { badgeClass, JARGON, KIND_PLURAL, Term } from '../components/Term';
 import type { Indexes } from '../data/indexes';
 import { plainText } from '../data/library';
 import { computeHealth, type Health } from '../graph/health';
@@ -9,7 +10,9 @@ import { useStore } from '../state/store';
 type ListKey = keyof Health['lists'];
 
 const LIST_TITLES: Record<ListKey, string> = {
-  total: 'All results and definitions',
+  theorems: 'Theorems',
+  definitions: 'Definitions and types',
+  main: 'Main results',
   proved: 'Complete',
   sorry: 'Has sorry',
   nonstandard: 'Extra axioms',
@@ -26,27 +29,65 @@ export function HealthView({ ix }: { ix: Indexes }) {
   const [axiom, setAxiom] = useState<string | null>(null);
   const name = (id: number) => (
     <button className="linklike" onClick={() => select(id)} title={ix.decls[id]!.title}>
-      {ix.decls[id]!.name}
+      {breakable(ix.decls[id]!.name)}
     </button>
   );
   const pct = (ok: number, total: number) => (total ? Math.round((100 * ok) / total) : 100);
-  const stat = (key: ListKey, label: React.ReactNode, tone?: 'ok' | 'sorry' | 'axiom') => (
-    <Stat label={label} value={h.lists[key].length} tone={tone} pressed={open === key} onClick={() => setOpen(open === key ? null : key)} />
+  const stat = (key: ListKey, label: React.ReactNode, tone?: Tone, note?: React.ReactNode) => (
+    <Stat label={label} value={h.lists[key].length} tone={tone} note={note} pressed={open === key} onClick={() => setOpen(open === key ? null : key)} />
   );
+  // Next to the theorem count: all proved, or how many are not.
+  const theoremNote =
+    h.theorems === 0 ? undefined : h.theoremsSorry ? (
+      <span className="stat-note sorry">{h.theoremsSorry.toLocaleString()} with sorry</span>
+    ) : h.theoremsExtra ? (
+      <span className="stat-note axiom">{h.theoremsExtra.toLocaleString()} with extra axioms</span>
+    ) : (
+      <span className="stat-note ok">✓ all proved</span>
+    );
+  const tiles = useEqualTileWidth([h]);
   return (
     <div className="health">
-      <section className="stat-row" aria-label="Counts">
-        {stat('total', 'Results and definitions')}
-        {stat('proved', 'Complete', 'ok')}
-        {stat('sorry', <Term term="sorry">Has sorry</Term>, h.sorry ? 'sorry' : undefined)}
-        {stat('nonstandard', <Term term="axiom">Extra axioms</Term>, h.nonstandard ? 'axiom' : undefined)}
-        {stat('deprecated', <Term term="deprecated">Deprecated</Term>)}
-        {stat('unsafe', <Term term="unsafe">Unsafe or partial</Term>)}
+      <section className="health-tiles" aria-label="Counts" ref={tiles}>
+        <div className="tile-group">
+          <span className="tile-group-label">The project</span>
+          <div className="tiles">
+            {stat('theorems', <Term term="theorem" plain>Theorems</Term>, 'theorem', theoremNote)}
+            {/* Everything that is not a theorem: definitions (def, abbrev) and types (structures, inductive types and their constructors). */}
+            {stat('definitions', 'Definitions and types', 'def')}
+            {stat('main', <Term term="result" plain>Main results</Term>, 'main')}
+          </div>
+        </div>
+        <div className="tile-group">
+          <span className="tile-group-label">Completeness</span>
+          <div className="tiles">
+            {stat('proved', 'Complete', 'ok')}
+            {stat('sorry', <Term term="sorry" plain>Has sorry</Term>, h.sorry ? 'sorry' : undefined)}
+            {stat('nonstandard', <Term term="axiom" plain>Extra axioms</Term>, h.nonstandard ? 'axiom' : undefined)}
+          </div>
+        </div>
+        <div className="tile-group">
+          <span className="tile-group-label">Hygiene</span>
+          <div className="tiles">
+            {stat('deprecated', <Term term="deprecated" plain>Deprecated</Term>)}
+            {stat('unsafe', <Term term="unsafe" plain>Unsafe or partial</Term>)}
+          </div>
+        </div>
       </section>
+      {h.definitionKinds.length > 0 && (
+        <p className="kind-split">
+          Definitions and types ({h.definitions.toLocaleString()}):{' '}
+          {h.definitionKinds.map((k) => (
+            <span key={k.kind} className={`badge ${badgeClass(k.kind)}`}>
+              {k.count.toLocaleString()} {k.count === 1 ? (JARGON[k.kind]?.label ?? k.kind) : (KIND_PLURAL[k.kind] ?? k.kind)}
+            </span>
+          ))}
+        </p>
+      )}
       {open && (
         <section aria-label={LIST_TITLES[open]} className="stat-list">
           <h3>
-            {LIST_TITLES[open]} ({h.lists[open].length})
+            {LIST_TITLES[open]} ({h.lists[open].length}) <ListKind ix={ix} ids={h.lists[open]} />
           </h3>
           <DeclColumns ix={ix} ids={h.lists[open]} name={name} />
         </section>
@@ -94,7 +135,8 @@ export function HealthView({ ix }: { ix: Indexes }) {
         {axiom && (
           <div className="stat-list">
             <h3>
-              Using {axiom === 'sorryAx' ? 'sorry' : axiom} ({h.axiomUsers.get(axiom)?.length ?? 0})
+              Using {axiom === 'sorryAx' ? 'sorry' : axiom} ({h.axiomUsers.get(axiom)?.length ?? 0}){' '}
+              <ListKind ix={ix} ids={h.axiomUsers.get(axiom) ?? []} />
             </h3>
             <DeclColumns ix={ix} ids={h.axiomUsers.get(axiom) ?? []} name={name} />
           </div>
@@ -104,7 +146,7 @@ export function HealthView({ ix }: { ix: Indexes }) {
       <section aria-label="Largest proofs" className="two-col">
         <div>
           <h3>Longest (lines of source)</h3>
-          <ol>
+          <ol className="top-list" role="list">
             {h.largestByLines.map((id) => (
               <li key={id}>
                 {name(id)} <span className="muted">{ix.decls[id]!.size.lines} lines</span>
@@ -114,7 +156,7 @@ export function HealthView({ ix }: { ix: Indexes }) {
         </div>
         <div>
           <h3>Largest proof terms</h3>
-          <ol>
+          <ol className="top-list" role="list">
             {h.largestByTerm.map((id) => (
               <li key={id}>
                 {name(id)} <span className="muted">{ix.decls[id]!.size.exprNodes.toLocaleString()} nodes</span>
@@ -125,7 +167,9 @@ export function HealthView({ ix }: { ix: Indexes }) {
       </section>
 
       <section aria-label="Standalone results">
-        <h3>Standalone results ({h.standalone.length})</h3>
+        <h3>
+          Standalone results ({h.standalone.length}) <ListKind ix={ix} ids={h.standalone} />
+        </h3>
         <p className="muted plain">
           Documented theorems that no other declaration uses (main results excluded). Usually findings in their own right; set{' '}
           <code>[project] roots</code> in <code>proofmap.toml</code> to make the important ones main results.
@@ -134,7 +178,9 @@ export function HealthView({ ix }: { ix: Indexes }) {
       </section>
 
       <section aria-label="Unused declarations">
-        <h3>Possibly unused ({h.unused.length})</h3>
+        <h3>
+          Possibly unused ({h.unused.length}) <ListKind ix={ix} ids={h.unused} />
+        </h3>
         <p className="muted plain">
           Other results and definitions that no other declaration in the project uses. Scripts, tests outside Lean and documents are
           not read, so a result checked only there is listed too.
@@ -184,12 +230,14 @@ function Progress({ name, ok, total, pct, mono = false }: { name: string; ok: nu
 function DeclColumns({ ix, ids, name }: { ix: Indexes; ids: number[]; name: (id: number) => React.ReactNode }) {
   const [all, setAll] = useState(false);
   const limit = all ? ids.length : 300;
+  // When every row is the same kind, the heading carries the badge (ListKind) instead of each row.
+  const sameKind = uniformKind(ix, ids) !== null;
   if (!ids.length) return <p className="empty plain">None</p>;
   return (
     <ul className="decl-list columns">
       {ids.slice(0, limit).map((id) => (
         <li key={id}>
-          <StatusBadge decl={ix.decls[id]!} /> {name(id)}
+          <StatusBadge decl={ix.decls[id]!} /> {name(id)} {!sameKind && <KindBadge kind={ix.decls[id]!.kind} />}
         </li>
       ))}
       {ids.length > limit && (
@@ -203,22 +251,68 @@ function DeclColumns({ ix, ids, name }: { ix: Indexes; ids: number[]; name: (id:
   );
 }
 
+type Tone = 'ok' | 'sorry' | 'axiom' | 'theorem' | 'def' | 'main';
+
+/** The one kind every declaration in `ids` has, or null when they differ (or there are none). */
+function uniformKind(ix: Indexes, ids: number[]): string | null {
+  const kind = ids.length ? ix.decls[ids[0]!]!.kind : null;
+  return kind !== null && ids.every((id) => ix.decls[id]!.kind === kind) ? kind : null;
+}
+
+/** Next to a list's heading: the kind all its rows share, if they share one. */
+function ListKind({ ix, ids }: { ix: Indexes; ids: number[] }) {
+  const kind = uniformKind(ix, ids);
+  return kind ? <KindBadge kind={kind} /> : null;
+}
+
+/** A kind's badge in a list (the same colours as on the map cards and in the details panel). */
+function KindBadge({ kind }: { kind: string }) {
+  return <span className={`badge ${badgeClass(kind)}`}>{JARGON[kind]?.label ?? kind}</span>;
+}
+
+/**
+ * Gives every tile in `ref` the same width: the widest tile's content, never less than 136px.
+ * Measured after the numbers are drawn, so a larger project widens all tiles together and nothing
+ * is cut; whole groups wrap when the row does not fit.
+ */
+function useEqualTileWidth(deps: unknown[]) {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const box = ref.current;
+    if (!box) return;
+    box.style.removeProperty('--tile-w');
+    const tiles = [...box.querySelectorAll<HTMLElement>('.stat')];
+    for (const t of tiles) t.style.width = 'max-content';
+    const widest = Math.max(136, ...tiles.map((t) => Math.ceil(t.getBoundingClientRect().width)));
+    for (const t of tiles) t.style.width = '';
+    box.style.setProperty('--tile-w', `${widest}px`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return ref;
+}
+
 export function Stat({
   label,
   value,
   tone,
+  note,
   onClick,
   pressed,
 }: {
   label: React.ReactNode;
   value: number;
-  tone?: 'ok' | 'sorry' | 'axiom';
+  tone?: Tone;
+  /** A short line next to the number (such as "✓ all proved"). */
+  note?: React.ReactNode;
   onClick?: () => void;
   pressed?: boolean;
 }) {
   const body = (
     <>
-      <div className="stat-value">{value.toLocaleString()}</div>
+      <div className="stat-top">
+        <span className="stat-value">{value.toLocaleString()}</span>
+        {note}
+      </div>
       <div className="stat-label">{label}</div>
     </>
   );

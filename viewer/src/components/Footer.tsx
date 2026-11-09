@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Indexes } from '../data/indexes';
 import { VERSION } from '../version';
 
@@ -18,6 +18,14 @@ export function Footer({ ix }: { ix: Indexes }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const showFooter = ix.data.project.footer !== false;
   const lean = ix.data.generator.lean;
+  // The details a bug report needs, shown and copyable (like an application's About box).
+  const facts: [string, string][] = [
+    ['proofmap', VERSION],
+    ['Lean', lean],
+    ['Page built', ix.data.project.builtAt.replace('T', ' ').replace(/\.\d+Z$|Z$/, ' UTC')],
+    ['Data format', String(ix.data.schema)],
+    ['Browser', typeof navigator === 'undefined' ? 'unknown' : navigator.userAgent],
+  ];
   return (
     <>
       <footer className="footer" style={showFooter ? undefined : { justifyContent: 'flex-end' }}>
@@ -34,20 +42,48 @@ export function Footer({ ix }: { ix: Indexes }) {
           About
         </button>
       </footer>
-      <dialog ref={dialog} aria-label="About proofmap">
-        <h2 style={{ marginTop: 0 }}>proofmap {VERSION}</h2>
+      <dialog ref={dialog} aria-label="About proofmap" className="about">
+        {/* Title on the left, close at the top right, as in any window. */}
+        <div className="dialog-head">
+          <h2>proofmap {VERSION}</h2>
+          <form method="dialog">
+            <button className="dialog-close" aria-label="Close">
+              ×
+            </button>
+          </form>
+        </div>
         <p>
           An interactive map of a Lean project's results and what they rest on. Licensed under the Apache
           License, Version 2.0.
         </p>
+        <dl className="about-facts">
+          {facts.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
         <pre>{NOTICE}</pre>
-        <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
-          Generated {ix.data.project.builtAt} with Lean {lean}.
-        </p>
-        <form method="dialog">
-          <button className="icon-button">Close</button>
-        </form>
+        <div className="dialog-foot">
+          <CopyDetails text={facts.map(([k, v]) => `${k}: ${v}`).join('\n')} />
+        </div>
       </dialog>
     </>
+  );
+}
+
+/** Copies the About details, and says so for a moment. */
+function CopyDetails({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(t);
+  }, [copied]);
+  return (
+    <button className="icon-button" onClick={() => void navigator.clipboard?.writeText(text).then(() => setCopied(true), () => setCopied(false))}>
+      {copied ? 'Copied' : 'Copy details'}
+    </button>
   );
 }

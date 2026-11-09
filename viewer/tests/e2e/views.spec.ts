@@ -87,7 +87,13 @@ test('health numbers match the extracted data', async ({ page }) => {
   // Match a stat by the start of its label (glossary hover cards inside labels contain other words).
   const stat = (label: string) =>
     counts.locator('.stat').filter({ has: page.locator('.stat-label', { hasText: new RegExp('^' + label) }) }).locator('.stat-value');
-  await expect(stat('Results and definitions')).toHaveText(String(visible.length));
+  const theorems = visible.filter((d) => d.kind === 'theorem');
+  await expect(stat('Theorems')).toHaveText(String(theorems.length));
+  await expect(stat('Definitions and types')).toHaveText(String(visible.filter((d) => d.kind !== 'theorem' && d.kind !== 'axiom').length));
+  await expect(stat('Main results')).toHaveText(String(data.project.roots.filter((r) => visible.some((d) => d.id === r)).length));
+  // Next to the theorem count: how many theorems are not proved (the fixture has unfinished ones).
+  const withSorry = theorems.filter((d) => d.status.sorry).length;
+  await expect(counts.locator('.stat', { has: page.locator('.stat-label', { hasText: /^Theorems/ }) }).locator('.stat-note')).toHaveText(`${withSorry} with sorry`);
   await expect(stat('Complete')).toHaveText(String(visible.filter((d) => !d.status.sorry && !d.status.nonstandardAxioms.length).length));
   await expect(stat('Has sorry')).toHaveText(String(visible.filter((d) => d.status.sorry).length));
   await expect(stat('Extra axioms')).toHaveText(String(visible.filter((d) => d.status.nonstandardAxioms.length).length));
@@ -148,7 +154,7 @@ test('export: the whole map as a real SVG and a PNG', async ({ page, browser }) 
 test('long names in lists wrap instead of being cut to an ellipsis, on a narrow window', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 800 });
   await page.goto(`${fixtureUrl}#/health`);
-  await page.getByRole('button', { name: /Results and definitions/ }).click();
+  await page.getByRole('button', { name: /Theorems/ }).click();
   const names = page.locator('.health .decl-list .linklike');
   await expect(names.first()).toBeVisible();
   // Every name lies wholly inside its row (a row that clips would hide it behind an ellipsis).
@@ -161,4 +167,67 @@ test('long names in lists wrap instead of being cut to an ellipsis, on a narrow 
       .map((e) => e.textContent),
   );
   expect(cut).toEqual([]);
+});
+
+test('health tiles are one size, nothing in them is cut, and counts of one read in the singular', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/health`);
+  const tiles = page.locator('.health-tiles .stat');
+  await expect(tiles).toHaveCount(8);
+  const boxes = await tiles.evaluateAll((els) =>
+    els.map((e) => ({ w: Math.round(e.getBoundingClientRect().width), h: Math.round(e.getBoundingClientRect().height), cut: [...e.querySelectorAll('.stat-top, .stat-label')].some((c) => c.scrollWidth > c.clientWidth + 1) })),
+  );
+  expect(new Set(boxes.map((b) => `${b.w}x${b.h}`)).size).toBe(1);
+  expect(boxes[0]!.w).toBeGreaterThanOrEqual(136);
+  expect(boxes.filter((b) => b.cut)).toEqual([]);
+  // The definitions by kind: "1 structure", not "1 structures".
+  await expect(page.locator('.kind-split')).toContainText('1 structure');
+  await expect(page.locator('.kind-split')).not.toContainText('1 structures');
+});
+
+test('kind badges are coloured by kind, and the rank appears only when it adds something', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/map/Fixture.Point`);
+  const badges = page.getByRole('complementary', { name: 'Details' }).locator('.badges .badge');
+  // A structure is a structure: no second "definition" badge.
+  await expect(badges).toHaveCount(1);
+  await expect(badges.first()).toHaveClass(/kind-structure/);
+  const structure = await badges.first().evaluate((e) => getComputedStyle(e).color);
+  // Map cards use the same badges, with the kind written out (the main result's map shows Double).
+  await page.goto(`${fixtureUrl}#/map`);
+  const card = page.locator('[data-decl="Fixture.double"]');
+  await expect(card.locator('.card-foot .badge')).toHaveText('definition');
+  const definition = await card.locator('.card-foot .badge').evaluate((e) => getComputedStyle(e).color);
+  expect(definition).not.toBe(structure);
+});
+
+test('a list of one kind shows the kind once, by its heading; a mixed list shows it on each row', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/health`);
+  await page.getByRole('button', { name: /Theorems/ }).click();
+  const theorems = page.getByRole('region', { name: 'Theorems' });
+  await expect(theorems.locator('h3 .badge')).toHaveText('theorem');
+  await expect(theorems.locator('li .badge.kind-theorem')).toHaveCount(0);
+  // Long names can wrap between their parts (after a dot or an underscore), not inside a word.
+  expect(await theorems.locator('li .linklike wbr').count()).toBeGreaterThan(0);
+  await page.getByRole('button', { name: /Definitions and types/ }).click();
+  const defs = page.getByRole('region', { name: 'Definitions and types' });
+  await expect(defs.locator('h3 .badge')).toHaveCount(0);
+  expect(await defs.locator('li .badge[class*="kind-"]').count()).toBeGreaterThan(1);
+});
+
+test('top-10 lists keep the number, a wrapping name and its count on one row, even on a narrow window', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 800 });
+  await page.goto(`${fixtureUrl}#/health`);
+  const rows = page.getByRole('region', { name: 'Largest proofs' }).locator('.top-list > li');
+  await expect(rows.first()).toBeVisible();
+  const bad = await rows.evaluateAll((lis) =>
+    lis
+      .map((li) => {
+        const name = li.querySelector('.linklike')!, count = li.querySelector('.muted')!;
+        const n = name.getBoundingClientRect(), c = count.getBoundingClientRect();
+        // The count sits beside the name's first line, and the name's text starts at its left edge.
+        const sameRow = Math.abs(c.top - n.top) < 6;
+        return sameRow && getComputedStyle(name).textAlign !== 'center' ? null : li.textContent;
+      })
+      .filter(Boolean),
+  );
+  expect(bad).toEqual([]);
 });

@@ -28,6 +28,9 @@ export interface ViewerState {
   pathFrom: number | null;
   pathTo: number | null;
   walkthrough: boolean;
+  /** The map's main result is open (showing what it rests on) unless the reader closed it. */
+  anchorClosed: boolean;
+  setAnchorClosed: (closed: boolean) => void;
   /** Declarations highlighted on the map (a "why" chain, or the way to a tour step). */
   highlight: number[];
   /** Index of the current guided-tour step, or null when no tour is running. */
@@ -84,6 +87,8 @@ export const useStore = create<ViewerState>((set) => ({
   pathTo: null,
   walkthrough: false,
   highlight: [],
+  anchorClosed: false,
+  setAnchorClosed: (anchorClosed) => set({ anchorClosed }),
   tour: null,
   comparison: null,
   outlineOpen: null,
@@ -105,7 +110,7 @@ export const useStore = create<ViewerState>((set) => ({
     }),
   setExpanded: (ids) => set({ expanded: new Set(ids) }),
   setAnchor: (anchor, opts) =>
-    set({ anchor, expanded: new Set(), expandedGroups: new Set(), highlight: [], urlReplace: opts?.replace ?? false }),
+    set({ anchor, anchorClosed: false, expanded: new Set(), expandedGroups: new Set(), highlight: [], urlReplace: opts?.replace ?? false }),
   setOutlineOpen: (outlineOpen) => set({ outlineOpen }),
   setOutlineScroll: (outlineScroll) => set({ outlineScroll }),
   setNotice: (notice) => set({ notice }),
@@ -142,6 +147,7 @@ export const useStore = create<ViewerState>((set) => ({
     set({
       view: 'map',
       anchor: chain[0] ?? null,
+      anchorClosed: false,
       expanded: new Set(chain.slice(0, -1)),
       expandedGroups: new Set(),
       highlight: chain,
@@ -151,6 +157,7 @@ export const useStore = create<ViewerState>((set) => ({
   tourGo: (index, path) =>
     set((s) => ({
       tour: index,
+      anchorClosed: false,
       view: 'map',
       walkthrough: false,
       focus: path[path.length - 1] ?? null,
@@ -219,6 +226,8 @@ function applyUrlState(u: UrlState, ix: Indexes, defaultPreset: Preset, first: b
     focus,
     missingKey: u.focus !== null && focus === null ? u.focus : null,
     anchor: id(u.anchor),
+    // A different main result opens; the same one keeps whether the reader closed it.
+    ...(id(u.anchor) !== cur.anchor ? { anchorClosed: false } : {}),
     expanded: new Set(u.expanded.map((k) => ix.idOfKey(k)).filter((i): i is number => i !== undefined)),
     expandedGroups: new Set(u.groups),
     ...(u.theme ? { theme: u.theme } : {}),

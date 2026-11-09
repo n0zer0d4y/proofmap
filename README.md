@@ -15,7 +15,7 @@ proofmap reads a Lean project's compiled code and writes one HTML page that show
 - **Outline:** the proof as a table of contents, with each result's summary taken from its docstring or comments.
 - **Walkthrough** (optional, `--walkthrough`): the goals before and after every tactic step, with the changes highlighted.
 - **Path finder:** "how does this definition reach that theorem?", answered in plain words.
-- **Health:** where the sorry is, extra axioms, and what depends on them.
+- **Health:** how many theorems, definitions and main results there are, where the sorry is, extra axioms, and what depends on them.
 - **Compare:** what was added, removed or changed since an earlier version.
 
 Everything runs on your machine. proofmap sends nothing anywhere, and the page loads nothing from the network.

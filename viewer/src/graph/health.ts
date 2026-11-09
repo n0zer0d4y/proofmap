@@ -5,6 +5,16 @@ import { downstream } from './propagate';
 /** The health and progress summary, over the visible project declarations. */
 export interface Health {
   total: number;
+  /** Theorems, and how many of them are proved (no sorry, only standard axioms), have sorry, or use an extra axiom. */
+  theorems: number;
+  theoremsProved: number;
+  theoremsSorry: number;
+  theoremsExtra: number;
+  /** Everything that is neither a theorem nor an axiom, by kind (most first). */
+  definitions: number;
+  definitionKinds: Array<{ kind: string; count: number }>;
+  /** Main results shown (the project's roots that are visible). */
+  main: number;
   proved: number;
   sorry: number;
   nonstandard: number;
@@ -17,7 +27,7 @@ export interface Health {
   largestByLines: number[];
   largestByTerm: number[];
   /** The declarations behind each count, so a count can be opened. */
-  lists: { total: number[]; proved: number[]; sorry: number[]; nonstandard: number[]; deprecated: number[]; unsafe: number[] };
+  lists: { theorems: number[]; definitions: number[]; main: number[]; proved: number[]; sorry: number[]; nonstandard: number[]; deprecated: number[]; unsafe: number[] };
   /** The declarations using each axiom (transitively). */
   axiomUsers: Map<string, number[]>;
   /** Documented theorems no other declaration uses (main results excluded): findings in their own right. */
@@ -37,19 +47,31 @@ export function computeHealth(ix: Indexes, top = 10): Health {
   const standard = new Set(ix.data.project.standardAxioms ?? ['propext', 'Classical.choice', 'Quot.sound']);
   const roots = new Set(ix.data.project.roots);
   const h: Health = {
-    total: ids.length, proved: 0, sorry: 0, nonstandard: 0, deprecated: 0, unsafe: 0,
+    total: ids.length, theorems: 0, theoremsProved: 0, theoremsSorry: 0, theoremsExtra: 0, definitions: 0, definitionKinds: [], main: 0,
+    proved: 0, sorry: 0, nonstandard: 0, deprecated: 0, unsafe: 0,
     sorrySources: [], axioms: [], largestByLines: [], largestByTerm: [], standalone: [], unused: [], byModule: [], byStep: [],
-    lists: { total: [...ids], proved: [], sorry: [], nonstandard: [], deprecated: [], unsafe: [] },
+    lists: { theorems: [], definitions: [], main: [], proved: [], sorry: [], nonstandard: [], deprecated: [], unsafe: [] },
     axiomUsers: new Map(),
     generated: decls.filter((d) => !d.external && d.flags.includes('noise:generated')).length,
   };
   const axiomCount = new Map<string, number>();
+  const kinds = new Map<string, number>();
   const byModule = new Map<string, { total: number; ok: number }>();
   const byStep = new Map<string, { module: string; name: string; total: number; ok: number; line: number }>();
   const add = (list: number[], id: number) => list.push(id);
   for (const id of ids) {
     const d = decls[id]!;
     const s = statusOf(d);
+    if (d.kind === 'theorem') {
+      add(h.lists.theorems, id);
+      if (s === 'ok') h.theoremsProved++;
+      if (d.status.sorry) h.theoremsSorry++;
+      else if (d.status.nonstandardAxioms.length) h.theoremsExtra++;
+    } else if (d.kind !== 'axiom') {
+      add(h.lists.definitions, id);
+      kinds.set(d.kind, (kinds.get(d.kind) ?? 0) + 1);
+    }
+    if (roots.has(id)) add(h.lists.main, id);
     if (s === 'ok') add(h.lists.proved, id);
     if (d.status.sorry) add(h.lists.sorry, id);
     if (d.status.nonstandardAxioms.length) add(h.lists.nonstandard, id);
@@ -75,6 +97,10 @@ export function computeHealth(ix: Indexes, top = 10): Health {
     st.line = Math.min(st.line, d.range?.start[0] ?? st.line);
     byStep.set(key, st);
   }
+  h.theorems = h.lists.theorems.length;
+  h.definitions = h.lists.definitions.length;
+  h.definitionKinds = [...kinds].map(([kind, count]) => ({ kind, count })).sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind));
+  h.main = h.lists.main.length;
   h.proved = h.lists.proved.length;
   h.sorry = h.lists.sorry.length;
   h.nonstandard = h.lists.nonstandard.length;

@@ -1,12 +1,13 @@
 # User guide
 
-A proofmap page is one HTML file (or one folder, for a site). It needs no server and no network: open it in any current browser. Everything you do on the page is kept in its address, so the back button works, and a copied link opens the same view, selection and settings for whoever you send it to.
+A proofmap page is one HTML file (or one folder, for a site). It needs no server and no network: open it in any current browser. Where you are on the page is kept in its address (the view, the selection, what is open on the map and the preset), so the back button works and a copied link opens the same place for whoever you send it to. The theme is remembered by your browser and is not part of links.
 
 ## The page at a glance
 
 - **Header:** the project title, the search box (press `/` to jump to it; it searches names, titles and summaries), the views (Map, Outline, Path finder, Health, Compare), the persona preset, the theme switch (system, light, dark) and **Walk me through it**.
 - **Main area:** the current view.
 - **Detail panel** (right, resizable): everything about the selected declaration.
+- **Footer:** _About_ shows the proofmap and Lean versions, when the page was built and its data format, with _Copy details_ for a bug report, and the license. It closes from its top right corner (or with Escape).
 
 Every status is shown by colour **and** by an icon and words, so it reads without colour too:
 
@@ -23,8 +24,8 @@ Every status is shown by colour **and** by an icon and words, so it reads withou
 
 The map starts at a main result and shows what it rests on, laid out left to right with the result on the right; arrows point from what is used to what uses it. It shows a readable amount at a time: helpers that Lean generates (instances, auxiliary lemmas, matchers) are hidden, and declarations from other libraries are gathered into one card per library (Mathlib, Lean core). Lean core is hidden for readers and mathematicians.
 
-- **Cards** show a declaration's status, title, Lean name, its statement (or its one-line summary; a long statement scrolls inside the card), and how many results of the project it uses and how many use it. Click a card to select it; the details panel then shows it in full. **+** (or Enter) shows what the card rests on.
-- **Edges** read as sentences (hover one): a solid line means "is used in the proof of", a dashed line "appears in the statement of", a dotted line "is used through hidden helpers".
+- **Cards** show a declaration's status, title, Lean name, its statement (or its one-line summary; a long statement scrolls inside the card), and how many results of the project it uses and how many use it. Click a card to select it; the details panel then shows it in full. **+** (or Enter) shows what the card rests on and **−** (or Escape) hides it again. The main result starts open, so its button is **−**: closing it leaves only the main result on the map.
+- **Edges** read as sentences (hover one): a solid line means "is used in the proof of", a dashed line "appears in the statement of", a dotted line "is used through hidden helpers". A highlighted chain (a tour step, or **Show on map** for a "Why?" chain) is drawn in the highlight colour with moving dashes, or still lines for readers who ask for less motion.
 - **Group cards** ("+12 in The prime case") and library cards open in place.
 - **Toolbar:** _Main result_, the result the map is built around (a list when the project has several), _Fit_, _Find selected_, _Focus map here_ (rebuild the map around the selection), _Show more around this_ (one more ring of what the selection rests on, each click), _Back to main result_, the _Other libraries_, _Lean core_, _Generated helpers_ and _Code in cards_ switches, and _SVG_ / _PNG_.
 - **Keyboard:** with the map focused, arrow keys move between cards, Enter shows what a card rests on, Escape hides it, `f` builds the map around the selection, `p` picks it for the path finder. On a toolbar button or switch, keys act on that control.
@@ -39,9 +40,9 @@ The proof as a table of contents: each main result, then what it rests on (theor
 
 ### Detail panel
 
-For the selected declaration: where it lives (module and section), its title and Lean name (with a copy button), badges explaining its kind, how many of the main results rest on it ("Needed for 2 of 5 main results", with a small meter; hover it for their names), its summary and docstring (Markdown, with maths), the comment above it in the source, its statement with linked names (hover a name for its statement, click to go there), the source with the file's line numbers, links to open the line in VS Code or on GitHub, and the lists of what it uses and what uses it.
+For the selected declaration: where it lives (module and section), its title and Lean name (with a copy button), coloured badges explaining its kind (each kind has its own colour, the same on map cards and in Health's lists), and "main result" or "lemma" where that applies, how many of the main results rest on it ("Needed for 2 of 5 main results", with a small meter; hover it for their names), its summary and docstring (Markdown, with maths), the comment above it in the source, its statement with linked names (hover a name for its statement, click to go there), the source with the file's line numbers, links to open the line in VS Code or on GitHub, and the lists of what it uses and what uses it.
 
-When a result depends on `sorry` or an extra axiom, **Why?** names the chain down to where it comes from, and **Show on map** highlights that chain.
+When a result depends on `sorry` or an extra axiom, the panel says where it comes from ("Rests on sorry in X", "Uses the axiom X", or "Trusts compiled code" for `native_decide`); **Why?** lists the chain down to it, and **Show on map** highlights that chain.
 
 ### Walkthrough
 
@@ -62,7 +63,7 @@ Pick a **from** and a **to** (search boxes, or `p` on the map). Click a box to s
 
 ### Health
 
-Counts of complete declarations and of those that have sorry, use extra axioms, or are deprecated or unsafe (click a count to list them); where the sorry is, each with how many results rest on it; which axioms are used and by which results; the longest proofs; **standalone results** (documented theorems that nothing else uses, usually findings in their own right); declarations that may be unused (a refactoring aid; scripts and documents outside Lean are not read, so a result checked only there appears too); and progress per module and per step, with steps grouped by file in source order. Declarations that Lean generated without a source location, such as match splitters and congruence lemmas, are left out of these lists, and the page says how many there are.
+Counts in three groups (click a count to list them): **the project** (theorems, with "all proved" or how many are not, definitions and types, and main results), **completeness** (complete, has sorry, extra axioms) and **hygiene** (deprecated, unsafe or partial). Below them, the definitions and types are counted by kind (definitions, abbreviations, structures, inductive types and their constructors), adding up to the tile's number. Then where the sorry is, each with how many results rest on it; which axioms are used and by which results; the longest proofs; **standalone results** (documented theorems that nothing else uses, usually findings in their own right); declarations that may be unused (a refactoring aid; scripts and documents outside Lean are not read, so a result checked only there appears too); and progress per module and per step, with steps grouped by file in source order. Declarations that Lean generated without a source location, such as match splitters and congruence lemmas, are left out of these lists, and the page says how many there are.
 
 ![The health view](images/health.png)
 
@@ -90,6 +91,6 @@ The preset (header) sets what the page shows and which view it opens with; switc
 
 - **One file:** send `proofmap.html`. It opens by double-click, offline.
 - **A website:** `proofmap build --site public/` writes `index.html` and a `data/` folder that work under any sub-path, for example on GitHub Pages. Walkthroughs then load only when opened.
-- **A link to a view:** copy the address; it carries the view, selection and settings.
+- **A link to a view:** copy the address; it carries the view, the selection, what is open and the preset.
 - **A picture:** _SVG_ or _PNG_ in the map toolbar saves the whole map, not only the part on screen. The SVG is made of shapes and text, so it can go into a paper or a vector editor. The outline prints to PDF.
 - **No local paths:** a page records where the project is relative to itself, never an absolute folder, so sharing it does not reveal your folders. _Open in VS Code_ works when the page is opened from the project on your computer.

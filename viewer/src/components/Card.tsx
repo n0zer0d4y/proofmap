@@ -1,10 +1,12 @@
 import { Handle, Position } from '@xyflow/react';
 import type { Indexes } from '../data/indexes';
 import { STATUS_LABEL, statusOf, statusText } from '../data/status';
+import { isOpen, toggleOpen } from '../state/mapOpen';
 import { useStore } from '../state/store';
 import { sourceLinks } from './links';
 import { Statement } from './Statement';
 import { StatusBadge } from './StatusBadge';
+import { badgeClass, JARGON } from './Term';
 
 export const CARD_WIDTH = 270;
 
@@ -33,15 +35,14 @@ export function cardHeight(ix: Indexes, id: number, statement: boolean, code: bo
 export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
   const d = ix.decls[id]!;
   const focus = useStore((s) => s.focus);
-  const expandedSet = useStore((s) => s.expanded);
   const statementsExpanded = useStore((s) => s.statementsExpanded);
   const namesSecondary = useStore((s) => s.namesSecondary);
   const showCode = useStore((s) => s.showCode);
   const select = useStore((s) => s.select);
-  const toggleExpanded = useStore((s) => s.toggleExpanded);
   const setWalkthrough = useStore((s) => s.setWalkthrough);
   const diff = useStore((s) => (s.comparison?.addedSet.has(id) ? 'new' : s.comparison?.changedSet.has(id) ? 'changed' : null));
-  const expanded = expandedSet.has(id);
+  // The main result is open unless closed; other cards when opened (see state/mapOpen).
+  const expanded = useStore((s) => isOpen(ix, s, id));
   const status = statusOf(d);
   // Project results only: the externals behind a tactic like `omega` would swamp the count.
   const restsOn = new Set([...d.deps.statement, ...d.deps.proof].filter((i) => !ix.decls[i]!.external && !ix.isNoise(i))).size;
@@ -83,7 +84,7 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
       {/* Code scrolls inside the card (and scrolling it does not zoom the map). */}
       {(selected || expanded) && showCode && d.code && <pre className="card-code nowheel nodrag">{d.code}</pre>}
       <div className="card-foot">
-        <span className="badge">{d.kind}</span>
+        <span className={`badge ${badgeClass(d.kind)}`}>{JARGON[d.kind]?.label ?? d.kind}</span>
         {!d.external && (
           <span
             className="counts"
@@ -100,7 +101,7 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
             aria-label={expanded ? `Hide what ${d.title} rests on` : `Show what ${d.title} rests on`}
             onClick={(e) => {
               e.stopPropagation();
-              toggleExpanded(id);
+              toggleOpen(ix, id);
             }}
           >
             {expanded ? '−' : '+'}

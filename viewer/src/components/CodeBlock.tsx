@@ -22,7 +22,7 @@ function getHighlighter(): Promise<HighlighterCore> {
 
 /** The code background in each theme (`--bg-sunken` in theme.css); token colours are adjusted
 to reach 5:1 against it, which leaves room for the current-line tint. */
-export const CODE_BG = { light: '#f1f1ef', dark: '#0f1114' } as const;
+export const CODE_BG = { light: '#f1f1ef', dark: '#0b0b0c' } as const;
 
 const adjustedStyle = (style: ThemedToken['htmlStyle']): React.CSSProperties | undefined => {
   if (!style) return undefined;
