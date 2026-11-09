@@ -4,19 +4,21 @@ A proofmap page is one HTML file (or one folder, for a site). It needs no server
 
 ## The page at a glance
 
-- **Header:** the project title, the search box (press `/` to jump to it; it searches names, titles and summaries), the views (Map, Outline, Path finder, Health, Compare), the persona preset, the theme switch (system, light, dark) and **Walk me through it**.
+- **Header:** the project title, the search box (press `/` to jump to it; it searches names, titles and summaries), the views (Map, Outline, Paths, Health, Compare), **Docs** (this guide, also opened with `?`; on narrower windows only its book icon shows), **Walk me through it**, the persona preset and the theme switch (system, light, dark).
 - **Main area:** the current view.
-- **Detail panel** (right, resizable): everything about the selected declaration.
+- **Details panel** (right, resizable): everything about the selected declaration.
 - **Footer:** _About_ shows the proofmap and Lean versions, when the page was built and its data format, with _Copy details_ for a bug report, and the license. It closes from its top right corner (or with Escape).
 
 Every status is shown by colour **and** by an icon and words, so it reads without colour too:
 
-| Mark    | Words                                             | Meaning                                                                                                                                                    |
-| ------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ✓ green | **Proved** (theorems), **Complete** (other kinds) | No `sorry` and only the standard axioms, in it and in everything it rests on. Counts and the legend say "Complete", which is true of a proved theorem too. |
-| ✗ red   | **Has sorry**                                     | A `sorry` in it or somewhere below it; the details panel names where ("Rests on sorry in X").                                                              |
-| ! amber | **Extra axiom**                                   | It rests on an axiom beyond the standard three; the details panel names it, or says "Trusts compiled code" for `native_decide`.                            |
-| ○ grey  | **Other library**                                 | From another library (Mathlib, core); not checked by this page.                                                                                            |
+| Mark                                               | Words                                             | Meaning                                                                                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <span class="status status-ok">✓</span> green      | **Proved** (theorems), **Complete** (other kinds) | No `sorry` and only the standard axioms, in it and in everything it rests on. Counts say "Complete" and the legend "proved or complete", since a proved theorem is complete too. |
+| <span class="status status-sorry">✗</span> red     | **Has sorry**                                     | A `sorry` in it or somewhere below it; the details panel names where ("Rests on sorry in X").                                                              |
+| <span class="status status-axiom">!</span> amber   | **Extra axiom**                                   | It rests on an axiom beyond the standard three; the details panel names it, or says "Trusts compiled code" for `native_decide`.                            |
+| <span class="status status-external">○</span> grey | **Other library**                                 | From another library (Mathlib, core); not checked by this page.                                                                                            |
+
+Each kind of declaration has its own colour, the same on map cards, in the details panel and in Health's lists: <span class="badge kind-theorem">theorem</span> <span class="badge kind-lemma">lemma</span> <span class="badge kind-def">definition</span> <span class="badge kind-abbrev">abbreviation</span> <span class="badge kind-structure">structure</span> <span class="badge kind-inductive">inductive type</span> <span class="badge kind-ctor">constructor</span> <span class="badge kind-instance">instance</span> <span class="badge kind-axiom">axiom</span>. A <span class="badge badge-main">main result</span> is one of the headline results the page starts from; <span class="badge badge-flag">private</span> and <span class="badge badge-flag">deprecated</span> are notes, and <span class="badge badge-warn">unsafe</span> or <span class="badge badge-warn">partial</span> marks code that skips some of Lean's checks.
 
 ## Views
 
@@ -24,7 +26,7 @@ Every status is shown by colour **and** by an icon and words, so it reads withou
 
 The map starts at a main result and shows what it rests on, laid out left to right with the result on the right; arrows point from what is used to what uses it. It shows a readable amount at a time: helpers that Lean generates (instances, auxiliary lemmas, matchers) are hidden, and declarations from other libraries are gathered into one card per library (Mathlib, Lean core). Lean core is hidden for readers and mathematicians.
 
-- **Cards** show a declaration's status, title, Lean name, its statement (or its one-line summary; a long statement scrolls inside the card), and how many results of the project it uses and how many use it. Click a card to select it; the details panel then shows it in full. **+** (or Enter) shows what the card rests on and **−** (or Escape) hides it again. The main result starts open, so its button is **−**: closing it leaves only the main result on the map.
+- **Cards** show a declaration's status, title, Lean name, its kind (as a coloured badge), its statement (or its one-line summary; a long statement scrolls inside the card), and how many results of the project it uses and how many use it. Click a card to select it; the details panel then shows it in full. **+** (or Enter) shows what the card rests on and **−** (or Escape) hides it again. The main result starts open, so its button is **−**: closing it leaves only the main result on the map.
 - **Edges** read as sentences (hover one): a solid line means "is used in the proof of", a dashed line "appears in the statement of", a dotted line "is used through hidden helpers". A highlighted chain (a tour step, or **Show on map** for a "Why?" chain) is drawn in the highlight colour with moving dashes, or still lines for readers who ask for less motion.
 - **Group cards** ("+12 in The prime case") and library cards open in place.
 - **Toolbar:** _Main result_, the result the map is built around (a list when the project has several), _Fit_, _Find selected_, _Focus map here_ (rebuild the map around the selection), _Show more around this_ (one more ring of what the selection rests on, each click), _Back to main result_, the _Other libraries_, _Lean core_, _Generated helpers_ and _Code in cards_ switches, and _SVG_ / _PNG_.
@@ -38,9 +40,9 @@ The proof as a table of contents: each main result, then what it rests on (theor
 
 ![The outline view](images/outline.png)
 
-### Detail panel
+### Details panel
 
-For the selected declaration: where it lives (module and section), its title and Lean name (with a copy button), coloured badges explaining its kind (each kind has its own colour, the same on map cards and in Health's lists), and "main result" or "lemma" where that applies, how many of the main results rest on it ("Needed for 2 of 5 main results", with a small meter; hover it for their names), its summary and docstring (Markdown, with maths), the comment above it in the source, its statement with linked names (hover a name for its statement, click to go there), the source with the file's line numbers, links to open the line in VS Code or on GitHub, and the lists of what it uses and what uses it.
+For the selected declaration: where it lives (module and section), its title and Lean name (with a copy button), coloured badges explaining its kind (each kind has its own colour, the same on map cards and in Health's lists), and "main result" or "lemma" where that applies, how many of the main results rest on it ("Needed for 2 of 5 main results", with a small meter; hover it for their names), its summary and docstring (Markdown, with maths), the comment above it in the source, its statement with linked names (hover a name for its statement, click to go there), the source with the file's line numbers, links to open the line in VS Code or on GitHub (when the page knows the project's repository; never for a dependency's files, which are not in it), and the lists of what it uses and what uses it.
 
 When a result depends on `sorry` or an extra axiom, the panel says where it comes from ("Rests on sorry in X", "Uses the axiom X", or "Trusts compiled code" for `native_decide`); **Why?** lists the chain down to it, and **Show on map** highlights that chain.
 
@@ -73,7 +75,7 @@ Shows what changed since an older version: results added, removed and changed (s
 
 ### Walk me through it
 
-A guided tour: it starts at the main result and walks down the outline on the map, one card at a time, narrated by the summaries. Its panel sits in the map's lower left corner, above the legend, and shows only on the map; another view hides it, and it is back at the same step when you return. _Next_ and _Back_ move through it; _End the tour_ (or Escape) stops it.
+A guided tour: it starts at the main result and walks down the outline on the map, one card at a time, narrated by the summaries. Its panel sits in the map's lower left corner, above the legend, and shows only on the map; another view hides it, and it is back at the same step when you return. _Next_ and _Back_ move through it; **✕** at its top right (or Escape) ends it.
 
 ## Presets: where to start
 
@@ -86,6 +88,19 @@ The preset (header) sets what the page shows and which view it opens with; switc
 **Developer** (you work on the code). Code is shown and the switches for generated helpers are visible. _Open in VS Code_ jumps to the line. The health view lists declarations that no other declaration uses, and the largest proofs. Run `proofmap serve` while you work: each `proofmap build` reloads the open page.
 
 **Auditor** (you check what is actually proved). Start in the health view: it should say 0 `sorry` and list only the standard axioms. For anything flagged, _Why?_ names the declaration responsible. In CI, `proofmap check --strict` fails the build when anything depends on `sorry` or an extra axiom.
+
+## Keyboard shortcuts
+
+| Key                                                 | Where       | What it does                           |
+| --------------------------------------------------- | ----------- | -------------------------------------- |
+| <kbd>/</kbd>                                        | anywhere    | jump to search                         |
+| <kbd>?</kbd>                                        | anywhere    | open these docs                        |
+| <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> | map         | move between cards                     |
+| <kbd>Enter</kbd> / <kbd>Esc</kbd>                   | map         | show or hide what the card rests on    |
+| <kbd>f</kbd>                                        | map         | build the map around the selection     |
+| <kbd>p</kbd>                                        | map         | pick the selection for the path finder |
+| <kbd>←</kbd> <kbd>→</kbd>                           | walkthrough | previous or next step                  |
+| <kbd>Esc</kbd>                                      | guided tour | end the tour                           |
 
 ## Sharing
 

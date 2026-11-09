@@ -9,6 +9,7 @@ import { helperDetailsPending, loadHelperDetails } from './data/wire';
 import { compare } from './graph/compare';
 import { PRESETS, type Preset } from './state/presets';
 import { syncWithUrl, useStore } from './state/store';
+import { DocsView } from './views/DocsView';
 import { HealthView } from './views/HealthView';
 import { MapView } from './views/MapView';
 import { OutlineView } from './views/OutlineView';
@@ -19,6 +20,7 @@ import { CompareView } from './views/CompareView';
 export function App() {
   const [ix, setIx] = useState<Indexes | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const view = useStore((s) => s.view);
 
   useEffect(() => {
     loadData()
@@ -65,6 +67,9 @@ export function App() {
     <div className="app">
       <Header ix={ix} />
       <main className="main">
+        {view === 'docs' ? (
+          <DocsView />
+        ) : (
         <Group className="panels" orientation="horizontal" style={{ height: '100%' }}>
           <Panel className="view-panel" defaultSize="64%" minSize="30%">
             <div className="panel" style={{ overflow: 'hidden' }}>
@@ -78,6 +83,7 @@ export function App() {
             </div>
           </Panel>
         </Group>
+        )}
       </main>
       {notice && (
         <p className="notice" role="alert">
@@ -116,7 +122,7 @@ function CurrentView({ ix }: { ix: Indexes }) {
         <WalkthroughView ix={ix} id={focus} key={focus} />
       </section>
     );
-  const labels = { map: 'Map', outline: 'Outline', paths: 'Path finder', health: 'Health', compare: 'Compare' };
+  const labels = { map: 'Map', outline: 'Outline', paths: 'Path finder', health: 'Health', compare: 'Compare', docs: 'Docs' };
   return (
     <section aria-label={labels[view]} data-view={view} style={{ height: '100%' }}>
       {view === 'map' && <MapView ix={ix} />}

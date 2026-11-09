@@ -34,7 +34,7 @@ Everything runs on your machine. proofmap sends nothing anywhere, and the page l
 
 - **proofmap runs your project's code, as `lake build` does.** It imports the compiled modules, which runs their initializers. With `--walkthrough`, it also elaborates the source files again. Run it only on code you would also build.
 - **Nothing leaves your machine.** proofmap makes no network requests. The page loads no fonts, scripts or analytics. `proofmap serve` listens on 127.0.0.1 only, and answers only requests addressed to it.
-- **The page contains your code.** It includes your declarations' source, statements and comments, so share it only as you would share the code. It contains no absolute path of your computer: file paths are relative to the project.
+- **The page contains your code.** It includes your declarations' source, statements and comments, so share it only as you would share the code. When the project is a git checkout, it also includes the repository's address (from `origin`, without credentials) for source links; `repoUrl = ""` in `proofmap.toml` leaves it out. It contains no absolute path of your computer: file paths are relative to the project.
 
 To report a security problem, use "Report a vulnerability" on the repository's Security tab rather than a public issue.
 
@@ -93,14 +93,14 @@ Add proofmap to the lakefile. In `lakefile.toml`:
 [[require]]
 name = "proofmap"
 git = "https://github.com/n0zer0d4y/proofmap"
-rev = "v0.2.0"
+rev = "v0.3.0"
 subDir = "lean"
 ```
 
 Or in `lakefile.lean`:
 
 ```lean
-require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.2.0" / "lean"
+require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.3.0" / "lean"
 ```
 
 Then:
@@ -134,6 +134,8 @@ title = "Sums of squares"
 rootModules = ["Mathlib.NumberTheory.SumFourSquares", "Mathlib.NumberTheory.SumTwoSquares"]
 roots = ["Nat.sum_four_squares"]     # the main results the page starts from
 ```
+
+Without a `proofmap.toml`, proofmap picks the page title (from `CITATION.cff`, the README's first heading or the package name) and the main results itself, and says what it chose. To publish the page with GitHub Pages and link to it from your README with a badge, see [the FAQ](docs/faq.md#how-do-i-publish-the-page-on-github-pages).
 
 How long a build takes, measured on a 130-module project that depends on Mathlib (13,759 declarations; 4 cores, 16 GB):
 

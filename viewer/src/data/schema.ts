@@ -77,6 +77,10 @@ export interface Project {
   repoUrl?: string | null;
   repoRef?: string | null;
   /**
+   * The project's folder inside its git repository, with a trailing slash ("lean/"), so source links reach a project that is not at the top of its repository. Absent or null when it is at the top.
+   */
+  repoPathPrefix?: string | null;
+  /**
    * The project folder relative to the page, with forward slashes ("" when the page is in the project folder). Written for single-file pages only, so the viewer can link to source files; no absolute path is ever recorded.
    */
   pageToRoot?: string | null;

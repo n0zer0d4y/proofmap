@@ -2,6 +2,28 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-11-09
+
+### Added
+
+- **Docs in the page:** a **Docs** button in the header (or the `?` key) opens the user guide, with its contents beside it; **Back to the …** returns to the view it was opened from. The guide is built into the page from `docs/guide.md`, so the two always say the same, and works offline.
+- **Source links without configuration:** without `repoUrl` in `proofmap.toml`, the "View on GitHub" links go to the repository's `origin` remote (as a web address, credentials removed), and `proofmap build` says so; `repoUrl = ""` leaves the links out. The build warns when the commit is not pushed or Lean files have uncommitted changes, since links to that commit would not match.
+- **A default page title:** the `title` in the project's `CITATION.cff` (a leading `repository-slug: ` is dropped), else its README's first level-one heading (Markdown or HTML, outside code blocks), else the package name in the lakefile, looked for in the project folder and then at the top of its repository. `proofmap build` prints the title and where it came from.
+- **Data:** `project.repoPathPrefix`, the project's folder inside its git repository (added within data format 2).
+- **Docs:** FAQ entries on publishing the page with GitHub Pages (with a README badge) and on source links that lead to a 404; the guide's kinds of declarations and keyboard shortcuts.
+
+### Changed
+
+- **Main results cover the whole project:** besides the five best, the best result of each folder of the project that has none among them is added (up to eight in all), so a repository with results in several folders shows each of them without losing any of its strongest.
+- **Header:** on laptop widths the title, search box and Docs button take less room, so the header stays one row with a long title.
+- **Main results:** a sanity check gives way to the theorem it checks. When an unused theorem's name ends in `_satisfiable`, `_witness`, `_example`, `_sanity`, `_test` or `_check`, or it is undocumented while applying a documented theorem, the theorems it applies that only it uses are considered in its place, and the check comes last.
+
+### Fixed
+
+- On a fresh load, the map's lines could show for a moment before their cards, at the wrong place; the map now appears once its first view is ready.
+- A GitHub link was offered for a dependency's files (under `.lake/packages`), which are not in the project's repository, so it led to a 404; there is none now.
+- Source links missed the project's folder when the Lean project is in a subfolder of its git repository (such as `repo/lean/`), so every "View on GitHub" link led to a 404.
+
 ## [0.2.0] - 2026-11-09
 
 ### Added

@@ -90,3 +90,15 @@ test('dropdowns keep their chevron away from the edge', async ({ page }) => {
     expect(style.paddingRight).toBeGreaterThanOrEqual(24);
   }
 });
+
+test('the header stays one row on a laptop width, even with a long title', async ({ page }) => {
+  await page.setViewportSize({ width: 1248, height: 800 });
+  await page.goto(`${fixtureUrl}#/map`);
+  const header = page.locator('.header');
+  const oneRow = (await header.boundingBox())!.height;
+  // A long CITATION.cff-style title must not push the controls onto a second row.
+  await page.locator('.header h1').evaluate((h) => (h.textContent = 'prime-gaps-and-sieve-bounds: four certified results on prime gaps and the large sieve inequality'));
+  expect((await header.boundingBox())!.height).toBe(oneRow);
+  // Docs keeps its name for screen readers when only its icon shows.
+  await expect(page.getByRole('button', { name: 'Docs' })).toBeVisible();
+});

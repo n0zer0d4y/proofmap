@@ -1,4 +1,4 @@
-import { PRESETS, VIEWS, type Preset, type View } from './presets';
+import { ALL_VIEWS, PRESETS, type Preset, type View } from './presets';
 
 /**
  * The part of the state mirrored into the URL hash, so links can be shared
@@ -65,7 +65,7 @@ export function parse(hash: string, fallbackView: View): UrlState {
   const raw = hash.replace(/^#/, '');
   const [path = '', query = ''] = raw.split('?');
   const parts = path.split('/').filter(Boolean);
-  if (parts[0] && (VIEWS as string[]).includes(parts[0])) s.view = parts[0] as View;
+  if (parts[0] && (ALL_VIEWS as string[]).includes(parts[0])) s.view = parts[0] as View;
   if (parts[1]) s.focus = decodeURIComponent(parts.slice(1).join('/'));
   for (const kv of query.split('&').filter(Boolean)) {
     const [k = '', v = ''] = kv.split('=');

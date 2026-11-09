@@ -47,6 +47,9 @@ structure Project where
   rootModules : Array String
   repoUrl : Option String := none
   repoRef : Option String := none
+  /-- The project's folder inside its git repository (`lean/`), so source links reach a project
+  that is not at the top of its repository. Absent when the project is at the top. -/
+  repoPathPrefix : Option String := none
   /-- The project folder relative to the page (single-file pages only). Pages never record an
   absolute path; the viewer finds the project from the page's own location. -/
   pageToRoot : Option String := none
@@ -60,6 +63,7 @@ instance : ToJson Project where
   toJson p := Json.mkObj <|
     [("title", toJson p.title), ("rootModules", toJson p.rootModules),
      ("repoUrl", nullable p.repoUrl), ("repoRef", nullable p.repoRef),
+     ("repoPathPrefix", nullable p.repoPathPrefix),
      ("pageToRoot", nullable p.pageToRoot), ("builtAt", toJson p.builtAt), ("roots", toJson p.roots),
      ("standardAxioms", toJson p.standardAxioms), ("footer", toJson p.footer)] ++
     (match p.preset with | some s => [("preset", toJson s)] | none => [])

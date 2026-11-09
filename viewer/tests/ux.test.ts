@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { projectFolder } from '../src/components/links';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { projectFolder, sourceLinks } from '../src/components/links';
 import { headLength } from '../src/components/Statement';
 import { buildIndexes, type Indexes } from '../src/data/indexes';
 import { libraryOf, plainText } from '../src/data/library';
@@ -158,6 +158,34 @@ describe('text helpers', () => {
     expect(headLength(cps('Even.{u_2} {α : Type u_2} : Prop'))).toBe('Even.{u_2} '.length);
     expect(headLength(cps('Nat.sum_four_squares (n : ℕ) : ∃ a b c d, a ^ 2 + b ^ 2 + c ^ 2 + d ^ 2 = n'))).toBe('Nat.sum_four_squares '.length);
     expect(headLength(cps('Foo.«weird name» (x : ℕ) : x = x'))).toBe('Foo.«weird name» '.length);
+  });
+});
+
+describe('GitHub source links', () => {
+  // A page on a web host: no VS Code link, only the GitHub one.
+  beforeEach(() => vi.stubGlobal('location', { protocol: 'https:', pathname: '/proj/proofmap.html' }));
+  afterEach(() => vi.unstubAllGlobals());
+  const page = (prefix: string | null | undefined) =>
+    buildIndexes({ ...data, project: { ...data.project, repoUrl: 'https://github.com/me/proj', repoRef: 'abc123', repoPathPrefix: prefix } });
+  const link = (ix: ReturnType<typeof buildIndexes>) => {
+    const d = ix.decls.find((x) => x.name === 'Fixture.double')!;
+    return sourceLinks(ix, d).github!;
+  };
+  it('go to the file at the mapped commit', () => {
+    expect(link(page(null))).toMatch(/^https:\/\/github\.com\/me\/proj\/blob\/abc123\/Fixture\/Basic\.lean#L\d+-L\d+$/);
+  });
+  it('are left out for the files of a dependency, which are not in the repository', () => {
+    const ix = page(null);
+    const d = ix.decls.find((x) => x.name === 'Fixture.double')!;
+    const mod = ix.data.modules.find((m) => m.name === d.module)!;
+    const dep = buildIndexes({ ...ix.data, modules: ix.data.modules.map((m) => (m === mod ? { ...m, path: `.lake/packages/mathlib/${m.path}` } : m)) });
+    expect(sourceLinks(dep, dep.decls.find((x) => x.name === 'Fixture.double')!).github).toBeUndefined();
+  });
+  it('reach a project in a folder of its repository', () => {
+    expect(link(page('lean/'))).toMatch(/\/blob\/abc123\/lean\/Fixture\/Basic\.lean#/);
+    // Written without the slash, or with an extra one, it still makes one path.
+    expect(link(page('lean'))).toMatch(/\/blob\/abc123\/lean\/Fixture\/Basic\.lean#/);
+    expect(link(page('/lean//'))).toMatch(/\/blob\/abc123\/lean\/Fixture\/Basic\.lean#/);
   });
 });
 

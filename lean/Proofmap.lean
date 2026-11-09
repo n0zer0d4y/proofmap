@@ -3,6 +3,7 @@ import Proofmap.Util
 import Proofmap.Schema
 import Proofmap.Attr
 import Proofmap.Config
+import Proofmap.Repo
 import ProofmapCompat.Serve
 import Proofmap.Extract.Env
 import Proofmap.Extract.Decls

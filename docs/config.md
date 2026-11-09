@@ -13,10 +13,10 @@ Every key is optional. proofmap checks the whole file before building and report
 
 ```toml
 [project]
-title = "Sums of squares"                              # page title (default: the root module names)
+title = "Sums of squares"                              # page title (default: CITATION.cff, README, package name)
 rootModules = ["Mathlib.NumberTheory.SumFourSquares"]  # what to map (see below)
 roots = ["Nat.sum_four_squares"]                       # the main results the page starts from
-repoUrl = "https://github.com/me/my-project"           # adds "View on GitHub" links
+repoUrl = "https://github.com/me/my-project"           # "View on GitHub" links (default: the origin remote)
 
 [display]
 preset = "reader"      # reader | mathematician | developer | auditor
@@ -49,10 +49,10 @@ sq = "square"
 
 | Key | Meaning |
 |---|---|
-| `title` | The page title. Default: the root module names. `--title` overrides it. |
+| `title` | The page title. Default, looked for in the project folder and then at the top of its git repository: the `title` in `CITATION.cff` (without a leading `repository-slug: `), else the first level-one heading of `README.md` (`# Title` or `<h1>Title</h1>`, outside code blocks); else the package name in the lakefile; else the root module names. `proofmap build` prints the title and where it came from. `--title` overrides it. |
 | `rootModules` | The modules to map. Each one brings in itself and **all its built submodules**, so `["Mathlib.NumberTheory"]` maps `Mathlib.NumberTheory.SumFourSquares` too. Default: the libraries in the lakefile (each `lean_lib`, its `roots` or `globs`, else its name). `--root MODULE` overrides it. Modules without a built `.olean` are skipped with a warning; run `lake build` first, which `proofmap build` does unless you pass `--no-lake-build`. |
-| `roots` | Full names of the main results. The page opens on them, the outline starts from them, and they get the rank `result`. Default: up to five theorems that nothing else in the project uses, documented ones first, then by how much they rest on; a name or docstring that states a result ("iff", "reduces", "complete", "theorem" and similar words) counts double. `proofmap build` prints the ones it chose. A name that matches nothing is reported, with the closest name proofmap knows. |
-| `repoUrl` | A GitHub (or similar) URL. Declarations get links to their lines, at the commit that was mapped when the project is a git checkout. |
+| `roots` | Full names of the main results. The page opens on them, the outline starts from them, and they get the rank `result`. Default: chosen from the theorems that nothing else in the project uses, ranked documented ones first, then by how much they rest on, with a name or docstring that states a result ("iff", "reduces", "complete", "theorem" and similar words) counting double. The five best are taken, plus the best of each folder of the project that has none among them (up to eight in all), so the main results come from across the project. A sanity check gives way to the theorem it checks: when an unused theorem's name ends in `_satisfiable`, `_witness`, `_example`, `_sanity`, `_test` or `_check`, or it is undocumented while applying a documented theorem, the theorems it applies that only it uses are considered in its place, and the check comes last. `proofmap build` prints the ones it chose. A name that matches nothing is reported, with the closest name proofmap knows. |
+| `repoUrl` | A GitHub (or similar) URL. Declarations get links to their lines, at the commit that was mapped when the project is a git checkout, and inside the project's folder when the project is in a subfolder of its repository (`repo/lean/`). Default: the repository's `origin` remote, as a web address (credentials removed); `proofmap build` says so. `repoUrl = ""` leaves the links out. proofmap warns when the commit is not pushed or Lean files have uncommitted changes, since links to that commit would not match. |
 
 ### `[display]`
 

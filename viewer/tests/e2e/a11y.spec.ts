@@ -15,6 +15,7 @@ const pages: Array<[string, string, string]> = [
   ['walkthrough', `${fixtureUrl}#/map/Fixture.and_swap?wt=1`, '[data-view="walkthrough"] .wt-count'],
   ['compare', `${compareUrl}#/compare`, '[data-view="compare"] .stat'],
   ['compare without a snapshot', `${fixtureUrl}#/compare`, '[data-view="compare"]'],
+  ['docs', `${fixtureUrl}#/docs`, '[data-view="docs"] .docs-article h2'],
 ];
 
 async function audit(page: Page) {

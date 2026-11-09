@@ -9,6 +9,7 @@ import Proofmap.Check
 import Proofmap.Compare
 import Proofmap.Launcher
 import Proofmap.Lakefile
+import Proofmap.Repo
 
 namespace Proofmap.Cli
 
@@ -142,9 +143,31 @@ def prepareBuild (a : BuildArgs) : IO (Except UInt32 (BuildOptions × Config.Con
       IO.eprintln "proofmap: `lake build` failed"
       return .error 2
   let configGlossary := cfg.glossary
+  -- The page title: --title or the config; else the project's CITATION.cff, its README's first
+  -- heading or its package name (said in the build output); else the root module names.
+  let (title, titleSource) ← match a.title <|> cfg.title with
+    | some t => pure (some t, none)
+    | none => do
+      match ← Repo.defaultTitle rootDir with
+      | some (t, src) => pure (some t, some src)
+      | none => pure (none, none)
+  -- Source links: `repoUrl` from the config (an empty string turns them off), else the `origin`
+  -- remote of the project's git repository.
+  let repo ← Repo.info rootDir
+  let repoUrl := match cfg.repoUrl with
+    | some "" => none
+    | some u => some u
+    | none => repo.remote
+  if let some u := repoUrl then
+    if cfg.repoUrl.isNone then
+      IO.println s!"proofmap: source links to {u} (from git remote origin; set repoUrl = \"\" in proofmap.toml to leave them out)"
+    if repo.uncommitted then
+      IO.eprintln "proofmap: warning: Lean files have uncommitted changes; source links point at the last commit, so some lines may not match"
+    if repo.unpushed then
+      IO.eprintln "proofmap: warning: the current commit is not on any remote branch; source links to it will not work until it is pushed"
   return .ok ({
-    rootDir, rootModules := roots, title := a.title <|> cfg.title, timings := a.timings
-    jobs := a.jobs, useCache := a.useCache, repoUrl := cfg.repoUrl
+    rootDir, rootModules := roots, title, titleSource, timings := a.timings
+    jobs := a.jobs, useCache := a.useCache, repoUrl
     standardAxioms := cfg.standardAxioms.getD Extract.defaultStandardAxioms
     -- Config entries come first, so they win over the built-in glossary.
     glossary := configGlossary ++ Extract.defaultGlossary.filter fun (k, _) => !configGlossary.any (·.1 == k)
@@ -196,7 +219,9 @@ def runBuild (args : List String) : IO UInt32 := do
       if opts.overrides.roots.isEmpty && !data.project.roots.isEmpty then
         let names := data.project.roots.toList.filterMap fun i => (data.decls[i]?).map (toString ·.name)
         IO.println s!"proofmap: main results (chosen automatically): {", ".intercalate names} (set roots in proofmap.toml to choose them)"
-      if opts.title.isNone then
+      if let some src := opts.titleSource then
+        IO.println s!"proofmap: page title \"{data.project.title}\" (from {src}; set title in proofmap.toml to change it)"
+      else if opts.title.isNone then
         IO.println s!"proofmap: page title \"{data.project.title}\" (set title in proofmap.toml to change it)"
       if a.timings then IO.eprintln s!"proofmap: write output: {(← IO.monoMsNow) - t} ms"
       return (0 : UInt32)

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Indexes } from '../data/indexes';
 import { PRESETS, PRESET_LABELS, VIEWS, type Preset, type View } from '../state/presets';
 import { useStore } from '../state/store';
@@ -11,6 +12,7 @@ const VIEW_LABELS: Record<View, string> = {
   paths: 'Paths',
   health: 'Health',
   compare: 'Compare',
+  docs: 'Docs',
 };
 
 const NEXT_THEME: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' };
@@ -24,7 +26,22 @@ export function Header({ ix }: { ix: Indexes }) {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const tourGo = useStore((s) => s.tourGo);
+  const openDocs = useStore((s) => s.openDocs);
+  const docsFrom = useStore((s) => s.docsFrom);
   const { steps, pathTo } = useTour(ix);
+  // `?` opens the docs from anywhere, unless the reader is typing.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+      if (e.key === '?' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey && !document.querySelector('dialog[open]')) {
+        e.preventDefault();
+        useStore.getState().openDocs();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   return (
     <header className="header">
       <h1 title={ix.data.project.title}>{ix.data.project.title}</h1>
@@ -37,6 +54,17 @@ export function Header({ ix }: { ix: Indexes }) {
         ))}
       </div>
       <span className="spacer" />
+      <button
+        className="icon-button"
+        aria-pressed={view === 'docs'}
+        title="How to read this page (?)"
+        onClick={() => (view === 'docs' ? setView(docsFrom) : openDocs())}
+      >
+        <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />
+        </svg>
+        <span className="docs-label">Docs</span>
+      </button>
       <button className="icon-button" disabled={!steps.length} onClick={() => tourGo(0, pathTo(steps[0]!))}>
         Walk me through it
       </button>

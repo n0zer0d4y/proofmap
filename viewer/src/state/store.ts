@@ -28,6 +28,10 @@ export interface ViewerState {
   pathFrom: number | null;
   pathTo: number | null;
   walkthrough: boolean;
+  /** The view the docs return to (the one they were opened from). */
+  docsFrom: View;
+  /** Open the built-in docs, remembering the view to return to. */
+  openDocs: () => void;
   /** The map's main result is open (showing what it rests on) unless the reader closed it. */
   anchorClosed: boolean;
   setAnchorClosed: (closed: boolean) => void;
@@ -86,6 +90,8 @@ export const useStore = create<ViewerState>((set) => ({
   pathFrom: null,
   pathTo: null,
   walkthrough: false,
+  docsFrom: 'map',
+  openDocs: () => set((s) => ({ view: 'docs', walkthrough: false, docsFrom: s.view === 'docs' ? s.docsFrom : s.view })),
   highlight: [],
   anchorClosed: false,
   setAnchorClosed: (anchorClosed) => set({ anchorClosed }),

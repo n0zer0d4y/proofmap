@@ -206,9 +206,10 @@ export function PathsView({ ix }: { ix: Indexes }) {
 
 function PathCanvas({ ix, graph, resetKey }: { ix: Indexes; graph: Folded; resetKey: string }) {
   const select = useStore((s) => s.select);
-  const { nodes, edges, onNodesChange } = useLaidOutGraph(ix, graph, NO_HIGHLIGHT, resetKey);
+  const { nodes, edges, onNodesChange, ready } = useLaidOutGraph(ix, graph, NO_HIGHLIGHT, resetKey);
   return (
     <ReactFlow
+      className={ready ? undefined : 'map-pending'}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}

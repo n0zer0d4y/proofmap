@@ -88,7 +88,12 @@ def enrich (rootDir : System.FilePath) (dividerPatterns : Array Regex.Regex) (ba
     if ov.roots.isEmpty then
       let documented (k : Nat) := (out[visible[k]!]!.docstring.getD "").trimAscii.toString != ""
       let headline (k : Nat) := Extract.Rank.statesResult (toString out[visible[k]!]!.name) out[visible[k]!]!.docstring
-      pure ((Extract.Rank.autoRoots deps isThm nameOf (documented := documented) (headline := headline)).map (visible[·]!), #[])
+      -- A declaration's area is its module's folder (`A.B.C` → `A.B`), so each folder of the
+      -- project gets a main result.
+      let area (k : Nat) : String :=
+        let parts := (out[visible[k]!]!.module.getD "").splitOn "."
+        ".".intercalate (if parts.length > 1 then parts.dropLast else parts)
+      pure ((Extract.Rank.autoRoots deps isThm nameOf (documented := documented) (headline := headline) (area := area)).map (visible[·]!), #[])
     else
       let found := ov.roots.map fun n => (n, visible.filter fun i => out[i]!.name == n)
       pure (found.flatMap (·.2), (found.filter (·.2.isEmpty)).map (·.1))

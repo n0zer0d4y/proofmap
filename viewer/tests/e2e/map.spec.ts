@@ -213,3 +213,27 @@ test('the main result opens and closes like any other card', async ({ page }) =>
   await page.keyboard.press('Enter');
   await expect(cards).toHaveCount(open);
 });
+
+test('the first paint never shows lines without their cards', async ({ page }) => {
+  // Watch every frame from the start: a frame with visible edges but no visible card is a flash.
+  await page.addInitScript(() => {
+    const w = window as unknown as { __bareEdgeFrames: number };
+    w.__bareEdgeFrames = 0;
+    const start = performance.now();
+    const visible = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+    };
+    const tick = () => {
+      const edges = [...document.querySelectorAll('.react-flow__edge path')].filter(visible);
+      const cards = [...document.querySelectorAll('.react-flow__node')].filter(visible);
+      if (edges.length && !cards.length) w.__bareEdgeFrames++;
+      if (performance.now() - start < 3000) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.goto(`${fixtureUrl}#/map`);
+  await expect(page.locator('[data-decl="Fixture.main_result"]')).toBeVisible();
+  await page.waitForTimeout(3200);
+  expect(await page.evaluate(() => (window as unknown as { __bareEdgeFrames: number }).__bareEdgeFrames)).toBe(0);
+});

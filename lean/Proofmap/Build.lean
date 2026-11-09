@@ -12,6 +12,7 @@ import Proofmap.Workers
 import Proofmap.Walkthrough.Cache
 import Proofmap.Enrich
 import Proofmap.Source.Sections
+import Proofmap.Repo
 
 /-!
 # Extraction pipeline (parent side)
@@ -32,6 +33,8 @@ structure BuildOptions where
   rootDir : System.FilePath
   rootModules : Array Name
   title : Option String := none
+  /-- Where a title that was not configured came from (CITATION.cff, README.md, the lakefile). -/
+  titleSource : Option String := none
   repoUrl : Option String := none
   standardAxioms : Array String := defaultStandardAxioms
   glossary : Array (String × String) := defaultGlossary
@@ -157,16 +160,14 @@ def extract (opts : BuildOptions) : IO ProofmapData := do
   phase s!"sections, comments, summaries, ranks ({roots.size} root(s))"
   let title := opts.title.getD (", ".intercalate (opts.rootModules.toList.map toString))
   -- With a repository URL, source links point at the commit that was mapped (when it is a git
-  -- checkout); otherwise at HEAD.
-  let repoRef ← if opts.repoUrl.isNone then pure none else do
-    try
-      let out ← IO.Process.output { cmd := "git", args := #["-C", opts.rootDir.toString, "rev-parse", "HEAD"], stdin := .null }
-      pure (if out.exitCode == 0 then some out.stdout.trimAscii.toString else none)
-    catch _ => pure none
+  -- checkout; otherwise at HEAD), inside the project's folder in the repository.
+  let repo ← if opts.repoUrl.isNone then pure {} else Repo.info opts.rootDir
+  let repoRef := repo.ref
+  let repoPathPrefix := if repo.pathPrefix.isEmpty then none else some repo.pathPrefix
   let data : ProofmapData := {
     generator := { version := version, lean := Lean.versionString }
     project := {
-      title, rootModules := opts.rootModules.map toString, repoUrl := opts.repoUrl, repoRef
+      title, rootModules := opts.rootModules.map toString, repoUrl := opts.repoUrl, repoRef, repoPathPrefix
       builtAt := ← Util.nowIsoUtc, roots
       standardAxioms := opts.standardAxioms, preset := opts.preset, footer := opts.footer }
     modules, decls, glossary := opts.glossary }

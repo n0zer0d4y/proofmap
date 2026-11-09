@@ -4,9 +4,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useWalkthroughSteps } from '../data/chunks';
 import type { Indexes } from '../data/indexes';
 import { caseOf, closedGoals, diffAfter, diffBefore, duplicateBullets, subtreeOf, visibleSteps, type GoalLine } from '../graph/goals';
+import { VIEW_NAMES } from '../state/presets';
 import { useStore } from '../state/store';
 
-const VIEW_NAMES = { map: 'map', outline: 'outline', paths: 'path finder', health: 'health view', compare: 'comparison' } as const;
 
 /**
  * Proof walkthrough: the proof's source with the current tactic highlighted

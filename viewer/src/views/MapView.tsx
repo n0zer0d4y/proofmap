@@ -143,6 +143,14 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
   const [positions, setPositions] = useState<Positions>({});
   const previous = useRef<Positions | undefined>(undefined);
   const fitted = useRef(false);
+  // The map is shown once its first view is chosen: before that, lines would show without their
+  // cards, at the default position. A fallback shows it anyway after a moment.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (ready) return;
+    const t = setTimeout(() => setReady(true), 1500);
+    return () => clearTimeout(t);
+  }, [ready, resetKey]);
   // Cards that appeared with the last layout (an opened card or library), to bring into view.
   const revealed = useRef<string[]>([]);
   const target = useRef<{ ids: string[] } | null>(null);
@@ -160,6 +168,7 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
       previous.current = undefined;
       fitted.current = false;
       target.current = null;
+      setReady(false);
     }
     let live = true;
     void requestLayout(sizes, folded.edges, previous.current).then((p) => {
@@ -226,6 +235,8 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
           () => void flow.setCenter(right - box.width / zoom / 2 + 24 / zoom, all.y + all.height / 2, { zoom }),
         );
       }
+      // Shown once the first view is applied (frame callbacks run in order, so after the fit above).
+      requestAnimationFrame(() => setReady(true));
       return;
     }
     const fresh = revealed.current;
@@ -276,7 +287,7 @@ export function useLaidOutGraph(ix: Indexes, folded: Folded, highlighted: Readon
     };
   });
 
-  return { nodes, edges, positions, onNodesChange, byId, sizeOf, onMoveStart };
+  return { nodes, edges, positions, onNodesChange, byId, sizeOf, onMoveStart, ready };
 }
 
 /** Below this zoom card text is too small to read; the map pans instead of shrinking further. */
@@ -337,7 +348,7 @@ function MapInner({ ix }: { ix: Indexes }) {
   }, [ix, anchor, anchorClosed, expanded, expandedGroups, showNoise, showExternal, showCore, highlight]);
   const highlighted = useMemo(() => new Set(highlight.map(declNodeId)), [highlight]);
 
-  const { nodes, edges, positions, onNodesChange, byId, sizeOf, onMoveStart } = useLaidOutGraph(ix, folded, highlighted, anchor);
+  const { nodes, edges, positions, onNodesChange, byId, sizeOf, onMoveStart, ready } = useLaidOutGraph(ix, folded, highlighted, anchor);
   const exportMap = async (kind: 'svg' | 'png') => {
     const pic = mapSvg(ix, folded, positions, sizeOf, currentPalette(), ix.data.project.title);
     if (kind === 'svg') return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(pic.svg)}`;
@@ -459,6 +470,7 @@ function MapInner({ ix }: { ix: Indexes }) {
         exportMap={exportMap}
       />
       <ReactFlow
+        className={ready ? undefined : 'map-pending'}
         nodes={nodes}
         onNodesChange={onNodesChange}
         edges={edges}

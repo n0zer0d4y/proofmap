@@ -32,6 +32,10 @@ export function sourceLinks(ix: Indexes, d: Decl): { vscode?: string; github?: s
   const root = projectFolder(ix);
   if (root !== null) out.vscode = `vscode://file/${encodeURI(`${root.replace(/\/+$/, '')}/${mod.path}`)}:${line}`;
   const repo = ix.data.project.repoUrl?.replace(/\/+$/, '');
-  if (repo) out.github = `${repo}/blob/${ix.data.project.repoRef ?? 'HEAD'}/${mod.path}#L${line}-L${d.range.end[0]}`;
+  // Module paths are relative to the project; a project in a folder of its repository (`lean/`)
+  // records that folder, which goes between the commit and the path.
+  const prefix = (ix.data.project.repoPathPrefix ?? '').replace(/^\/+/, '').replace(/\/*$/, '/').replace(/^\/$/, '');
+  // A dependency's file (under `.lake/packages`) is not in the project's repository: no link.
+  if (repo && !/^\.lake\//.test(mod.path)) out.github = `${repo}/blob/${ix.data.project.repoRef ?? 'HEAD'}/${prefix}${mod.path}#L${line}-L${d.range.end[0]}`;
   return out;
 }
