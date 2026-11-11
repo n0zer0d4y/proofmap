@@ -20,10 +20,13 @@ proofmap reads a Lean project's compiled code and writes one HTML page that show
 
 Everything runs on your machine. proofmap sends nothing anywhere, and the page loads nothing from the network.
 
+To see it on real projects, open one of the [examples](#examples).
+
 ## Table of Contents
 
 - [Security](#security)
 - [Background](#background)
+- [Examples](#examples)
 - [Install](#install)
 - [Usage](#usage)
 - [Documentation](#documentation)
@@ -57,6 +60,16 @@ How it works: proofmap loads the project's `.olean` files in parallel worker pro
 
 Walkthroughs are optional (`--walkthrough`). Lean does not keep the goals of each tactic step in its compiled files, so recording them means elaborating every proof again, which takes about as long as `lake build`.
 
+## Examples
+
+Lean 4 projects that publish their proof map with GitHub Pages. Each is built on Mathlib, keeps its Lean library in a `lean/` folder with a `proofmap.toml` that names its main results, and links to its map from a badge at the top of its README.
+
+| Project                                                                                               | Its Lean library                                                                                                                                                                                                                  | Proof map                                                                                 |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [simple-zeros-hilbert-robin-epstein](https://github.com/n0zer0d4y/simple-zeros-hilbert-robin-epstein) | The finite cores of two results in analytic number theory: a lower bound for the proportion of zeros of ζ that are simple and on the critical line, and the odd analogue of Robin's criterion.                                    | [Open](https://n0zer0d4y.github.io/simple-zeros-hilbert-robin-epstein/lean/proofmap.html) |
+| [debruijn-newman-large-sieve](https://github.com/n0zer0d4y/debruijn-newman-large-sieve)               | The finite arithmetic core of a proof that the factor log log Q in the large sieve with prime moduli cannot be removed.                                                                                                           | [Open](https://n0zer0d4y.github.io/debruijn-newman-large-sieve/lean/proofmap.html)        |
+| [rankin-selberg-delta](https://github.com/n0zer0d4y/rankin-selberg-delta)                             | The Rankin–Selberg method for level-one cusp forms, from the modular discriminant Δ to the pole of the Rankin–Selberg series and L(f, 1 + it) ≠ 0, and a zero-free region and the explicit formula for the Rankin–Selberg square. | [Open](https://n0zer0d4y.github.io/rankin-selberg-delta/lean/proofmap.html)               |
+
 ## Install
 
 proofmap needs [elan](https://github.com/leanprover/elan) (every Lean user already has it), git, and a project on Lean **v4.28.0 or newer**. Pick one of two ways to install it.
@@ -73,6 +86,26 @@ macOS and Linux:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/n0zer0d4y/proofmap/main/install.sh | sh
+```
+
+Or install from a clone of this repository, to read the installer before it runs or to install a particular version. Check out a release tag; `main` can hold changes that are not released yet.
+
+```sh
+git clone https://github.com/n0zer0d4y/proofmap
+cd proofmap
+git checkout v0.3.1
+```
+
+Then, on macOS and Linux:
+
+```sh
+sh install.sh --source .
+```
+
+Or on Windows (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Source .
 ```
 
 Open a new terminal, then, in any Lean project:

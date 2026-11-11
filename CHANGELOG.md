@@ -2,6 +2,13 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Examples** in the README: three Lean projects that publish their proof map with GitHub Pages, with links to each project and its map.
+- **Install from a clone** in the README: `install.sh --source .` or `install.ps1 -Source .` in a checked-out release, for readers who want to read the installer first or install a particular version.
+
 ## [0.3.1] - 2026-11-09
 
 ### Fixed
