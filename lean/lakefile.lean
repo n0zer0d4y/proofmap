@@ -16,7 +16,7 @@ run_cmd do
   elabCommand (← `(def $(mkIdent `compatDir) : System.FilePath := System.FilePath.mk $(quote dir)))
 
 package proofmap where
-  version := v!"0.4.0"
+  version := v!"0.4.1"
 
 lean_lib ProofmapCompat where
   srcDir := compatDir

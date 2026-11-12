@@ -2,6 +2,12 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-11-12
+
+### Fixed
+
+- **Health's lists of declarations nothing uses:** in a row with notes (the command that names it, `private`, `simp`), a long name that had to wrap dropped below its status mark, leaving the mark alone on the first line. The name now wraps beside the mark, with the notes underneath.
+
 ## [0.4.0] - 2026-11-12
 
 ### Added

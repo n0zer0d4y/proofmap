@@ -173,8 +173,9 @@ test('long names in lists wrap instead of being cut to an ellipsis, on a narrow 
       .filter((li) => {
         const mark = li.querySelector('.status'), name = li.querySelector('.decl-name .linklike, .linklike');
         if (!mark || !name) return false;
-        const first = name.getClientRects()[0]!;
-        return Math.abs(mark.getBoundingClientRect().top - first.top) > first.height || li.scrollWidth > li.clientWidth + 1;
+        // One box however many lines the name has: compare tops, against the mark's height (a line).
+        const m = mark.getBoundingClientRect();
+        return Math.abs(m.top - name.getBoundingClientRect().top) >= m.height || li.scrollWidth > li.clientWidth + 1;
       })
       .map((li) => li.textContent),
   );
@@ -280,4 +281,17 @@ test('declarations nothing uses show what names them, and whether they are priva
   // The details panel says the same.
   await audited.getByRole('button', { name: /Fixture\.double_two/ }).click();
   await expect(page.getByRole('complementary', { name: 'Details' }).locator('.checked-by')).toHaveText('Named by #print axioms at Fixture/Tagged.lean:40');
+  // A long name in a row with notes wraps beside its status mark, not onto a line of its own.
+  await page.setViewportSize({ width: 900, height: 800 });
+  const row = (await audited.elementHandle())!;
+  await row.evaluate((li) => (li.querySelector('.decl-name .linklike')!.textContent = 'Project.Section.Subsection.'.repeat(6) + 'a_declaration_name_longer_than_any_column'));
+  const layout = await row.evaluate((li) => {
+    // The name button is one box, however many lines it has: compare its top with the mark's,
+    // against the mark's own height (one line).
+    const mark = li.querySelector('.status')!.getBoundingClientRect();
+    const name = li.querySelector('.decl-name .linklike')!.getBoundingClientRect();
+    return { gap: Math.abs(mark.top - name.top), line: mark.height, spills: li.scrollWidth > li.clientWidth + 1 };
+  });
+  expect(layout.gap).toBeLessThan(layout.line);
+  expect(layout.spills).toBe(false);
 });

@@ -5,7 +5,7 @@
 ```jsonc
 {
   "schema": 2,
-  "generator": { "name": "proofmap", "version": "0.4.0", "lean": "4.29.0" },
+  "generator": { "name": "proofmap", "version": "0.4.1", "lean": "4.29.0" },
   "project": { "title": "...", "rootModules": ["Mathlib.NumberTheory.SumFourSquares"], "roots": [1024], "...": "..." },
   "modules": [ { "name": "Mathlib.NumberTheory.SumFourSquares", "path": ".lake/packages/mathlib/Mathlib/NumberTheory/SumFourSquares.lean", "...": "..." } ],
   "decls": [ { "id": 1024, "name": "Nat.sum_four_squares", "...": "..." } ],

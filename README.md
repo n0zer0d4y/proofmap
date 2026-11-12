@@ -93,7 +93,7 @@ Or install from a clone of this repository, to read the installer before it runs
 ```sh
 git clone https://github.com/n0zer0d4y/proofmap
 cd proofmap
-git checkout v0.4.0
+git checkout v0.4.1
 ```
 
 Then, on macOS and Linux:
@@ -145,14 +145,14 @@ Not needed to map a project. This project install adds proofmap to one project's
 [[require]]
 name = "proofmap"
 git = "https://github.com/n0zer0d4y/proofmap"
-rev = "v0.4.0"
+rev = "v0.4.1"
 subDir = "lean"
 ```
 
 Or in `lakefile.lean`:
 
 ```lean
-require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.4.0" / "lean"
+require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.4.1" / "lean"
 ```
 
 Then update it with `--keep-toolchain`, which keeps the project's Lean version (without it, Lake can move the project to proofmap's), and commit the lakefile with `lake-manifest.json`:
