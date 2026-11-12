@@ -117,7 +117,7 @@
       "description": "Noise flags start with 'noise:' and hide the declaration by default; the rest are informational. noise:generated marks a project declaration Lean generated without a source range (match splitters, congruence lemmas, deriving helpers).",
       "enum": [
         "noise:instance", "noise:aux", "noise:internal", "noise:matcher", "noise:projection", "noise:ctor", "noise:equation", "noise:generated",
-        "private", "deprecated", "unsafe", "partial"
+        "private", "deprecated", "unsafe", "partial", "simp"
       ]
     },
     "SummarySource": { "enum": ["attr", "config", "docstring", "comment", "section", "ai"] },
@@ -220,7 +220,22 @@
         "rank": { "$ref": "#/$defs/Rank" },
         "step": { "description": "Step label used to group big steps on the map.", "type": ["string", "null"] },
         "tags": { "$ref": "#/$defs/Tags" },
-        "walkthrough": { "description": "Index into walkthroughs, or null.", "anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }] }
+        "walkthrough": { "description": "Index into walkthroughs, or null.", "anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }] },
+        "checkedBy": {
+          "description": "Commands in the project's source that name this declaration (#print axioms, #check, #eval). They leave nothing in the compiled code, so they are not dependencies. Absent in data written before it was added.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/CheckRef" }
+        }
+      }
+    },
+    "CheckRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "module", "line"],
+      "properties": {
+        "command": { "enum": ["print axioms", "check", "eval"] },
+        "module": { "description": "The module whose source has the command.", "type": "string" },
+        "line": { "description": "1-based line of the command.", "type": "integer", "minimum": 1 }
       }
     },
     "Walkthrough": {

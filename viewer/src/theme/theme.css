@@ -274,6 +274,13 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .detail .badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 /* "Needed for 2 of 5 main results" and its meter: one segment per main result (a plain bar beyond 12). */
 .needed { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; }
+.checked-by { margin: 6px 0 0; font-size: 12px; }
+.check-ref { font-size: 12px; }
+/* A row with notes (Health's lists of declarations nothing uses): the notes go on their own line,
+   under the name, so the name keeps its width. */
+.decl-list li.with-notes { flex-wrap: wrap; }
+.decl-list li > .use-notes { flex: 1 0 100%; padding-left: 18px; overflow-wrap: anywhere; }
+.use-notes > * { margin-right: 4px; }
 .needed-meter { display: inline-flex; gap: 2px; align-items: center; }
 .needed-meter i { display: block; width: 10px; height: 8px; border-radius: 2px; background: var(--border); }
 .needed-meter i.on { background: var(--accent); }
@@ -287,7 +294,10 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 /* A long name wraps (at dots and underscores if it must) rather than being cut: names are buttons,
    and a cut button shows nothing but the ellipsis. */
 .decl-list li { padding: 1px 0; display: flex; gap: 4px; align-items: baseline; min-width: 0; }
-.decl-list li > .linklike { text-align: left; min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+.decl-list li > .linklike, .decl-list li > .decl-name { text-align: left; min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+/* The name button sits at the top of its line, so a wrapped name keeps the row's status mark and
+   badge on its first line (a button's own baseline is its last line). */
+.decl-name .linklike { text-align: left; vertical-align: top; }
 .decl-list li > .status { flex: none; }
 .why { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; background: var(--bg-sunken); }
 .why-item + .why-item { margin-top: 8px; }
@@ -381,7 +391,7 @@ dialog pre { white-space: pre-wrap; font-size: 12px; }
 .top-list { list-style: none; padding-left: 0; counter-reset: top; }
 .top-list > li { display: flex; gap: 6px; align-items: baseline; counter-increment: top; }
 .top-list > li::before { content: counter(top) "."; flex: none; min-width: 3ch; text-align: right; color: var(--fg-muted); }
-.top-list > li > .linklike { text-align: left; min-width: 0; }
+.top-list > li > .linklike, .top-list > li > .decl-name { text-align: left; min-width: 0; }
 .top-list > li > .muted { flex: none; }
 .kind-split { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--fg-muted); margin: 0 0 20px; }
 .stat-sorry .stat-value { color: var(--sorry); }

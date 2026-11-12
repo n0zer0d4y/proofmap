@@ -5,7 +5,7 @@
 ```jsonc
 {
   "schema": 2,
-  "generator": { "name": "proofmap", "version": "0.3.1", "lean": "4.29.0" },
+  "generator": { "name": "proofmap", "version": "0.4.0", "lean": "4.29.0" },
   "project": { "title": "...", "rootModules": ["Mathlib.NumberTheory.SumFourSquares"], "roots": [1024], "...": "..." },
   "modules": [ { "name": "Mathlib.NumberTheory.SumFourSquares", "path": ".lake/packages/mathlib/Mathlib/NumberTheory/SumFourSquares.lean", "...": "..." } ],
   "decls": [ { "id": 1024, "name": "Nat.sum_four_squares", "...": "..." } ],
@@ -30,7 +30,8 @@ With a repository address (`project.repoUrl`), source links point at `project.re
 
 - **Project declarations** (`external: false`) come from the root modules and carry everything: source `range` (1-based lines, 0-based columns), `code`, `docstring`, `leadingComment` (the comment just above it), `summary` with its `source` (`attr`, `config`, `docstring`, `comment` or `section`), `sectionPath` into the module's section tree, `size`, `rank`, `step` and `tags`.
 - **External declarations** (`external: true`) are from other libraries and appear only when a project declaration uses them directly. They carry their name, kind, module and signature, but no code and no dependencies.
-- `flags` that start with `noise:` (such as `noise:instance`, `noise:aux`, `noise:matcher`) mark generated declarations the viewer hides by default. `noise:generated` marks a project declaration that has no source range, which is how Lean's generated helpers (match splitters, congruence lemmas, `deriving` helpers) are recognised across Lean versions. The others (`private`, `deprecated`, `unsafe`, `partial`) are informational.
+- `flags` that start with `noise:` (such as `noise:instance`, `noise:aux`, `noise:matcher`) mark generated declarations the viewer hides by default. `noise:generated` marks a project declaration that has no source range, which is how Lean's generated helpers (match splitters, congruence lemmas, `deriving` helpers) are recognised across Lean versions. The others (`private`, `deprecated`, `unsafe`, `partial`) are informational: `unsafe` marks an `unsafe` declaration, `partial` a `partial def`, which Lean adds without a checked definition (a recursive definition Lean checked, by structural or well-founded recursion, is not partial), and `simp` a lemma the simp set rewrites with, or a definition it unfolds.
+- `checkedBy` lists the commands in the project's own source that name the declaration: `#print axioms`, `#check` and `#eval`, each as `{ "command": "print axioms" | "check" | "eval", "module", "line" }`. They leave nothing in the compiled code, so they are not dependencies; they tell a declaration nothing uses but that is audited or checked apart from dead code. Data written before this field was added has none.
 - `signature` is the pretty-printed statement, with names written as inside the declaration's own namespace; `signatureHover` gives the code-point ranges in it that name other declarations.
 
 ## Dependencies

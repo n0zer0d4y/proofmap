@@ -57,7 +57,7 @@ def report (data : ProofmapData) (cfg : Config.Config) : Report := Id.run do
         | some i => axioms.modify i fun (n, k) => (n, k + 1)
         | none => axioms.push (a, 1)
   let names : Std.HashSet String := project.foldl (fun s d => s.insert d.name) {}
-  let entries := cfg.roots.map (("project.roots", ·)) ++ cfg.summaries.map (("summaries", ·.1)) ++
+  let entries := cfg.roots.map (("project.roots", ·)) ++ cfg.titles.map (("titles", ·.1)) ++ cfg.summaries.map (("summaries", ·.1)) ++
     cfg.steps.map (("steps", ·.1)) ++ cfg.ranks.map (("ranks", ·.1))
   return {
     projectDecls := project.size, modules := data.modules.size, sorryCount := sorryDecls.size

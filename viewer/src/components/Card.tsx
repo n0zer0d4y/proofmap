@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
-import type { Indexes } from '../data/indexes';
+import { twinModule, type Indexes } from '../data/indexes';
 import { STATUS_LABEL, statusOf, statusText } from '../data/status';
 import { isOpen, toggleOpen } from '../state/mapOpen';
 import { useStore } from '../state/store';
@@ -48,6 +48,8 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
   const restsOn = new Set([...d.deps.statement, ...d.deps.proof].filter((i) => !ix.decls[i]!.external && !ix.isNoise(i))).size;
   const usedBy = new Set([...ix.usedBy.statement[id]!, ...ix.usedBy.proof[id]!].filter((i) => !ix.isNoise(i))).size;
   const links = sourceLinks(ix, d);
+  // Another declaration has the same name: the module tells them apart.
+  const twin = twinModule(ix, id);
   const selected = focus === id;
   const showStatement = statementsExpanded;
   return (
@@ -71,8 +73,9 @@ export function DeclCard({ ix, id }: { ix: Indexes; id: number }) {
           </span>
         )}
       </div>
-      <div className="card-name mono" title={d.name}>
+      <div className="card-name mono" title={twin ? `${d.name} · ${twin}` : d.name}>
         {namesSecondary ? d.name : d.title}
+        {twin && <span> · {twin.split('.').pop()}</span>}
       </div>
       {d.summary && !showStatement && (
         <div className="card-summary">

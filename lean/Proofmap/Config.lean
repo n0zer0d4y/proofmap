@@ -24,6 +24,8 @@ enabled = false              # true records tactic steps (slow: about as long as
 [sections]
 dividerPatterns = ["^--\\s*[─=]{2,}\\s*(.+?)\\s*[─=]*$"]
 banners = true               # framed comment banners count as section headings
+[titles]
+"Nat.sum_four_squares" = "Lagrange's four-square theorem"
 [summaries]
 "Nat.euler_four_squares" = "Euler's four-square identity, for natural numbers"
 [steps]
@@ -50,6 +52,7 @@ structure Config where
   walkthrough : Bool := false
   dividerPatterns : Option (Array String) := none
   banners : Bool := true
+  titles : Array (String × String) := #[]
   summaries : Array (String × String) := #[]
   steps : Array (String × String) := #[]
   ranks : Array (String × Schema.Rank) := #[]
@@ -132,7 +135,7 @@ private def unknown (v : Value) (what : String) (name : String) (known : List St
 private def presets : List String := ["reader", "mathematician", "developer", "auditor"]
 
 private def tables : List String :=
-  ["project", "display", "axioms", "walkthrough", "sections", "summaries", "steps", "ranks", "glossary"]
+  ["project", "display", "axioms", "walkthrough", "sections", "titles", "summaries", "steps", "ranks", "glossary"]
 
 private def decode (t : Table) : DecodeM Config := do
   let mut c : Config := {}
@@ -149,6 +152,7 @@ private def decode (t : Table) : DecodeM Config := do
       unknown v "table" sect tables
       continue
     match sect with
+    | "titles" => c := { c with titles := ← strTable sect v }
     | "summaries" => c := { c with summaries := ← strTable sect v }
     | "steps" => c := { c with steps := ← strTable sect v }
     | "glossary" => c := { c with glossary := ← strTable sect v }

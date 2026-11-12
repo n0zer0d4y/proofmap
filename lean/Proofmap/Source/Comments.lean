@@ -179,9 +179,120 @@ def leadingComment? (lx : Lexed) (byLine : Std.HashMap Nat Nat) (structural : St
   let text := joinLines (found.reverse.flatMap commentLines)
   return if text.isEmpty then none else some text
 
-/-- The first paragraph of a Markdown text (up to the first blank line), trimmed. -/
+/-- A Markdown heading line (`## Title`): its level (the number of `#` marks) and its words;
+`none` for other lines (`#eval` is not a heading: the marks must be followed by a space or end
+the line). -/
+def heading? (line : String) : Option (Nat × String) :=
+  let cs := line.toList
+  let n := (cs.takeWhile (· == '#')).length
+  let rest := cs.drop n
+  if n == 0 || n > 6 then none
+  else match rest with
+    | [] => some (n, "")
+    | c :: _ => if c == ' ' || c == '\t' then some (n, String.ofList (rest.dropWhile (· == ' '))) else none
+
+/-- The words of a Markdown heading line, without its `#` marks. -/
+def headingText? (line : String) : Option String := (heading? line).map (·.2)
+
+private def isBlank (c : Char) : Bool := c == ' ' || c == '\t'
+
+/-- The text of a Markdown list item (`* text`, `- text`, `+ text`, `1. text`), else `none`. -/
+private def bulletText? (line : List Char) : Option (List Char) :=
+  match line.dropWhile isBlank with
+  | c :: s :: r => if (c == '*' || c == '-' || c == '+') && isBlank s then some r else
+    let cs := line.dropWhile isBlank
+    let ds := cs.takeWhile Char.isDigit
+    match cs.drop ds.length with
+    | p :: s' :: r' => if !ds.isEmpty && (p == '.' || p == ')') && isBlank s' then some r' else none
+    | _ => none
+  | _ => none
+
+/-- The backticked names a list item starts with: "`a`, `b` and `c`: …" gives `a`, `b`, `c`.
+Names later in the description are not read; a backticked expression (with spaces) ends it. -/
+private partial def leadingNames (cs : List Char) (acc : Array String := #[]) : Array String :=
+  let cs := cs.dropWhile isBlank
+  let cs := if acc.isEmpty then cs else match cs with
+    | ',' :: r | '/' :: r | '&' :: r => r.dropWhile isBlank
+    | 'a' :: 'n' :: 'd' :: s :: r | 'o' :: 'r' :: s :: r => if isBlank s then r.dropWhile isBlank else cs
+    | _ => cs
+  match cs with
+  | '`' :: r =>
+    let tok := r.takeWhile (· != '`')
+    if tok.length == r.length then acc  -- no closing backtick
+    else
+      let name := match tok with | '@' :: t => t | t => t
+      if name.isEmpty || name.any isBlank then acc
+      else leadingNames (r.drop (tok.length + 1)) (acc.push (String.ofList name))
+  | _ => acc
+
+/-- Whether a heading names Mathlib's main-results section of a module docstring. -/
+def isMainStatementsHeading (title : String) : Bool :=
+  let t := title.toLower
+  ["main statements", "main results", "main theorems"].any fun p => t.startsWith p
+
+/-- The names a module docstring lists as its main results: a `## Main statements` section, the
+optional second-level section of Mathlib's documentation style
+(https://mathlib.org/contribute/doc.html), or `Main results` / `Main theorems`, which many Mathlib
+files use instead (level 2 or deeper, so a file titled `# Main results` is not one), whose list
+items start with the result's name in backticks. The section ends at the next heading of the
+same or a higher level. -/
+def mainStatementNames (doc : String) : Array String := Id.run do
+  let mut out : Array String := #[]
+  let mut level : Option Nat := none
+  for raw in doc.splitOn "\n" do
+    let line := (raw.toList.filter (· != '\r')).dropWhile isBlank
+    match heading? (String.ofList line) with
+    | some (n, title) =>
+      if level.any (n ≤ ·) then level := none
+      if n ≥ 2 && isMainStatementsHeading title then level := some n
+    | none =>
+      if level.isSome then
+        if let some item := bulletText? line then
+          for name in leadingNames item do
+            if !out.contains name then out := out.push name
+  return out
+
+/-- The first paragraph of a Markdown text (up to a blank line or a heading), trimmed. Headings
+before it are titles, not a summary, so they are skipped; a text with only a heading gives the
+heading's words. -/
 def firstParagraph (text : String) : String :=
-  let ls := (text.splitOn "\n").map (·.trimAscii.toString) |>.dropWhile (·.isEmpty)
-  " ".intercalate (ls.takeWhile (!·.isEmpty))
+  go ((text.splitOn "\n").map (·.trimAscii.toString)) none
+where
+  go : List String → Option String → String
+  | [], heading => heading.getD ""
+  | l :: rest, heading =>
+    if l.isEmpty then go rest heading
+    else match headingText? l with
+      | some t => go rest (heading <|> (if t.isEmpty then none else some t))
+      | none => " ".intercalate (l :: rest.takeWhile fun x => !x.isEmpty && (headingText? x).isNone)
+
+/-- The commands that name a declaration on a line of their own: `#print axioms X`, `#check X`
+(also `#check @X`) and `#eval X …`, as `(command, name, line)` with `command` one of
+`print axioms`, `check`, `eval` and `line` 1-based. Only lines with code count (a command inside
+a comment is not run), and only a plain name (`#check (f : T)` names no single declaration). -/
+def checkCommands (lx : Lexed) : Array (String × String × Nat) := Id.run do
+  let mut out := #[]
+  for h : i in [0:lx.lines.size] do
+    if !(lx.hasCode[i + 1]?.getD false) then continue
+    let cs := lx.lines[i].toList.dropWhile isBlank
+    let found : Option (String × List Char) :=
+      match cs with
+      | '#' :: 'p' :: 'r' :: 'i' :: 'n' :: 't' :: s :: r =>
+        if isBlank s then
+          match r.dropWhile isBlank with
+          | 'a' :: 'x' :: 'i' :: 'o' :: 'm' :: 's' :: s' :: r' => if isBlank s' then some ("print axioms", r') else none
+          | _ => none
+        else none
+      | '#' :: 'c' :: 'h' :: 'e' :: 'c' :: 'k' :: s :: r => if isBlank s then some ("check", r) else none
+      | '#' :: 'e' :: 'v' :: 'a' :: 'l' :: s :: r => if isBlank s then some ("eval", r) else none
+      | _ => none
+    let some (command, rest) := found | continue
+    let rest := match rest.dropWhile isBlank with | '@' :: r => r | r => r
+    let name := rest.takeWhile fun c => !isBlank c && c != '(' && c != ')' && c != ':' && c != ','
+    -- A plain name: starts like an identifier, and is not a literal or an expression.
+    match name with
+    | c :: _ => if c.isAlpha || c == '_' || c.val ≥ 0x80 then out := out.push (command, String.ofList name, i + 1)
+    | [] => pure ()
+  return out
 
 end Proofmap.Source

@@ -2,7 +2,7 @@ import { ReactFlow, ReactFlowProvider } from '@xyflow/react';
 import { useMemo } from 'react';
 import { DeclSearch } from '../components/SearchBox';
 import { StatusBadge } from '../components/StatusBadge';
-import type { Indexes } from '../data/indexes';
+import { twinModule, type Indexes } from '../data/indexes';
 import { declNodeId, type Folded } from '../graph/fold';
 import { findPaths, reachable, relation } from '../graph/paths';
 import { isCoreLibrary, libraryOf } from '../data/library';
@@ -125,7 +125,7 @@ export function PathsView({ ix }: { ix: Indexes }) {
           />
         </label>
         <span className="paths-chosen">
-          {name(from) && <span className="mono">{name(from)!.name}</span>} → {name(to) && <span className="mono">{name(to)!.name}</span>}
+          {from !== null && <ChosenName ix={ix} id={from} />} → {to !== null && <ChosenName ix={ix} id={to} />}
         </span>
         {(from !== null || to !== null) && (
           <button className="icon-button" onClick={() => setPath(null, null)}>
@@ -181,11 +181,13 @@ export function PathsView({ ix }: { ix: Indexes }) {
                     <StatusBadge decl={ix.decls[id]!} />{' '}
                     <button className="linklike" onClick={() => select(id)}>
                       {ix.decls[id]!.title}
-                    </button>{' '}
+                    </button>
+                    <TwinNote ix={ix} id={id} />{' '}
                     {relation(ix, id, next) === 'proof' ? 'is used in the proof of' : 'appears in the statement of'}{' '}
                     <button className="linklike" onClick={() => select(next)}>
                       {ix.decls[next]!.title}
                     </button>
+                    <TwinNote ix={ix} id={next} />
                   </li>
                 );
               })}
@@ -226,4 +228,21 @@ function PathCanvas({ ix, graph, resetKey }: { ix: Indexes; graph: Folded; reset
       proOptions={{ hideAttribution: true }}
     />
   );
+}
+
+/** A chosen end of the path: its Lean name, and its module when another declaration shares the name. */
+function ChosenName({ ix, id }: { ix: Indexes; id: number }) {
+  const twin = twinModule(ix, id);
+  return (
+    <span className="mono">
+      {ix.decls[id]!.name}
+      {twin && <span className="muted"> · {twin}</span>}
+    </span>
+  );
+}
+
+/** The module, in brackets, of a declaration whose name another declaration shares. */
+function TwinNote({ ix, id }: { ix: Indexes; id: number }) {
+  const twin = twinModule(ix, id);
+  return twin ? <span className="muted"> ({twin})</span> : null;
 }

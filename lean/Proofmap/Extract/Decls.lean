@@ -8,7 +8,9 @@ Noise flags hide generated declarations by default; they are always kept in the 
 Facts checked on the fixture (see `test/fixture/expected/manifest.json`):
 - private names (`_private.<Module>.0.<Name>`) report `isInternalDetail`, so the internal
   check runs on the user-facing name;
-- a `partial def` compiles to an `opaque`, and only `<name>._unsafe_rec` has the partial bit;
+- a `partial def` compiles to an `opaque` whose code is `<name>._unsafe_rec`; recursive
+  definitions (structural, well-founded, derived `DecidableEq`) get a partial `_unsafe_rec` helper
+  too, but stay checked definitions, so only the opaque one is partial;
 - newer toolchains generate `ctorIdx`, `ctorElim`, `ctorElimType` and `<ctor>.elim`, which are
   not internal details, so they are named here. Suffix rules only apply when the prefix really
   is a constructor or inductive type, so user theorems such as `Or.elim` are not noise.
@@ -51,9 +53,11 @@ def declKind (env : Environment) (n : Name) (ci : ConstantInfo) : DeclKind :=
 /-- Noise flags (`noise:*`). Empty means the declaration is shown by default. -/
 def noiseFlags (env : Environment) (n : Name) (ci : ConstantInfo) : Array String := Id.run do
   let mut fs : Array String := #[]
-  if isInstanceCore env n then fs := fs.push "noise:instance"
-  if isMatcherCore env n then fs := fs.push "noise:matcher"
   let parent := n.getPrefix
+  -- An instance, or a part of one: `deriving` writes helpers such as `instDecidableEqT.decEq` and
+  -- `instReprT.repr` inside the instance's namespace, with the `deriving` clause as their source.
+  if isInstanceCore env n || isInstanceCore env parent then fs := fs.push "noise:instance"
+  if isMatcherCore env n then fs := fs.push "noise:matcher"
   let suffix := lastString? n
   let parentIsInductive := match env.find? parent with | some (.inductInfo _) => true | _ => false
   let parentIsCtor := match env.find? parent with | some (.ctorInfo _) => true | _ => false
@@ -76,15 +80,22 @@ recognised by the missing range rather than by name. -/
 def generatedFlag (noise : Array String) (hasRange : Bool) : Array String :=
   if noise.isEmpty && !hasRange then #["noise:generated"] else noise
 
-/-- Informational flags: `private`, `deprecated`, `unsafe`, `partial`. -/
+/-- Informational flags: `private`, `deprecated`, `unsafe`, `partial`, `simp`. -/
 def infoFlags (env : Environment) (n : Name) (ci : ConstantInfo) : Array String := Id.run do
   let mut fs : Array String := #[]
   if isPrivateName n then fs := fs.push "private"
   if Linter.isDeprecated env n then fs := fs.push "deprecated"
   if ci.isUnsafe then fs := fs.push "unsafe"
-  let isPartial := ci.isPartial || env.contains (n.str "_unsafe_rec") ||
-    (Compiler.getImplementedBy? env n).isSome
+  -- A `partial def` has no checked definition: Lean adds it as an opaque constant whose compiled
+  -- code is `<name>._unsafe_rec`. Structural and well-founded recursion also get an `_unsafe_rec`
+  -- helper (itself partial), but keep a checked definition, so they are not partial.
+  -- `@[implemented_by]` only replaces the compiled code of a checked definition: not partial.
+  let isPartial := ci.isPartial || (ci matches .opaqueInfo _ && env.contains (n.str "_unsafe_rec"))
   if isPartial then fs := fs.push "partial"
+  -- `@[simp]`: a lemma the simp set rewrites with, or a definition it unfolds. Kept even when
+  -- nothing in the project uses it: the simp tactic may, in projects that build on this one.
+  let simpSet := Meta.simpExtension.getState env
+  if simpSet.isLemma (.decl n) || simpSet.isDeclToUnfold n then fs := fs.push "simp"
   return fs
 
 def isNoise (flags : Array String) : Bool :=

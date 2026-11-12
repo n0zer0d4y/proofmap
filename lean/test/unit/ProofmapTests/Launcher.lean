@@ -37,5 +37,12 @@ def launcherTests : TestM Unit := do
     #["Foo", "Bar.Main", "Bar.Extra"]
   let toml ← Proofmap.Lakefile.fromToml "name = \"fixture\"\n[[lean_lib]]\nname = \"Fixture\"\nglobs = [\"Fixture.*\"]\n[[lean_lib]]\nname = \"Other\"\n"
   checkEq "lakefile.toml" toml #["Fixture", "Other"]
+  -- A project that also requires proofmap in its lakefile (the manifest records it).
+  let manifest (pkgs : String) := "{\"version\": \"1.1.0\", \"packagesDir\": \".lake/packages\", \"packages\": [" ++ pkgs ++ "], \"name\": \"p\"}"
+  let mathlib := "{\"name\": \"mathlib\", \"rev\": \"abc\", \"inputRev\": \"v4.29.0\", \"type\": \"git\"}"
+  checkEq "pinned proofmap: inputRev" (pinnedProofmap (manifest (mathlib ++ ", {\"name\": \"proofmap\", \"rev\": \"4533338\", \"inputRev\": \"v0.3.1\"}"))) (some "v0.3.1")
+  checkEq "pinned proofmap: commit when no inputRev" (pinnedProofmap (manifest "{\"name\": \"proofmap\", \"rev\": \"4533338\"}")) (some "4533338")
+  checkEq "pinned proofmap: not required" (pinnedProofmap (manifest mathlib)) none
+  checkEq "pinned proofmap: not a manifest" (pinnedProofmap "not json") none
 
 end ProofmapTests

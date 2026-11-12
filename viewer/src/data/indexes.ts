@@ -32,6 +32,15 @@ export interface SearchHit {
 
 export const isNoiseDecl = (d: Decl) => d.flags.some((f) => f.startsWith('noise:'));
 
+/**
+ * The module of a declaration whose name another declaration shares (in another module), shown
+ * next to the name wherever names are listed so the two can be told apart; null otherwise.
+ */
+export function twinModule(ix: Indexes, id: number): string | null {
+  const d = ix.decls[id]!;
+  return (ix.byName.get(d.name)?.length ?? 0) > 1 ? d.module : null;
+}
+
 export function buildIndexes(data: ProofmapData): Indexes {
   const decls = data.decls;
   const n = decls.length;

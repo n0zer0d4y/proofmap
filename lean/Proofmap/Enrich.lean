@@ -25,6 +25,8 @@ open Proofmap.Schema Proofmap.Source
 
 /-- Author-provided overrides, from `proofmap.toml` (by declaration name). -/
 structure Overrides where
+  /-- Titles that replace the one made from the name (`[titles]`). -/
+  titles : Std.HashMap String String := {}
   summaries : Std.HashMap String String := {}
   steps : Std.HashMap String String := {}
   ranks : Std.HashMap String Rank := {}
@@ -34,8 +36,60 @@ structure Overrides where
 private def isVisibleProject (d : Decl) : Bool :=
   !d.external && !d.flags.any (·.startsWith "noise:")
 
+private def lastOf (s : String) : String := (s.splitOn ".").getLast?.getD s
+
+/-- The project declarations shown on the page, by the last component of their name. -/
+def nameIndex (decls : Array Decl) : Std.HashMap String (Array Nat) := Id.run do
+  let mut byLast : Std.HashMap String (Array Nat) := {}
+  for h : i in [0:decls.size] do
+    let d := decls[i]
+    if isVisibleProject d then byLast := byLast.insert (lastOf d.name) ((byLast.getD (lastOf d.name) #[]).push i)
+  return byLast
+
+/-- The declaration a name written in module `m` refers to, among those in `nameIndex`: the ones
+with that full name, else those whose name ends in `.name` (written inside the module's
+namespaces); of these, the one in module `m`, else the only one. `none` when it stays ambiguous
+or matches nothing: a name is never guessed. -/
+def resolveIn (decls : Array Decl) (byLast : Std.HashMap String (Array Nat)) (n m : String) : Option Nat :=
+  let same := (byLast.getD (lastOf n) #[]).filter fun i => decls[i]!.name == n || decls[i]!.name.endsWith ("." ++ n)
+  let exact := same.filter (decls[·]!.name == n)
+  let cands := if exact.isEmpty then same else exact
+  let inModule := cands.filter (decls[·]!.module == some m)
+  if inModule.size == 1 then some inModule[0]!
+  else if inModule.isEmpty && cands.size == 1 then some cands[0]!
+  else none
+
+/-- The main results the project's module docstrings list in their `## Main statements` sections
+(`mainStatementNames`), in module and list order, and the listed names that name nothing
+(`resolveIn`): a name that stays ambiguous or unmatched is reported, never guessed. -/
+def listedRoots (decls : Array Decl) (modules : Array Schema.Module) : Array Nat × Array (String × String) := Id.run do
+  let byLast := nameIndex decls
+  let mut roots : Array Nat := #[]
+  let mut unmatched : Array (String × String) := #[]
+  for m in modules do
+    let some doc := m.doc | continue
+    for n in mainStatementNames doc do
+      match resolveIn decls byLast n m.name with
+      | some i => if !roots.contains i then roots := roots.push i
+      | none => unmatched := unmatched.push (m.name, n)
+  return (roots, unmatched)
+
+/-- The `#print axioms`, `#check` and `#eval` commands of each module (`checkCommands`), recorded
+on the declarations they name (`checkedBy`), in module and line order. -/
+def addCheckRefs (decls : Array Decl) (modules : Array Schema.Module) (commands : String → Array (String × String × Nat)) :
+    Array Decl := Id.run do
+  let byLast := nameIndex decls
+  let mut out := decls
+  for m in modules do
+    for (command, n, line) in commands m.name do
+      if let some i := resolveIn decls byLast n m.name then
+        let ref : CheckRef := { command, module := m.name, line }
+        if !out[i]!.checkedBy.contains ref then
+          out := out.modify i fun d => { d with checkedBy := d.checkedBy.push ref }
+  return out
+
 /-- Fill in sections, leading comments, summaries, steps, ranks and roots. Returns the updated
-declarations and modules, the root ids, and the root names that matched nothing. -/
+declarations and modules, the root ids, and warnings about main-result names that matched nothing. -/
 def enrich (rootDir : System.FilePath) (dividerPatterns : Array Regex.Regex) (banners : Bool) (ov : Overrides)
     (decls : Array Decl) (modules : Array Schema.Module) :
     IO (Array Decl × Array Schema.Module × Array Nat × Array String) := do
@@ -73,7 +127,8 @@ def enrich (rootDir : System.FilePath) (dividerPatterns : Array Regex.Regex) (ba
       ((leading.bind (nonEmpty ∘ firstParagraph)).map ({ text := ·, source := "comment" })) <|>
       (sectionTitle.map ({ text := ·, source := "section" }))
     let step := d.tags.step <|> ov.steps[d.name]? <|> sectionTitle
-    out := out.set! i { d with sectionPath := path, leadingComment := leading, summary, step }
+    let title := (ov.titles[d.name]?).getD d.title
+    out := out.set! i { d with sectionPath := path, leadingComment := leading, summary, step, title }
   -- Ranks and roots over the visible project declarations.
   let visible := (List.range out.size).toArray.filter fun i => isVisibleProject out[i]!
   let dense : Std.HashMap Nat Nat := visible.size.fold (init := {}) fun k _ m => m.insert visible[k]! k
@@ -84,8 +139,22 @@ def enrich (rootDir : System.FilePath) (dividerPatterns : Array Regex.Regex) (ba
   let nameOf (k : Nat) := out[visible[k]!]!.name
   let dependents := Extract.Rank.transitiveDependents deps
   let threshold := Extract.Rank.topTenPercentThreshold dependents isThm
+  -- Main results: `roots` in the config; else the `## Main statements` sections of the module
+  -- docstrings (Mathlib's convention), when they name any; else chosen automatically.
+  -- `#print axioms`, `#check` and `#eval` commands, on the declarations they name.
+  out := addCheckRefs out mods fun mn => match lexed[mn]? with
+    | some (lx, _, _) => checkCommands lx
+    | none => #[]
+  let (listed, unlisted) := listedRoots out mods
+  let listedWarnings := unlisted.map fun (m, n) =>
+    s!"`{n}` in the main statements of {m} names no project declaration (or several)"
   let (roots, unmatched) ←
-    if ov.roots.isEmpty then
+    if !ov.roots.isEmpty then
+      let found := ov.roots.map fun n => (n, visible.filter fun i => out[i]!.name == n)
+      pure (found.flatMap (·.2), (found.filter (·.2.isEmpty)).map fun (n, _) => s!"root '{n}' from the config matches no project declaration")
+    else if !listed.isEmpty then
+      pure (listed, listedWarnings)
+    else
       let documented (k : Nat) := (out[visible[k]!]!.docstring.getD "").trimAscii.toString != ""
       let headline (k : Nat) := Extract.Rank.statesResult (toString out[visible[k]!]!.name) out[visible[k]!]!.docstring
       -- A declaration's area is its module's folder (`A.B.C` → `A.B`), so each folder of the
@@ -93,10 +162,7 @@ def enrich (rootDir : System.FilePath) (dividerPatterns : Array Regex.Regex) (ba
       let area (k : Nat) : String :=
         let parts := (out[visible[k]!]!.module.getD "").splitOn "."
         ".".intercalate (if parts.length > 1 then parts.dropLast else parts)
-      pure ((Extract.Rank.autoRoots deps isThm nameOf (documented := documented) (headline := headline) (area := area)).map (visible[·]!), #[])
-    else
-      let found := ov.roots.map fun n => (n, visible.filter fun i => out[i]!.name == n)
-      pure (found.flatMap (·.2), (found.filter (·.2.isEmpty)).map (·.1))
+      pure ((Extract.Rank.autoRoots deps isThm nameOf (documented := documented) (headline := headline) (area := area)).map (visible[·]!), listedWarnings)
   for h : k in [0:visible.size] do
     let i := visible[k]
     let d := out[i]!

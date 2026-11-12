@@ -21,6 +21,7 @@ export const JARGON: Record<string, { label: string; text: string }> = {
   deprecated: { label: 'deprecated', text: 'Kept for compatibility; a newer name should be used instead.' },
   unsafe: { label: 'unsafe', text: 'Bypasses some of Lean’s checks; cannot be used in proofs.' },
   partial: { label: 'partial', text: 'A function that might not terminate, so Lean does not unfold it in proofs.' },
+  simp: { label: 'simp', text: 'A simp lemma: the simp tactic may rewrite with it, here or in projects that build on this one.' },
   external: { label: 'other library', text: 'Comes from a library this project uses (such as Mathlib), not from the project.' },
   'polynomial time': { label: 'polynomial time', text: 'Runs in a number of steps bounded by a polynomial in the input size: "efficient".' },
   'NP-complete': { label: 'NP-complete', text: 'Among the hardest problems whose solutions can be checked quickly.' },
@@ -34,7 +35,7 @@ const BADGE_CLASS: Record<string, string> = {
   theorem: 'kind-theorem', lemma: 'kind-lemma', def: 'kind-def', abbrev: 'kind-abbrev', structure: 'kind-structure',
   inductive: 'kind-inductive', ctor: 'kind-ctor', instance: 'kind-instance', axiom: 'kind-axiom',
   opaque: 'kind-other', recursor: 'kind-other', quot: 'kind-other',
-  result: 'badge-main', private: 'badge-flag', deprecated: 'badge-flag', external: 'badge-flag', unsafe: 'badge-warn', partial: 'badge-warn',
+  result: 'badge-main', private: 'badge-flag', deprecated: 'badge-flag', external: 'badge-flag', unsafe: 'badge-warn', partial: 'badge-warn', simp: 'badge-flag',
 };
 export const badgeClass = (term: string) => BADGE_CLASS[term] ?? '';
 

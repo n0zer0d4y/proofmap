@@ -36,7 +36,8 @@ export type Flag =
   | 'private'
   | 'deprecated'
   | 'unsafe'
-  | 'partial';
+  | 'partial'
+  | 'simp';
 export type Rank = 'result' | 'theorem' | 'lemma' | 'def';
 /**
  * A proof's tactic steps. proofmap build --json always writes the inline form (steps). The split form (file, build) is what the viewer holds for a page whose walkthroughs were moved into files next to it; it loads them when the walkthrough is opened. stepCount is always present.
@@ -177,6 +178,10 @@ export interface Decl {
    * Index into walkthroughs, or null.
    */
   walkthrough: number | null;
+  /**
+   * Commands in the project's source that name this declaration (#print axioms, #check, #eval). They leave nothing in the compiled code, so they are not dependencies. Absent in data written before it was added.
+   */
+  checkedBy?: CheckRef[];
 }
 /**
  * A name inside the signature that links to a declaration. Offsets are Unicode code points into the signature string, end exclusive.
@@ -222,6 +227,17 @@ export interface Tags {
   step?: string;
   rank?: Rank;
   summary?: string;
+}
+export interface CheckRef {
+  command: 'print axioms' | 'check' | 'eval';
+  /**
+   * The module whose source has the command.
+   */
+  module: string;
+  /**
+   * 1-based line of the command.
+   */
+  line: number;
 }
 export interface InlineWalkthrough {
   decl: DeclId;

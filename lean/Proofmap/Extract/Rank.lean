@@ -92,7 +92,8 @@ def statesResult (name : String) (doc : Option String) : Bool :=
   words.any fun w => (text.splitOn w).length > 1
 
 /-- Name endings that mark a sanity check rather than a result (`T_hyps_satisfiable`). -/
-def checkSuffixes : Array String := #["satisfiable", "witness", "example", "sanity", "test", "check"]
+def checkSuffixes : Array String :=
+  #["satisfiable", "witness", "example", "sanity", "test", "check", "nonvacuous", "nonvacuity"]
 
 /-- Whether a declaration's name says it is a sanity check: its last component ends in one of
 `checkSuffixes` after an underscore (`numeric_hyps_satisfiable`), or is one of them. -/
@@ -135,11 +136,15 @@ def autoRoots (deps : Array (Array Nat)) (isTheorem : Nat → Bool) (name : Nat 
   for w in unused do
     let applied := (deps[w]!.filter fun t => t < n && t != w && isTheorem t && users[t]! == 1).toList.eraseDups
     let isCheck := looksLikeCheck (name w) || (!documented w && applied.any documented)
+    let mut gaveWay := false
     if isCheck then
       demoted := demoted.insert w
       for t in applied do
-        if (looksLikeCheck (name w) || documented t) && !candidates.contains t then candidates := candidates.push t
-    if !candidates.contains w then candidates := candidates.push w
+        if looksLikeCheck (name w) || documented t then
+          gaveWay := true
+          if !candidates.contains t then candidates := candidates.push t
+    -- A check that gave way is about the theorems it applies; they stand for it.
+    if !gaveWay && !candidates.contains w then candidates := candidates.push w
   -- Wording that states a result doubles a theorem's weight; it does not let a small lemma
   -- (`foo_iff`) overtake the theorem the project builds up to.
   let weight (i : Nat) : Nat := below[i]! * (if headline i then 2 else 1)

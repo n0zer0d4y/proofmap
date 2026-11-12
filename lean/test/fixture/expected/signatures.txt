@@ -86,6 +86,18 @@ Fixture.trickyChar  [Fixture.Result]
 Fixture.trickyString  [Fixture.Result]
   title: Tricky string
   sig:   Fixture.trickyString : ⟦String→String@Init.Prelude⟧
+Fixture.Tree  [Fixture.Status]
+  title: Tree
+  sig:   Fixture.Tree : Type
+Fixture.Tree.leaf  [Fixture.Status]
+  title: Leaf
+  sig:   Fixture.Tree.leaf : ⟦Tree→Fixture.Tree@Fixture.Status⟧
+Fixture.Tree.node  [Fixture.Status]
+  title: Node
+  sig:   Fixture.Tree.node (l r : ⟦Tree→Fixture.Tree@Fixture.Status⟧) : ⟦Tree→Fixture.Tree@Fixture.Status⟧
+Fixture.audited_only  [Fixture.Status]
+  title: Audited only
+  sig:   Fixture.audited_only (n : ⟦Nat→Nat@Init.Prelude⟧) : n + 0 = n
 Fixture.classical_fact  [Fixture.Status]
   title: Classical fact
   sig:   Fixture.classical_fact (p : Prop) : p ∨ ¬p
@@ -98,15 +110,24 @@ Fixture.customAxiom  [Fixture.Status]
 Fixture.downstream_of_sorry  [Fixture.Status]
   title: Downstream of sorry
   sig:   Fixture.downstream_of_sorry : ⟦double→Fixture.double@Fixture.Basic⟧ 5 = 5 * 2
+Fixture.halvings  [Fixture.Status]
+  title: Halvings
+  sig:   Fixture.halvings (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
 Fixture.hiddenHelper  [Fixture.Status]
   title: Hidden helper
   sig:   Fixture.hiddenHelper✝ (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
 Fixture.hiddenHelper_pos  [Fixture.Status]
   title: Hidden helper positive
   sig:   Fixture.hiddenHelper_pos (n : ⟦Nat→Nat@Init.Prelude⟧) : 0 < ⟦Fixture.hiddenHelper✝→Fixture.hiddenHelper@Fixture.Status⟧ n
+Fixture.leftover_helper  [Fixture.Status]
+  title: Leftover helper
+  sig:   Fixture.leftover_helper✝ : ⟦True→True@Init.Prelude⟧
 Fixture.safeId  [Fixture.Status]
   title: Safe id
   sig:   Fixture.safeId (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧
+Fixture.sumList  [Fixture.Status]
+  title: Sum list
+  sig:   Fixture.sumList : ⟦List→List@Init.Prelude⟧ ⟦Nat→Nat@Init.Prelude⟧ → ⟦Nat→Nat@Init.Prelude⟧
 Fixture.twice  [Fixture.Status]
   title: Twice
   sig:   Fixture.twice (n : ⟦Nat→Nat@Init.Prelude⟧) : ⟦Nat→Nat@Init.Prelude⟧

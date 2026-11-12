@@ -71,7 +71,6 @@ export function computeHealth(ix: Indexes, top = 10): Health {
       add(h.lists.definitions, id);
       kinds.set(d.kind, (kinds.get(d.kind) ?? 0) + 1);
     }
-    if (roots.has(id)) add(h.lists.main, id);
     if (s === 'ok') add(h.lists.proved, id);
     if (d.status.sorry) add(h.lists.sorry, id);
     if (d.status.nonstandardAxioms.length) add(h.lists.nonstandard, id);
@@ -83,7 +82,10 @@ export function computeHealth(ix: Indexes, top = 10): Health {
     }
     const usesSorryDirectly = [...d.directDeps.statement, ...d.directDeps.proof].some((t) => decls[t]!.name === 'sorryAx');
     if (usesSorryDirectly) h.sorrySources.push({ id, downstream: downstream(ix, id).size });
-    const users = ix.usedBy.statement[id]!.length + ix.usedBy.proof[id]!.length;
+    // Users shown on the page. A hidden generated helper does not make a declaration used: one that
+    // real code goes through is already counted, since dependencies are collapsed through helpers,
+    // so the only ones left are a declaration's own (such as the `_simp_1` Lean makes for a simp lemma).
+    const users = [...ix.usedBy.statement[id]!, ...ix.usedBy.proof[id]!].filter((u) => !ix.isNoise(u)).length;
     if (users === 0 && !roots.has(id) && d.rank !== 'result') (d.kind === 'theorem' && d.docstring ? h.standalone : h.unused).push(id);
     const m = byModule.get(d.module ?? '?') ?? { total: 0, ok: 0 };
     m.total++;
@@ -100,6 +102,9 @@ export function computeHealth(ix: Indexes, top = 10): Health {
   h.theorems = h.lists.theorems.length;
   h.definitions = h.lists.definitions.length;
   h.definitionKinds = [...kinds].map(([kind, count]) => ({ kind, count })).sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind));
+  // Main results in the configured order, as in the outline (only those shown on the page).
+  const shown = new Set(ids);
+  h.lists.main = ix.data.project.roots.filter((id) => shown.has(id));
   h.main = h.lists.main.length;
   h.proved = h.lists.proved.length;
   h.sorry = h.lists.sorry.length;

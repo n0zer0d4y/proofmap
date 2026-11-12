@@ -1,4 +1,4 @@
-import type { Decl, DeclKind, ProofmapData, Rank, Status, Step, SummarySource, Walkthrough } from './schema';
+import type { CheckRef, Decl, DeclKind, ProofmapData, Rank, Status, Step, SummarySource, Walkthrough } from './schema';
 
 /**
  * The page payload. Pages carry the data in a compact form written by
@@ -44,6 +44,8 @@ interface WireDecl {
   q?: string;
   y?: Decl['tags'];
   w?: number;
+  /** checkedBy: [command, module, line]. */
+  v?: [string, string, number][];
 }
 
 interface WireWalkthrough {
@@ -141,6 +143,7 @@ function declFrom(w: Pick<Wire, 'kinds' | 'moduleNames' | 'statuses'>, x: WireDe
     step: x.q ?? null,
     tags: x.y ?? {},
     walkthrough: x.w ?? null,
+    checkedBy: (x.v ?? []).map(([command, module, line]) => ({ command: command as CheckRef['command'], module, line })),
   };
 }
 
@@ -200,6 +203,7 @@ function wireOf(d: Decl, t: Pick<Wire, 'kinds' | 'moduleNames' | 'statuses'>): W
     e: [d.directDeps.statement, d.directDeps.proof],
     z: [d.size.lines, d.size.exprNodes],
     a: d.rank,
+    v: d.checkedBy?.length ? d.checkedBy.map((c) => [c.command, c.module, c.line] as [string, string, number]) : undefined,
   };
 }
 

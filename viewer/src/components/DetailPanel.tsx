@@ -68,6 +68,7 @@ export function DetailPanel({ ix }: { ix: Indexes }) {
         {d.external && <Term term="external" />}
       </div>
       <NeededFor ix={ix} id={focus} />
+      <CheckedBy ix={ix} id={focus} />
 
       {extras.length > 0 && (
         <section className="why" aria-label="Why this result is not fully proved">
@@ -411,5 +412,25 @@ function NeededFor({ ix, id }: { ix: Indexes; id: number }) {
         )}
       </span>
     </div>
+  );
+}
+
+/** The `#print axioms`, `#check` and `#eval` commands in the project's source that name this
+ * declaration. They are not dependencies: for a declaration nothing uses, they say it is kept on
+ * purpose. */
+function CheckedBy({ ix, id }: { ix: Indexes; id: number }) {
+  const refs = ix.decls[id]!.checkedBy ?? [];
+  if (!refs.length) return null;
+  const fileOf = (module: string) => ix.data.modules.find((m) => m.name === module)?.path ?? module;
+  return (
+    <p className="checked-by muted">
+      Named by{' '}
+      {refs.map((c, i) => (
+        <span key={`${c.module}:${c.line}`}>
+          {i > 0 && ', '}
+          <code>#{c.command}</code> at {fileOf(c.module)}:{c.line}
+        </span>
+      ))}
+    </p>
   );
 }

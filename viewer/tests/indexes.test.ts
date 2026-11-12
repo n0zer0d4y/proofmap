@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { buildIndexes } from '../src/data/indexes';
+import { buildIndexes, twinModule } from '../src/data/indexes';
 import { loadData } from '../src/data/load';
 import type { ProofmapData } from '../src/data/schema';
 
@@ -14,6 +14,12 @@ describe('indexes (fixture)', () => {
   it('looks declarations up by name, including clashing names', () => {
     expect(ix.decls[id('Fixture.main_result')]!.kind).toBe('theorem');
     expect(ix.byName.get('ClashDemo.value')).toHaveLength(2);
+  });
+
+  it('gives the module only for a name another declaration shares', () => {
+    const [a, b] = ix.byName.get('ClashDemo.value')!;
+    expect([twinModule(ix, a!), twinModule(ix, b!)].sort()).toEqual(['Fixture.Clash.A', 'Fixture.Clash.B']);
+    expect(twinModule(ix, id('Fixture.main_result'))).toBeNull();
   });
 
   it('builds reverse dependencies', () => {

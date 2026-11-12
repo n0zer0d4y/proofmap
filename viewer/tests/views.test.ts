@@ -87,6 +87,22 @@ describe('health', () => {
     expect(h.deprecated).toBe(visible.filter((d) => d.flags.includes('deprecated')).length);
     expect(h.proved).toBe(visible.filter((d) => !d.status.sorry && d.status.nonstandardAxioms.length === 0).length);
   });
+  it('a declaration used only by a hidden generated helper is still unused', () => {
+    // Fixture.double_zero is unused; make a hidden helper (Fixture.Color._sizeOf_1) its only user,
+    // as Lean's `_simp_1` helper of a simp lemma is.
+    const zero = id('Fixture.double_zero'), helper = id('Fixture.Color._sizeOf_1');
+    expect(ix.isNoise(helper)).toBe(true);
+    const decls = data.decls.map((d) =>
+      d.id === helper ? { ...d, deps: { ...d.deps, proof: [...d.deps.proof, zero] } } : d,
+    );
+    const h2 = computeHealth(buildIndexes({ ...data, decls }));
+    expect(h2.unused).toContain(zero);
+  });
+  it('lists the main results in the configured order, as the outline does', () => {
+    expect(h.lists.main).toEqual(data.project.roots);
+    const reversed = { ...data, project: { ...data.project, roots: [...data.project.roots].reverse() } };
+    expect(computeHealth(buildIndexes(reversed)).lists.main).toEqual([...data.project.roots].reverse());
+  });
   it('finds the sorry source and what rests on it', () => {
     expect(h.sorrySources.map((s) => [name(s.id), s.downstream])).toEqual([['Fixture.unfinished', 2]]);
   });

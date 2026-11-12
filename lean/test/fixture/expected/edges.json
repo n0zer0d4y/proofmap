@@ -288,6 +288,38 @@
     "Fixture.two_goals": {
       "statement": [],
       "proof": []
+    },
+    "Fixture.Tree": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.Tree.leaf": {
+      "statement": [
+        "Fixture.Tree"
+      ],
+      "proof": []
+    },
+    "Fixture.Tree.node": {
+      "statement": [
+        "Fixture.Tree"
+      ],
+      "proof": []
+    },
+    "Fixture.halvings": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.sumList": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.audited_only": {
+      "statement": [],
+      "proof": []
+    },
+    "Fixture.leftover_helper": {
+      "statement": [],
+      "proof": []
     }
   }
 }

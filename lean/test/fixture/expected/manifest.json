@@ -153,7 +153,10 @@
       "module": "Fixture.Basic",
       "docstring": false,
       "section": "Data types",
-      "leadingComment": "A plain block comment above a definition. /- With a nested block comment. -/\nThe leading comment covers this whole block."
+      "leadingComment": "A plain block comment above a definition. /- With a nested block comment. -/\nThe leading comment covers this whole block.",
+      "checkedBy": [
+        "check@81"
+      ]
     },
     {
       "name": "Fixture.secretNumber",
@@ -331,7 +334,7 @@
       "flags": [
         "partial"
       ],
-      "note": "Lean compiles partial defs to an opaque constant; only the generated collatzSteps._unsafe_rec carries the partial bit."
+      "note": "Lean adds a partial def as an opaque constant whose code is collatzSteps._unsafe_rec; that is what makes it partial."
     },
     {
       "name": "Fixture.unsafeId",
@@ -349,10 +352,68 @@
       "module": "Fixture.Status",
       "docstring": true,
       "section": "Flags",
-      "flags": [
-        "partial"
+      "flags": [],
+      "note": "implemented_by replaces only the compiled code of a checked definition, so it is not partial."
+    },
+    {
+      "name": "Fixture.sumList",
+      "kind": "def",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "flags": [],
+      "note": "Structural recursion. Lean also generates a partial sumList._unsafe_rec helper, but sumList keeps a checked definition, so it is not partial."
+    },
+    {
+      "name": "Fixture.halvings",
+      "kind": "def",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags",
+      "flags": [],
+      "note": "Well-founded recursion: not partial or unsafe either."
+    },
+    {
+      "name": "Fixture.Tree",
+      "kind": "inductive",
+      "module": "Fixture.Status",
+      "docstring": true,
+      "section": "Flags"
+    },
+    {
+      "name": "Fixture.Tree.leaf",
+      "kind": "ctor",
+      "module": "Fixture.Status",
+      "docstring": false,
+      "section": "Flags"
+    },
+    {
+      "name": "Fixture.Tree.node",
+      "kind": "ctor",
+      "module": "Fixture.Status",
+      "docstring": false,
+      "section": "Flags"
+    },
+    {
+      "name": "Fixture.audited_only",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": false,
+      "section": "Flags",
+      "checkedBy": [
+        "print axioms@80"
       ],
-      "note": "proofmap flags implemented_by declarations as partial."
+      "note": "Nothing uses it; the #print axioms command below names it."
+    },
+    {
+      "name": "Fixture.leftover_helper",
+      "kind": "theorem",
+      "module": "Fixture.Status",
+      "docstring": false,
+      "section": "Flags",
+      "flags": [
+        "private"
+      ]
     },
     {
       "name": "Fixture.double_mono",
@@ -542,7 +603,10 @@
       "section": "Banner section",
       "proof": "term",
       "leadingComment": "A comment above a one-shot command prefix and an attribute.",
-      "note": "The leading comment search looks past `set_option ... in` and the attribute line."
+      "note": "@[simp]: the simp set rewrites with it.",
+      "flags": [
+        "simp"
+      ]
     },
     {
       "name": "Fixture.and_swap",
@@ -612,7 +676,44 @@
       "Fixture.collatzSteps._unsafe_rec",
       "Fixture.le_double._proof_1_1",
       "Fixture.two_goals._proof_1_1",
-      "Fixture.two_goals._proof_1_2"
+      "Fixture.two_goals._proof_1_2",
+      "Fixture.Tree._sizeOf_1",
+      "Fixture.Tree._sizeOf_inst",
+      "Fixture.Tree.below",
+      "Fixture.Tree.brecOn",
+      "Fixture.Tree.brecOn.eq",
+      "Fixture.Tree.brecOn.go",
+      "Fixture.Tree.casesOn",
+      "Fixture.Tree.ctorElim",
+      "Fixture.Tree.ctorElimType",
+      "Fixture.Tree.ctorIdx",
+      "Fixture.Tree.leaf.elim",
+      "Fixture.Tree.leaf.sizeOf_spec",
+      "Fixture.Tree.noConfusion",
+      "Fixture.Tree.noConfusionType",
+      "Fixture.Tree.node.elim",
+      "Fixture.Tree.node.inj",
+      "Fixture.Tree.node.injEq",
+      "Fixture.Tree.node.noConfusion",
+      "Fixture.Tree.node.sizeOf_spec",
+      "Fixture.Tree.rec",
+      "Fixture.Tree.recOn",
+      "Fixture.halvings._proof_1",
+      "Fixture.halvings._unsafe_rec",
+      "Fixture.halvings.eq_def",
+      "Fixture.instDecidableEqTree",
+      "Fixture.instDecidableEqTree.decEq",
+      "Fixture.instDecidableEqTree.decEq._proof_1",
+      "Fixture.instDecidableEqTree.decEq._proof_2",
+      "Fixture.instDecidableEqTree.decEq._proof_3",
+      "Fixture.instDecidableEqTree.decEq._proof_4",
+      "Fixture.instDecidableEqTree.decEq._proof_5",
+      "Fixture.instDecidableEqTree.decEq._sunfold",
+      "Fixture.instDecidableEqTree.decEq._unsafe_rec",
+      "Fixture.instDecidableEqTree.decEq.match_1",
+      "Fixture.sumList._sunfold",
+      "Fixture.sumList._unsafe_rec",
+      "Fixture.sumList.match_1"
     ]
   },
   "toolchainDifferences": {
@@ -627,6 +728,13 @@
         "Fixture.Color.toCtorIdx"
       ],
       "note": "collectAxioms returns axioms in a different order than on v4.35.0; the extractor must sort axiom lists for stable output."
+    },
+    "v4.35.0": {
+      "extraNoise": [
+        "Fixture.instDecidableEqTree.decEq._f",
+        "Fixture.sumList._f"
+      ],
+      "note": "Structural recursion generates a `_f` helper; v4.28.0 does not."
     }
   },
   "clashGroups": {

@@ -29,12 +29,32 @@ namespace Proofmap
 
 open Lean Proofmap.Schema Proofmap.Extract
 
+/-- The build's line about the main results: always printed, so the reader can check them
+without opening the page. `source` is where they were named (the config file, the modules'
+`## Main statements` sections); `none` when proofmap chose them. -/
+def mainResultsMessage (names : List String) (source : Option String) : String :=
+  match source with
+  | some f => s!"main results ({names.length}, from {f}): {", ".intercalate names}"
+  | none => s!"main results ({names.length}, chosen automatically): {", ".intercalate names} (name them in a `## Main statements` section of the module docstring, or set roots in proofmap.toml)"
+
+/-- The build's line about the page title and where it came from. -/
+def titleMessage (title : String) (source : Option String) (configured : Bool) : String :=
+  let src := source.map (s!"from {·}")
+  let hint := if configured then none else some "set title in proofmap.toml to change it"
+  match [src, hint].filterMap id with
+  | [] => s!"page title \"{title}\""
+  | parts => s!"page title \"{title}\" ({"; ".intercalate parts})"
+
 structure BuildOptions where
   rootDir : System.FilePath
   rootModules : Array Name
   title : Option String := none
-  /-- Where a title that was not configured came from (CITATION.cff, README.md, the lakefile). -/
+  /-- Where the title came from: `--title`, the config file, CITATION.cff, README.md, the lakefile. -/
   titleSource : Option String := none
+  /-- Whether the title was set by `--title` or the config (the build then gives no hint). -/
+  titleConfigured : Bool := false
+  /-- The config file the main results were set in; `none` when proofmap chose them. -/
+  rootsFrom : Option String := none
   repoUrl : Option String := none
   standardAxioms : Array String := defaultStandardAxioms
   glossary : Array (String × String) := defaultGlossary
@@ -155,8 +175,8 @@ def extract (opts : BuildOptions) : IO ProofmapData := do
     | .ok r => pure r
     | .error e => throw <| IO.userError s!"invalid divider pattern {p}: {e}"
   let (decls, modules, roots, unmatched) ← enrich opts.rootDir dividers opts.banners opts.overrides decls modules
-  for n in unmatched do
-    IO.eprintln s!"proofmap: warning: root '{n}' from the config matches no project declaration"
+  for w in unmatched do
+    IO.eprintln s!"proofmap: warning: {w}"
   phase s!"sections, comments, summaries, ranks ({roots.size} root(s))"
   let title := opts.title.getD (", ".intercalate (opts.rootModules.toList.map toString))
   -- With a repository URL, source links point at the commit that was mapped (when it is a git

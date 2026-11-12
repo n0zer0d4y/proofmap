@@ -34,10 +34,15 @@ def rankTests : TestM Unit := do
   --   2: main_hyps_satisfiable  uses 0, 1   (unused, rests on more than main)
   let wDeps : Array (Array Nat) := #[#[1], #[], #[0, 1]]
   let wName (i : Nat) : String := #["Foo.main", "Foo.helper", "Foo.main_hyps_satisfiable"][i]!
+  -- A check that gave way is not a main result itself: the theorem it checks stands for it.
   checkEq "auto roots: a check named as one gives way to the theorem it checks"
-    (autoRoots wDeps (fun _ => true) wName) #[0, 2]
+    (autoRoots wDeps (fun _ => true) wName) #[0]
   checkEq "auto roots: an undocumented check of a documented theorem gives way, whatever its name"
-    (autoRoots wDeps (fun _ => true) (fun i => s!"Foo.d{i}") (documented := (· == 0))) #[0, 2]
+    (autoRoots wDeps (fun _ => true) (fun i => s!"Foo.d{i}") (documented := (· == 0))) #[0]
+  -- A check whose theorem is used elsewhere too promotes nothing, so it stays, last.
+  --   0: main (used by 1 and 2)   1: corollary (unused)   2: main_example (unused check)
+  checkEq "auto roots: a check that promotes nothing is kept, after the results"
+    (autoRoots #[#[], #[0], #[0]] (fun _ => true) (fun i => #["Foo.main", "Foo.cor", "Foo.main_example"][i]!)) #[1, 2]
   -- A documented main theorem whose proof is one big lemma keeps its place.
   checkEq "auto roots: a documented result proved by one lemma stays first"
     (autoRoots #[#[1], #[]] (fun _ => true) (fun i => s!"Foo.d{i}") (documented := fun _ => true)) #[0]
@@ -52,7 +57,7 @@ def rankTests : TestM Unit := do
     (autoRoots aDeps (fun i => i != 3 && i != 4) (fun i => s!"d{i}") (k := 2)) #[0, 1]
   checkEq "auto roots: more areas than k shows one of each, up to maxK"
     (autoRoots #[#[], #[], #[]] (fun _ => true) (fun i => s!"d{i}") (k := 2) (area := fun i => s!"P.{i}")).size 3
-  checkEq "looks like a check" ((["T_hyps_satisfiable", "Foo.bar_witness", "Foo.example", "Foo.sanity_check"].map looksLikeCheck)) [true, true, true, true]
+  checkEq "looks like a check" ((["T_hyps_satisfiable", "Foo.bar_witness", "Foo.example", "Foo.sanity_check", "Foo.bound_nonvacuous", "Foo.hyps_nonvacuity"].map looksLikeCheck)) [true, true, true, true, true, true]
   checkEq "does not look like a check" ((["Foo.examples_are_dense", "Foo.check_correct", "Foo.testing_lemma"].map looksLikeCheck)) [false, false, false]
   checkEq "states a result: iff" (statesResult "Foo.bar_iff" none) true
   checkEq "states a result: reduction in the docstring" (statesResult "Foo.clique_to_indset" (some "Clique reduces to independent set.")) true

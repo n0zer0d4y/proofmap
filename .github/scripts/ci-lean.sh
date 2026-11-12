@@ -68,4 +68,24 @@ if [ -n "${PROOFMAP_E2E:-}" ]; then
   (cd "$repo/viewer" && PROOFMAP_EXE="$exe" PROOFMAP_FIXTURE="$work/lean/test/fixture" npx playwright test tests/e2e/serve.spec.ts tests/e2e/split.spec.ts)
 fi
 
+# Last, because it changes the fixture (in the work copy): the main results named in a module
+# docstring's `## Main statements` section (Mathlib's convention) are the page's main results.
+echo "== main results from a ## Main statements section"
+node -e '
+const fs = require("fs"), f = process.argv[1];
+const src = fs.readFileSync(f, "utf8");
+const section = "## Main statements\n\n* `double_mono`: in this file.\n* `colorOf_zero`: in another file, the only one.\n* `no_such_result`: names nothing.\n\n";
+fs.writeFileSync(f, src.replace("# Main results\n\n", "# Main results\n\n" + section));
+' "$work/lean/test/fixture/Fixture/Result.lean"
+grep -q '^## Main statements' "$work/lean/test/fixture/Fixture/Result.lean"
+(cd "$work/lean/test/fixture" && lake build Fixture.Result > /dev/null)
+(cd "$work/lean/test/fixture" && lake env "$exe" build --root Fixture --no-lake-build --json "$work/listed.json" --out "$work/listed.html") > "$work/listed.txt" 2>&1
+grep -q "main results (2, from the Main statements of the modules): Fixture.double_mono, Fixture.colorOf_zero" "$work/listed.txt"
+grep -q "warning: .no_such_result. in the main statements of Fixture.Result names no project declaration" "$work/listed.txt"
+node -e '
+const d = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+const roots = d.project.roots.map((i) => d.decls[i].name).join(",");
+if (roots !== "Fixture.double_mono,Fixture.colorOf_zero") { console.error("roots: " + roots); process.exit(1); }
+' "$work/listed.json"
+
 echo "== all Lean checks passed on $toolchain"

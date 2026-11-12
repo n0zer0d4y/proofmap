@@ -167,6 +167,18 @@ test('long names in lists wrap instead of being cut to an ellipsis, on a narrow 
       .map((e) => e.textContent),
   );
   expect(cut).toEqual([]);
+  // A wrapped name keeps its status mark on its first line, and nothing in a row spills past it.
+  const misplaced = await page.locator('.health .decl-list li').evaluateAll((rows) =>
+    rows
+      .filter((li) => {
+        const mark = li.querySelector('.status'), name = li.querySelector('.decl-name .linklike, .linklike');
+        if (!mark || !name) return false;
+        const first = name.getClientRects()[0]!;
+        return Math.abs(mark.getBoundingClientRect().top - first.top) > first.height || li.scrollWidth > li.clientWidth + 1;
+      })
+      .map((li) => li.textContent),
+  );
+  expect(misplaced).toEqual([]);
 });
 
 test('health tiles are one size, nothing in them is cut, and counts of one read in the singular', async ({ page }) => {
@@ -230,4 +242,42 @@ test('top-10 lists keep the number, a wrapping name and its count on one row, ev
       .filter(Boolean),
   );
   expect(bad).toEqual([]);
+});
+
+test('a name two modules share shows its module wherever it is listed', async ({ page }) => {
+  // Health's lists: the two ClashDemo.value_pos theorems are told apart by their modules.
+  await page.goto(`${fixtureUrl}#/health`);
+  await page.getByRole('button', { name: /Theorems/ }).click();
+  const rows = page.getByRole('region', { name: 'Theorems' }).locator('li', { hasText: 'ClashDemo.value_pos' });
+  await expect(rows).toHaveCount(2);
+  expect((await rows.allTextContents()).map((t) => t.replace(/\u200b/g, '')).sort()).toEqual([
+    expect.stringContaining('· Fixture.Clash.A'),
+    expect.stringContaining('· Fixture.Clash.B'),
+  ]);
+  // The module follows the name in the same item, so the name keeps its width and stays one line.
+  for (const row of await rows.all()) {
+    await expect(row.locator('.decl-name .muted')).toHaveCount(1);
+    expect(await row.locator('.decl-name .linklike').evaluate((e) => e.getClientRects().length)).toBe(1);
+  }
+  // A map card: the module's last part next to the name, the whole module in its tooltip.
+  await page.goto(`${fixtureUrl}#/map/ClashDemo.value_pos~Fixture.Clash.B`);
+  const name = page.locator('[data-decl="ClashDemo.value_pos"] .card-name').first();
+  await expect(name).toContainText('· B');
+  await expect(name).toHaveAttribute('title', 'ClashDemo.value_pos · Fixture.Clash.B');
+});
+
+test('declarations nothing uses show what names them, and whether they are private or simp lemmas', async ({ page }) => {
+  await page.goto(`${fixtureUrl}#/health`);
+  const unused = page.getByRole('region', { name: 'Unused declarations' });
+  const audited = unused.locator('li', { hasText: 'Fixture.double_two' });
+  await expect(audited.locator('.badge', { hasText: 'simp' })).toHaveCount(1);
+  await expect(audited.locator('.check-ref')).toHaveText('audited by #print axioms at Fixture/Tagged.lean:40');
+  const checked = unused.locator('li', { hasText: 'Fixture.double_zero' });
+  await expect(checked.locator('.badge', { hasText: 'private' })).toHaveCount(1);
+  await expect(checked.locator('.check-ref')).toHaveText('type-checked by #check at Fixture/Basic.lean:75');
+  // Entries nothing names have no mark.
+  await expect(unused.locator('li', { hasText: 'Fixture.trickyChar' }).locator('.check-ref')).toHaveCount(0);
+  // The details panel says the same.
+  await audited.getByRole('button', { name: /Fixture\.double_two/ }).click();
+  await expect(page.getByRole('complementary', { name: 'Details' }).locator('.checked-by')).toHaveText('Named by #print axioms at Fixture/Tagged.lean:40');
 });

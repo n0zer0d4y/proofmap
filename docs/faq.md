@@ -32,7 +32,7 @@ On big projects built with `--walkthrough`, walkthroughs are most of the size. W
 
 ### Can I map part of Mathlib, or of another dependency?
 
-Yes: name its modules as roots, for example `proofmap build --root Mathlib.Data.List`. proofmap finds the sources of packages in the project's `.lake/packages`, so any built module of a dependency can be mapped.
+Yes: name its modules with `--root` (or `rootModules` in `proofmap.toml`), for example `proofmap build --root Mathlib.Data.List`. proofmap finds the sources of packages in the project's `.lake/packages`, so any built module of a dependency can be mapped. Many Mathlib files list their main theorems in a `## Main statements` section, and every theorem named there becomes a main result of the page; for a short list, set `roots` in `proofmap.toml`.
 
 ### How do I use proofmap in CI?
 

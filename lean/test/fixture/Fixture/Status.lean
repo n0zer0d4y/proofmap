@@ -55,4 +55,30 @@ unsafe def unsafeId (n : Nat) : Nat := n
 @[implemented_by unsafeId]
 def safeId (n : Nat) : Nat := n
 
+/-- Sums a list by structural recursion: recursive, but neither partial nor unsafe. -/
+def sumList : List Nat → Nat
+  | [] => 0
+  | x :: xs => x + sumList xs
+
+/-- Counts halvings by well-founded recursion: recursive, but neither partial nor unsafe. -/
+def halvings (n : Nat) : Nat :=
+  if h : n ≤ 1 then 0 else 1 + halvings (n / 2)
+termination_by n
+decreasing_by omega
+
+/-- A recursive type with derived equality: its generated `decEq` is recursive, not partial. -/
+inductive Tree
+  | leaf
+  | node (l r : Tree)
+  deriving DecidableEq
+
+-- Nothing uses these two. The first is audited by a command below; the second is a private
+-- leftover. Commands leave nothing in the compiled code, so proofmap reads them from the source.
+theorem audited_only (n : Nat) : n + 0 = n := rfl
+private theorem leftover_helper : True := trivial
+
+#print axioms audited_only
+#check @double
+-- #print axioms in_a_comment
+
 end Fixture

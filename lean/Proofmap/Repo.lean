@@ -171,4 +171,20 @@ def defaultTitle (dir : System.FilePath) : IO (Option (String × String)) := do
     if let some t := packageName src false then return some (t, "lakefile.lean")
   return none
 
+/-- The hint printed after a build while the page is not committed: what to commit, and where
+publishing is explained. `folder` is the side folder the build wrote next to the page, if any. -/
+def commitHint (page : String) (folder : Option String) : String :=
+  let what := match folder with
+    | some f => s!"{page} and {f}/"
+    | none => page
+  s!"{page} is not committed yet: commit {what} to share the page with the repository, or publish it with GitHub Pages (see the FAQ)"
+
+/-- Whether `file` is in a git repository but neither committed nor ignored there. -/
+def uncommitted (file : System.FilePath) : IO Bool := do
+  let dir := file.parent.getD "."
+  let some name := file.fileName | return false
+  if (← git dir #["rev-parse", "--is-inside-work-tree"]) != some "true" then return false
+  if (← git dir #["ls-files", "--error-unmatch", name]).isSome then return false
+  return (← git dir #["check-ignore", "-q", name]).isNone
+
 end Proofmap.Repo

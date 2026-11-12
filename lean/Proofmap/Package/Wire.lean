@@ -122,6 +122,8 @@ def encodeDecl (tb : Tables) (d : Decl) : Tables × Array (String × Json) := Id
   let tags := toJson d.tags
   unless tags == Json.mkObj [] do f := f.push ("y", tags)
   if let some w := d.walkthrough then f := f.push ("w", toJson w)
+  unless d.checkedBy.isEmpty do
+    f := f.push ("v", Json.arr (d.checkedBy.map fun c => Json.arr #[toJson c.command, toJson c.module, toJson c.line]))
   return (tb, f)
 
 /-- A file name for a module's chunk: the name with anything but ASCII letters, digits, `.`, `-`

@@ -1,4 +1,5 @@
 import Proofmap.Version
+import Lean.Data.Json
 
 /-!
 # The global install's launcher
@@ -64,6 +65,24 @@ partial def findProject (dir : FilePath) : IO (Option FilePath) := do
 
 def readToolchain (project : FilePath) : IO String :=
   return (← IO.FS.readFile (project / "lean-toolchain")).trimAscii.toString
+
+/-- The proofmap a project's `lake-manifest.json` requires (its `inputRev`, such as `v0.3.1`, else
+its commit), when the lakefile also requires proofmap; `none` otherwise. -/
+def pinnedProofmap (manifest : String) : Option String := do
+  let json ← (Lean.Json.parse manifest).toOption
+  let packages ← (json.getObjValD "packages").getArr?.toOption
+  let p ← packages.find? fun p => (p.getObjValAs? String "name").toOption == some "proofmap"
+  (p.getObjValAs? String "inputRev").toOption <|> (p.getObjValAs? String "rev").toOption
+
+/-- The note shown when a project also requires proofmap while the global install runs it. -/
+def pinnedNote (rev : String) : String :=
+  s!"this project's lakefile also requires proofmap ({rev}); the global install does not need it, and keeping both means two proofmap versions. Keep the require only to pin a version for everyone, or for @[proofmap ...]"
+
+/-- `pinnedProofmap` for a project folder. -/
+def projectPin (project : FilePath) : IO (Option String) := do
+  let f := project / "lake-manifest.json"
+  if !(← f.pathExists) then return none
+  return pinnedProofmap (← IO.FS.readFile f)
 
 structure LeanVersion where
   major : Nat

@@ -20,7 +20,7 @@ def configTests : TestM Unit := do
   -- A full, valid config.
   let good := "[project]\ntitle = \"Squares\"\nroots = [\"A.b\"]\nrootModules = [\"A\", \"C\"]\n" ++
     "[display]\npreset = \"auditor\"\nfooter = false\n[sections]\nbanners = false\n" ++
-    "[summaries]\n\"A.b\" = \"Short\"\n[steps]\n\"A.b\" = \"Final\"\n[ranks]\n\"A.b\" = \"result\"\n" ++
+    "[titles]\n\"A.b\" = \"The b theorem\"\n[summaries]\n\"A.b\" = \"Short\"\n[steps]\n\"A.b\" = \"Final\"\n[ranks]\n\"A.b\" = \"result\"\n" ++
     "[glossary]\nnpComplete = \"NP-complete\"\n"
   match ← parse good "proofmap.toml" with
   | .error es => check "valid config parses" false (toString es.toList)
@@ -31,6 +31,7 @@ def configTests : TestM Unit := do
     checkEq "preset" c.preset (some "auditor")
     checkEq "footer" c.footer false
     checkEq "banners" c.banners false
+    checkEq "titles" c.titles #[("A.b", "The b theorem")]
     checkEq "summaries" c.summaries #[("A.b", "Short")]
     checkEq "steps" c.steps #[("A.b", "Final")]
     checkEq "ranks" (c.ranks.map (·.1)) #["A.b"]

@@ -61,6 +61,9 @@ for (const m of manifest.decls) {
   if (!same(d.status.nonstandardAxioms, ns))
     fail(`${m.name}: nonstandardAxioms ${JSON.stringify(d.status.nonstandardAxioms)}, expected ${JSON.stringify(ns)}`);
   if (m.title && d.title !== m.title) fail(`${m.name}: title "${d.title}", expected "${m.title}"`);
+  // `#print axioms` / `#check` / `#eval` commands that name it: "command@line", none unless listed.
+  const checks = (d.checkedBy ?? []).map((c) => `${c.command}@${c.line}`);
+  if (!same(checks, m.checkedBy ?? [])) fail(`${m.name}: checkedBy ${JSON.stringify(checks)}, expected ${JSON.stringify(m.checkedBy ?? [])}`);
 }
 
 // Sections and leading comments.

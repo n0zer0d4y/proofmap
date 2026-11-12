@@ -178,6 +178,20 @@ instance : ToJson Tags where
     (match t.rank with | some r => [("rank", toJson r)] | none => []) ++
     (match t.summary with | some s => [("summary", toJson s)] | none => [])
 
+/-- A command in the project's own source that names a declaration: `#print axioms X` (an
+axiom audit), `#check X` or `#eval X`. It leaves nothing in the compiled code, so it is not a
+dependency; it is recorded so that a declaration nothing else uses can be told apart from dead
+code. -/
+structure CheckRef where
+  /-- `print axioms`, `check` or `eval`. -/
+  command : String
+  module : String
+  line : Nat
+  deriving Inhabited, BEq, Repr
+
+instance : ToJson CheckRef where
+  toJson c := Json.mkObj [("command", toJson c.command), ("module", toJson c.module), ("line", toJson c.line)]
+
 structure Decl where
   id : Nat
   name : String
@@ -203,6 +217,8 @@ structure Decl where
   step : Option String := none
   tags : Tags := {}
   walkthrough : Option Nat := none
+  /-- Commands in the project's source that name this declaration (`CheckRef`). -/
+  checkedBy : Array CheckRef := #[]
   deriving Inhabited
 
 def Decl.isNoise (d : Decl) : Bool := d.flags.any (·.startsWith "noise:")
@@ -218,7 +234,7 @@ instance : ToJson Decl where
     ("deps", toJson d.deps), ("directDeps", toJson d.directDeps),
     ("size", Json.mkObj [("lines", toJson d.lines), ("exprNodes", toJson d.exprNodes)]),
     ("rank", toJson d.rank), ("step", nullable d.step), ("tags", toJson d.tags),
-    ("walkthrough", nullable d.walkthrough)]
+    ("walkthrough", nullable d.walkthrough), ("checkedBy", toJson d.checkedBy)]
 
 structure Step where
   tactic : String

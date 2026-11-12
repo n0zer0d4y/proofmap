@@ -3,7 +3,7 @@
 proofmap works without any configuration. Two optional ways let you adjust what it shows:
 
 - a **`proofmap.toml`** file next to the lakefile, which works with both install modes, and
-- the **`@[proofmap ...]` attribute** in the code, which needs the [project install](../README.md#project-install-pinned-for-everyone-working-on-the-project).
+- the **`@[proofmap ...]` attribute** in the code, which needs the [project install](../README.md#optional-pin-proofmap-in-a-projects-lakefile).
 
 Both can set the same things per declaration. When both do, the attribute wins.
 
@@ -32,6 +32,9 @@ enabled = false        # true: record tactic steps (same as build --walkthrough;
 dividerPatterns = ['^--\s*[─━=#*-]{2,}\s*(.+?)\s*[─━=#*-]*$', '^-- (§|#)\s*(.+)$']
 banners = true
 
+[titles]
+"Nat.sum_four_squares" = "Lagrange's four-square theorem"
+
 [summaries]
 "Nat.euler_four_squares" = "Euler's four-square identity, for natural numbers"
 
@@ -51,7 +54,7 @@ sq = "square"
 |---|---|
 | `title` | The page title. Default, looked for in the project folder and then at the top of its git repository: the `title` in `CITATION.cff` (without a leading `repository-slug: `), else the first level-one heading of `README.md` (`# Title` or `<h1>Title</h1>`, outside code blocks); else the package name in the lakefile; else the root module names. `proofmap build` prints the title and where it came from. `--title` overrides it. |
 | `rootModules` | The modules to map. Each one brings in itself and **all its built submodules**, so `["Mathlib.NumberTheory"]` maps `Mathlib.NumberTheory.SumFourSquares` too. Default: the libraries in the lakefile (each `lean_lib`, its `roots` or `globs`, else its name). `--root MODULE` overrides it. Modules without a built `.olean` are skipped with a warning; run `lake build` first, which `proofmap build` does unless you pass `--no-lake-build`. |
-| `roots` | Full names of the main results. The page opens on them, the outline starts from them, and they get the rank `result`. Default: chosen from the theorems that nothing else in the project uses, ranked documented ones first, then by how much they rest on, with a name or docstring that states a result ("iff", "reduces", "complete", "theorem" and similar words) counting double. The five best are taken, plus the best of each folder of the project that has none among them (up to eight in all), so the main results come from across the project. A sanity check gives way to the theorem it checks: when an unused theorem's name ends in `_satisfiable`, `_witness`, `_example`, `_sanity`, `_test` or `_check`, or it is undocumented while applying a documented theorem, the theorems it applies that only it uses are considered in its place, and the check comes last. `proofmap build` prints the ones it chose. A name that matches nothing is reported, with the closest name proofmap knows. |
+| `roots` | Full names of the main results. The page opens on them, the outline starts from them, and they get the rank `result`. Default: the declarations named in the `## Main statements` sections of the project's module docstrings (the optional second-level section of [Mathlib's documentation style](https://mathlib.org/contribute/doc.html); `## Main results` and `## Main theorems`, which many Mathlib files use instead, count too), in module and list order. A section is a second-level (or deeper) heading that starts with one of those names (`## Main results (this file)` counts, `## Key lemmas` does not), and each of its list items starts with a name in backticks; names later in an item are descriptions, not results. A name is looked for in its own file first (it may be written inside the file's namespaces), else as the only declaration of that name in the project; a name that matches nothing, or several, is reported. When no section names any, the main results are chosen from the theorems that nothing else in the project uses, ranked documented ones first, then by how much they rest on, with a name or docstring that states a result ("iff", "reduces", "complete", "theorem" and similar words) counting double. The five best are taken, plus the best of each folder of the project that has none among them (up to eight in all), so the main results come from across the project. A sanity check gives way to the theorem it checks: when an unused theorem's name ends in `_satisfiable`, `_witness`, `_example`, `_sanity`, `_test`, `_check`, `_nonvacuous` or `_nonvacuity`, or it is undocumented while applying a documented theorem, the theorems it applies that only it uses are considered in its place, and the check itself is not a main result (a check that applies no such theorem comes last). The automatic choice is a starting point: a result that other theorems use, such as one half of an equivalence or a general theorem with a special case, is never chosen, and at most eight are. Name those in a Main statements section, or here. `proofmap build` prints the main results the page uses and where they came from, also when they are set here. A name that matches nothing is reported, with the closest name proofmap knows. |
 | `repoUrl` | A GitHub (or similar) URL. Declarations get links to their lines, at the commit that was mapped when the project is a git checkout, and inside the project's folder when the project is in a subfolder of its repository (`repo/lean/`). Default: the repository's `origin` remote, as a web address (credentials removed); `proofmap build` says so. `repoUrl = ""` leaves the links out. proofmap warns when the commit is not pushed or Lean files have uncommitted changes, since links to that commit would not match. |
 
 ### `[display]`
@@ -73,17 +76,18 @@ Walkthroughs are off by default. `enabled = true` (or `proofmap build --walkthro
 
 proofmap groups declarations by the sections of their file: `namespace` and `section` blocks, Markdown headings in module docs (`/-! # Heading -/`), and comment dividers. `dividerPatterns` are the regular expressions that recognise a divider line; the first capture group, or the last one if there are several, is the section title. `banners = false` stops framed comment banners from counting as section headings.
 
-### `[summaries]`, `[steps]`, `[ranks]`
+### `[titles]`, `[summaries]`, `[steps]`, `[ranks]`
 
 Keyed by a declaration's full name.
 
-- **summaries:** the one-line description shown on cards and in the outline. Without one, proofmap uses the first paragraph of the docstring, else of the comment just above the declaration. As a last resort it shows the title of the enclosing section, marked "In section: ...", never presented as the declaration's own description. Every summary carries a chip that says where it came from.
+- **titles:** the readable title shown on cards, in the outline and in lists, in place of the one proofmap makes from the name (see [`[glossary]`](#glossary)), such as "Lagrange's four-square theorem" for `Nat.sum_four_squares`.
+- **summaries:** the one-line description shown on cards and in the outline. Without one, proofmap uses the first paragraph of the docstring, else of the comment just above the declaration; headings at its start (`## Title`) are skipped. As a last resort it shows the title of the enclosing section, marked "In section: ...", never presented as the declaration's own description. Every summary carries a chip that says where it came from.
 - **steps:** names the big steps of the proof. The map's group cards, the outline's order and the health view's progress bars use them; without a step, a declaration is grouped by its section.
 - **ranks:** `result`, `theorem`, `lemma` or `def`. proofmap computes a rank from the code (roots are results; theorems with a docstring, or that much else rests on, are theorems; other theorems are lemmas) and this overrides it.
 
 ### `[glossary]`
 
-proofmap turns Lean names into readable titles, so `isSquare_neg_one_iff` becomes "Is square negative one if and only if". The glossary maps name fragments to words. Your entries are added to the built-in ones and win over them.
+proofmap turns Lean names into readable titles, so `isSquare_neg_one_iff` becomes "Is square negative one if and only if". The glossary maps name fragments to words, written exactly as you give them, so `vc = "VC"` keeps the capitals and `uncond = "unconditional"` spells a word out. Your entries are added to the built-in ones and win over them. For a title that is not a reading of the name, use [`[titles]`](#titles-summaries-steps-ranks).
 
 ## The `@[proofmap ...]` attribute
 

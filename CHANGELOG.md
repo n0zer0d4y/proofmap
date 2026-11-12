@@ -2,12 +2,32 @@
 
 All notable changes to proofmap are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.4.0] - 2026-11-12
 
 ### Added
 
+- **Main results from `## Main statements`:** the declarations named in the `## Main statements` sections of the project's module docstrings (the optional second-level section of [Mathlib's documentation style](https://mathlib.org/contribute/doc.html); `## Main results` and `## Main theorems`, which many Mathlib files use instead, count too) are the page's main results, before any guessing; `roots` in `proofmap.toml` still overrides them. Each list item's leading name in backticks counts; a name that matches nothing, or several, is reported. The README says why the main results should be named and what the guess misses when they are not.
 - **Examples** in the README: three Lean projects that publish their proof map with GitHub Pages, with links to each project and its map.
 - **Install from a clone** in the README: `install.sh --source .` or `install.ps1 -Source .` in a checked-out release, for readers who want to read the installer first or install a particular version.
+- **What names a declaration nothing uses:** Health's lists of declarations nothing else uses show, next to each, the `#print axioms`, `#check` or `#eval` in the project's own files that names it ("audited by #print axioms at File.lean:930"), and whether it is `private` (usually a leftover helper) or a `simp` lemma (usually kept for the simp tactic); the details panel says so too. The data has a new `checkedBy` field and a `simp` flag (within data format 2).
+- **`[titles]`** in `proofmap.toml`: a title for a declaration, in place of the one made from its name. `proofmap check` reports entries that name no declaration.
+- **Build output:** every build prints the main results the page uses and the page title, and where they came from (`proofmap.toml`, the Main statements sections, `--title`, or chosen automatically). While the page is not committed (and not ignored by git), the build says to commit it, with `proofmap_files/` when there is one.
+- **Two installs:** with the global install, `proofmap build` and `proofmap doctor` say when the project's lakefile also requires proofmap, and which version, since that means two proofmap versions.
+
+### Changed
+
+- **Main results:** a sanity check that gave way to the theorems it checks is no longer listed as a main result itself, and names ending in `_nonvacuous` or `_nonvacuity` count as sanity checks. The configuration docs say what the automatic choice cannot find (a theorem that other theorems use, more than eight results).
+- **Health** lists the main results in the configured order, as the outline does.
+- **Names two modules share** show the module wherever names are listed: Health's lists, the path finder's chosen ends and its chain, and map cards (the module's last part, with the whole module in the tooltip).
+- **README install steps:** install proofmap once on your computer (with a check for an existing install), then map a project with `proofmap build`. The section says what to commit (`proofmap.html`, and `proofmap_files/` when the build writes one) and how to name the main results, with what the automatic guess misses when they are not named. Adding proofmap to a project's lakefile is described as optional, for pinning a version or using the `@[proofmap ...]` attribute.
+
+### Fixed
+
+- **"Unsafe or partial" counted ordinary definitions:** every recursive definition (structural or well-founded recursion, derived `DecidableEq`) was flagged partial, because Lean gives it a compiled helper like a `partial def`'s, and so was every `@[implemented_by]` definition, whose checked definition proofs still use. Only a `partial def`, which Lean adds without a checked definition, is flagged now.
+- **Helpers written by `deriving`** (such as `instDecidableEqT.decEq` and `instReprT.repr`) were shown and counted as the project's own definitions; they are hidden with their instance now.
+- **A declaration used only by its own generated helper** (such as the `_simp_1` lemma Lean makes for a simp lemma) counted as used in Health, so it was missing from the list of declarations nothing uses; hidden helpers no longer count, as in the details panel's "Used by".
+- **A docstring that starts with a heading** (`## Title`) gave the heading line, marks and all, as the start of the summary; the summary is the first paragraph after it now.
+- **Project install** in the README: `lake update proofmap --keep-toolchain`. Without the flag, Lake moved a project on an older Lean to proofmap's own Lean version, and Mathlib's cache then failed to build.
 
 ## [0.3.1] - 2026-11-09
 

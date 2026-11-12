@@ -145,9 +145,11 @@ def prepareBuild (a : BuildArgs) : IO (Except UInt32 (BuildOptions × Config.Con
   let configGlossary := cfg.glossary
   -- The page title: --title or the config; else the project's CITATION.cff, its README's first
   -- heading or its package name (said in the build output); else the root module names.
-  let (title, titleSource) ← match a.title <|> cfg.title with
-    | some t => pure (some t, none)
-    | none => do
+  let configName := (configFile?.bind (·.fileName)).getD "proofmap.toml"
+  let (title, titleSource) ← match a.title, cfg.title with
+    | some t, _ => pure (some t, some "--title")
+    | none, some t => pure (some t, some configName)
+    | none, none => do
       match ← Repo.defaultTitle rootDir with
       | some (t, src) => pure (some t, some src)
       | none => pure (none, none)
@@ -166,7 +168,8 @@ def prepareBuild (a : BuildArgs) : IO (Except UInt32 (BuildOptions × Config.Con
     if repo.unpushed then
       IO.eprintln "proofmap: warning: the current commit is not on any remote branch; source links to it will not work until it is pushed"
   return .ok ({
-    rootDir, rootModules := roots, title, titleSource, timings := a.timings
+    rootDir, rootModules := roots, title, titleSource, titleConfigured := a.title.isSome || cfg.title.isSome
+    rootsFrom := if cfg.roots.isEmpty then none else some configName, timings := a.timings
     jobs := a.jobs, useCache := a.useCache, repoUrl
     standardAxioms := cfg.standardAxioms.getD Extract.defaultStandardAxioms
     -- Config entries come first, so they win over the built-in glossary.
@@ -175,6 +178,7 @@ def prepareBuild (a : BuildArgs) : IO (Except UInt32 (BuildOptions × Config.Con
     banners := cfg.banners, preset := cfg.preset, footer := cfg.footer
     walkthrough := a.walkthrough.getD cfg.walkthrough
     overrides := {
+      titles := cfg.titles.foldl (fun m (k, v) => m.insert k v) {}
       summaries := cfg.summaries.foldl (fun m (k, v) => m.insert k v) {}
       steps := cfg.steps.foldl (fun m (k, v) => m.insert k v) {}
       ranks := cfg.ranks.foldl (fun m (k, v) => m.insert k v) {}
@@ -217,16 +221,22 @@ def runBuild (args : List String) : IO UInt32 := do
         | .ok note =>
           IO.println s!"proofmap: wrote {a.out} ({counts})"
           if let some n := note then IO.println s!"proofmap: {n}"
+          let pageFile := (← IO.currentDir) / a.out
+          if ← Repo.uncommitted pageFile then
+            let folder := s!"{(pageFile.fileStem).getD "proofmap"}_files"
+            let hasFolder ← ((pageFile.parent.getD ".") / folder).isDir
+            IO.println s!"proofmap: {Repo.commitHint ((pageFile.fileName).getD "proofmap.html") (if hasFolder then some folder else none)}"
           if pageToRoot.isNone then
             IO.println "proofmap: the page is outside the project folder, so it has no \"Open in VS Code\" links (where the project is would reveal your folders); write it inside the project, or use proofmap serve"
-      -- Say what was chosen automatically, and how to choose it instead.
-      if opts.overrides.roots.isEmpty && !data.project.roots.isEmpty then
+      -- Say which main results and title the page uses and where they came from, also when
+      -- they were configured, so they can be checked without opening the page.
+      if !data.project.roots.isEmpty then
         let names := data.project.roots.toList.filterMap fun i => (data.decls[i]?).map (toString ·.name)
-        IO.println s!"proofmap: main results (chosen automatically): {", ".intercalate names} (set roots in proofmap.toml to choose them)"
-      if let some src := opts.titleSource then
-        IO.println s!"proofmap: page title \"{data.project.title}\" (from {src}; set title in proofmap.toml to change it)"
-      else if opts.title.isNone then
-        IO.println s!"proofmap: page title \"{data.project.title}\" (set title in proofmap.toml to change it)"
+        -- Where they came from: the config, the `## Main statements` sections, or proofmap's choice.
+        let source := opts.rootsFrom <|>
+          (if (listedRoots data.decls data.modules).1 == data.project.roots then some "the Main statements of the modules" else none)
+        IO.println s!"proofmap: {mainResultsMessage names source}"
+      IO.println s!"proofmap: {titleMessage data.project.title opts.titleSource opts.titleConfigured}"
       if a.timings then IO.eprintln s!"proofmap: write output: {(← IO.monoMsNow) - t} ms"
       return (0 : UInt32)
     catch e =>
@@ -429,6 +439,7 @@ def delegateToEngine (projectArg : Option String) (args : List String) : IO UInt
     IO.eprintln s!"proofmap: {e}"
     return 1
   | .ok w => if let some w := w then IO.eprintln s!"proofmap: warning: {w}"
+  if let some rev ← Launcher.projectPin project then IO.eprintln s!"proofmap: note: {Launcher.pinnedNote rev}"
   match ← Launcher.ensureEngine (← Launcher.home) tc with
   | .error e =>
     IO.eprintln s!"proofmap: {e}"
@@ -451,6 +462,7 @@ def runDoctor (projectArg : Option String) : IO UInt32 := do
     let tc ← Launcher.readToolchain p
     IO.println s!"  project: {p}"
     IO.println s!"  toolchain: {tc}"
+    if let some rev ← Launcher.projectPin p then IO.println s!"  lakefile: {Launcher.pinnedNote rev}"
     let supported ← match Launcher.support tc with
       | .error e =>
         IO.println s!"  support: NOT SUPPORTED: {e}"

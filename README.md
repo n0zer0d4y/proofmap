@@ -62,7 +62,7 @@ Walkthroughs are optional (`--walkthrough`). Lean does not keep the goals of eac
 
 ## Examples
 
-Lean 4 projects that publish their proof map with GitHub Pages. Each is built on Mathlib, keeps its Lean library in a `lean/` folder with a `proofmap.toml` that names its main results, and links to its map from a badge at the top of its README.
+Lean 4 projects that publish their proof map with GitHub Pages. Each is built on Mathlib, keeps its Lean library in a `lean/` folder, names its main results in a `proofmap.toml` (one of the ways described in [Map a project](#map-a-project)), and links to its map from a badge at the top of its README.
 
 | Project                                                                                               | Its Lean library                                                                                                                                                                                                                  | Proof map                                                                                 |
 | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -72,9 +72,9 @@ Lean 4 projects that publish their proof map with GitHub Pages. Each is built on
 
 ## Install
 
-proofmap needs [elan](https://github.com/leanprover/elan) (every Lean user already has it), git, and a project on Lean **v4.28.0 or newer**. Pick one of two ways to install it.
+proofmap needs [elan](https://github.com/leanprover/elan) (every Lean user already has it), git, and a project on Lean **v4.28.0 or newer**. You install it once on your computer (the global install); it then works in every Lean project, and adds nothing to them. If `proofmap --version` already prints a version, it is installed: go straight to [Map a project](#map-a-project).
 
-### Global install (no change to your project)
+### Install proofmap on your computer
 
 Windows (PowerShell):
 
@@ -93,7 +93,7 @@ Or install from a clone of this repository, to read the installer before it runs
 ```sh
 git clone https://github.com/n0zer0d4y/proofmap
 cd proofmap
-git checkout v0.3.1
+git checkout v0.4.0
 ```
 
 Then, on macOS and Linux:
@@ -108,43 +108,60 @@ Or on Windows (PowerShell):
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Source .
 ```
 
-Open a new terminal, then, in any Lean project:
+Open a new terminal and check that `proofmap --version` works. `proofmap self-update` updates it later.
+
+### Map a project
+
+In the project's folder (the one with the lakefile):
 
 ```sh
-lake build            # proofmap reads the compiled project
-proofmap build        # writes proofmap.html
+proofmap build        # runs lake build, then writes proofmap.html
 proofmap open         # opens it in your browser
 ```
 
 The first `proofmap build` for each Lean version compiles a matching proofmap engine. This is needed because Lean's compiled files can only be read by a program built with the same Lean version. It takes a few minutes and happens once per Lean version. `proofmap doctor` shows what proofmap found, and how to fix anything it couldn't.
 
-### Project install (pinned for everyone working on the project)
+- **What to commit:** `proofmap.html` is the page for your readers. Commit it to share it with the repository or [publish it with GitHub Pages](docs/faq.md#how-do-i-publish-the-page-on-github-pages), and rebuild and commit it again when the Lean code changes. On a large project the build may also write a `proofmap_files/` folder, and says so; commit it too and keep it next to the page. proofmap's cache is in `.lake/proofmap/`, which stays out of git with the rest of `.lake/`.
+- **Main results:** the page opens on the project's headline theorems. Lean records everything else the page shows (every declaration, statement, dependency and axiom), but not which theorems are the headline ones, so name them. Follow [Mathlib's documentation style](https://mathlib.org/contribute/doc.html), whose module docstrings have an optional second-level section "Main statements": in the module docstring of each file that proves one, a `## Main statements` section lists it, one item per result, starting with its name in backticks. proofmap also accepts `## Main results` and `## Main theorems`, which many Mathlib files use instead. Every theorem named in such a section, in any file of the project, is a main result of the page, so list only the ones a reader should start from.
 
-Add proofmap to the lakefile. In `lakefile.toml`:
+  ```lean
+  /-!
+  # Sums of four squares
+
+  ## Main statements
+
+  * `Nat.sum_four_squares`: every natural number is a sum of four squares.
+  -/
+  ```
+
+  `roots` in `proofmap.toml` overrides the sections. If the main results are named nowhere, proofmap guesses them from the dependencies: the guess can pick a large internal theorem and miss a short result, it never picks a theorem that other theorems use (such as one half of an equivalence), and it picks at most eight. Every build prints the main results and where they came from.
+- **Title:** proofmap takes it from `CITATION.cff`, the README's first heading or the package name, and prints it; `title` in `proofmap.toml` sets it.
+
+### Optional: pin proofmap in a project's lakefile
+
+Not needed to map a project. This project install adds proofmap to one project's dependencies, for teams that want everyone on the same proofmap version, or to tag declarations with `@[proofmap ...]` (see [configuration](docs/config.md#the-proofmap--attribute)). In `lakefile.toml`:
 
 ```toml
 [[require]]
 name = "proofmap"
 git = "https://github.com/n0zer0d4y/proofmap"
-rev = "v0.3.1"
+rev = "v0.4.0"
 subDir = "lean"
 ```
 
 Or in `lakefile.lean`:
 
 ```lean
-require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.3.1" / "lean"
+require proofmap from git "https://github.com/n0zer0d4y/proofmap" @ "v0.4.0" / "lean"
 ```
 
-Then:
+Then update it with `--keep-toolchain`, which keeps the project's Lean version (without it, Lake can move the project to proofmap's), and commit the lakefile with `lake-manifest.json`:
 
 ```sh
-lake update proofmap
+lake update proofmap --keep-toolchain
 lake exe proofmap build
 lake exe proofmap open
 ```
-
-With the project install you can also tag declarations in the code with `@[proofmap ...]` (see [configuration](docs/config.md#the-proofmap-attribute)).
 
 ## Usage
 
@@ -168,7 +185,7 @@ rootModules = ["Mathlib.NumberTheory.SumFourSquares", "Mathlib.NumberTheory.SumT
 roots = ["Nat.sum_four_squares"]     # the main results the page starts from
 ```
 
-Without a `proofmap.toml`, proofmap picks the page title (from `CITATION.cff`, the README's first heading or the package name) and the main results itself, and says what it chose. To publish the page with GitHub Pages and link to it from your README with a badge, see [the FAQ](docs/faq.md#how-do-i-publish-the-page-on-github-pages).
+Without a `proofmap.toml`, proofmap takes the page title from `CITATION.cff`, the README's first heading or the package name, and the main results from the `## Main statements` sections of the module docstrings (see [Map a project](#map-a-project)), and says what it used. To publish the page with GitHub Pages and link to it from your README with a badge, see [the FAQ](docs/faq.md#how-do-i-publish-the-page-on-github-pages).
 
 How long a build takes, measured on a 130-module project that depends on Mathlib (13,759 declarations; 4 cores, 16 GB):
 
